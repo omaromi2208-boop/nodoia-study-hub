@@ -37,10 +37,14 @@ type StudyState = {
   extractedText: string;
   summary: StudySummary | null;
   quiz: StudyQuiz | null;
+  activeNodeId: string | null;
+  isSpeaking: boolean;
   setPdf: (args: { name: string; text: string }) => void;
   clear: () => void;
   setSummary: (s: StudySummary | null) => void;
   setQuiz: (q: StudyQuiz | null) => void;
+  setActiveNodeId: (id: string | null) => void;
+  setIsSpeaking: (v: boolean) => void;
 };
 
 const StudyContext = createContext<StudyState | null>(null);
@@ -50,6 +54,8 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
   const [extractedText, setExtractedText] = useState<string>("");
   const [summary, setSummary] = useState<StudySummary | null>(null);
   const [quiz, setQuiz] = useState<StudyQuiz | null>(null);
+  const [activeNodeId, setActiveNodeId] = useState<string | null>(null);
+  const [isSpeaking, setIsSpeaking] = useState(false);
 
   const value = useMemo<StudyState>(
     () => ({
@@ -57,22 +63,30 @@ export function StudyProvider({ children }: { children: React.ReactNode }) {
       extractedText,
       summary,
       quiz,
+      activeNodeId,
+      isSpeaking,
       setPdf: ({ name, text }) => {
         setPdfName(name);
         setExtractedText(text);
         setSummary(null);
         setQuiz(null);
+        setActiveNodeId(null);
+        setIsSpeaking(false);
       },
       clear: () => {
         setPdfName(null);
         setExtractedText("");
         setSummary(null);
         setQuiz(null);
+        setActiveNodeId(null);
+        setIsSpeaking(false);
       },
       setSummary,
       setQuiz,
+      setActiveNodeId,
+      setIsSpeaking,
     }),
-    [pdfName, extractedText, summary, quiz],
+    [pdfName, extractedText, summary, quiz, activeNodeId, isSpeaking],
   );
 
   return <StudyContext.Provider value={value}>{children}</StudyContext.Provider>;
