@@ -40,20 +40,20 @@ export default function Dashboard() {
   return (
     <AppShell title="Dashboard">
       <div className="grid gap-4">
-        <section className="rounded-2xl border border-border/70 bg-surface/60 p-4 backdrop-blur shadow-soft">
+        <section className="rounded-[20px] border border-border/60 bg-surface/40 p-4 backdrop-blur-xl shadow-elev">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h1 className="text-lg font-semibold">Sube tu PDF</h1>
+              <h1 className="text-xl font-semibold tracking-tight">Convierte tu PDF en un mapa visual</h1>
               <p className="mt-1 text-sm text-muted-foreground">
-                NodoIA extrae el texto y genera un resumen en 7 nodos + mapa interactivo.
+                Genera 7 nodos clave, un lienzo estilo pizarra y un resumen premium.
               </p>
             </div>
           </div>
 
           <div className="mt-4 grid gap-3">
-            <label className="group relative flex cursor-pointer items-center justify-between gap-3 rounded-2xl border border-border/70 bg-background/20 px-4 py-4 transition-colors hover:bg-background/30">
+            <label className="group relative flex cursor-pointer items-center justify-between gap-3 rounded-[20px] border border-border/60 bg-background/25 px-4 py-4 transition-colors hover:bg-background/35">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent ring-1 ring-border/70">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/15 ring-1 ring-brand/25">
                   <FileUp className="h-5 w-5" />
                 </div>
                 <div className="min-w-0">
@@ -92,7 +92,7 @@ export default function Dashboard() {
               </Button>
             </div>
             {errorMsg ? (
-              <div className="rounded-xl border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs">
+              <div className="rounded-[20px] border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs">
                 {errorMsg}
               </div>
             ) : null}
@@ -109,7 +109,7 @@ export default function Dashboard() {
             <NodeMap summary={summary} />
           </section>
         ) : (
-          <section className="rounded-2xl border border-border/70 bg-surface/40 p-4 backdrop-blur shadow-soft">
+          <section className="rounded-[20px] border border-border/60 bg-surface/40 p-4 backdrop-blur-xl shadow-soft">
             <div className="text-sm font-semibold">Aún no hay resumen</div>
             <p className="mt-1 text-sm text-muted-foreground">
               Sube un PDF y pulsa “Generar resumen”.

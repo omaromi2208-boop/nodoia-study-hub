@@ -9,6 +9,70 @@
 
 @layer base {
   :root {
+    /* Light mode (crema + lila/violeta) */
+    --background: 36 35% 97%;
+    --foreground: 240 10% 14%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 14%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 14%;
+
+    --primary: 268 85% 62%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 268 30% 92%;
+    --secondary-foreground: 240 10% 14%;
+
+    --muted: 36 18% 92%;
+    --muted-foreground: 240 5% 46%;
+
+    --accent: 292 65% 94%;
+    --accent-foreground: 240 10% 14%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 268 18% 84%;
+    --input: 268 18% 84%;
+    --ring: 268 85% 62%;
+
+    --radius: 1.25rem;
+
+    /* Brand */
+    --brand: 268 85% 62%;
+    --brand-2: 292 92% 62%;
+    --brand-foreground: 0 0% 100%;
+
+    /* Pedagogic node palette */
+    --node-1: 190 95% 52%;
+    --node-2: 268 95% 68%;
+    --node-3: 130 72% 56%;
+    --node-4: 42 96% 58%;
+    --node-5: 6 90% 64%;
+    --node-6: 210 90% 64%;
+    --node-7: 310 90% 68%;
+
+    /* Surfaces & shadows */
+    --surface: 0 0% 100%;
+    --surface-2: 36 25% 95%;
+    --shadow-elev: 0 22px 60px -24px hsl(var(--brand) / 0.25);
+    --shadow-soft: 0 16px 40px -26px hsl(240 12% 14% / 0.18);
+
+    /* Sidebar tokens (kept for shadcn sidebar components) */
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 190 95% 52%;
+    --sidebar-primary-foreground: 222 22% 7%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 190 95% 52%;
+  }
+
+  .dark {
+    /* Night mode (deep blue/black + glass) */
     --background: 222 22% 7%;
     --foreground: 210 30% 96%;
 
@@ -30,50 +94,18 @@
     --accent: 222 16% 18%;
     --accent-foreground: 210 30% 96%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
-
     --border: 222 14% 18%;
     --input: 222 14% 18%;
-    --ring: 190 95% 52%;
+    --ring: 268 85% 62%;
 
-    --radius: 0.75rem;
-
-    /* Brand */
-    --brand: 190 95% 52%;
-    --brand-2: 268 95% 68%;
+    --brand: 268 85% 62%;
+    --brand-2: 292 92% 62%;
     --brand-foreground: 222 22% 7%;
 
-    /* Pedagogic node palette */
-    --node-1: 190 95% 52%;
-    --node-2: 268 95% 68%;
-    --node-3: 130 72% 56%;
-    --node-4: 42 96% 58%;
-    --node-5: 6 90% 64%;
-    --node-6: 210 90% 64%;
-    --node-7: 310 90% 68%;
-
-    /* Surfaces & shadows */
     --surface: 222 18% 10%;
     --surface-2: 222 16% 13%;
-    --shadow-elev: 0 18px 60px -24px hsl(var(--brand) / 0.35);
-    --shadow-soft: 0 14px 40px -22px hsl(220 40% 2% / 0.7);
-
-    /* Sidebar tokens (kept for shadcn sidebar components) */
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 190 95% 52%;
-    --sidebar-primary-foreground: 222 22% 7%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 190 95% 52%;
-  }
-
-  .dark {
-    /* App defaults to dark in :root; this stays for compatibility */
-    --background: 222 22% 7%;
-    --foreground: 210 30% 96%;
+    --shadow-elev: 0 22px 70px -28px hsl(var(--brand) / 0.35);
+    --shadow-soft: 0 16px 40px -26px hsl(220 40% 2% / 0.7);
   }
 }
 
