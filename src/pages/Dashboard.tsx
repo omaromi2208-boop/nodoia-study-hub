@@ -11,6 +11,7 @@ export default function Dashboard() {
   const { pdfName, extractedText, summary, setPdf, setSummary } = useStudy();
   const [isParsing, setIsParsing] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const onPickPdf = async (file: File) => {
     setIsParsing(true);
@@ -25,9 +26,12 @@ export default function Dashboard() {
   const onGenerate = async () => {
     if (!extractedText) return;
     setIsGenerating(true);
+    setErrorMsg(null);
     try {
       const result = await nodoiaAi<StudySummary>({ mode: "summary", text: extractedText });
       setSummary(result);
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "No se pudo generar el resumen.");
     } finally {
       setIsGenerating(false);
     }
@@ -87,6 +91,11 @@ export default function Dashboard() {
                 {isGenerating ? "Generando…" : "Generar resumen"}
               </Button>
             </div>
+            {errorMsg ? (
+              <div className="rounded-xl border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs">
+                {errorMsg}
+              </div>
+            ) : null}
           </div>
         </section>
 

@@ -7,10 +7,10 @@ const corsHeaders = {
 
 type Mode = "summary" | "quiz";
 
-function json(status: number, body: unknown) {
+function json(status: number, body: unknown, extraHeaders: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), {
     status,
-    headers: { ...corsHeaders, "Content-Type": "application/json" },
+    headers: { ...corsHeaders, "Content-Type": "application/json", ...extraHeaders },
   });
 }
 
@@ -165,7 +165,13 @@ serve(async (req) => {
     if (!response.ok) {
       // Surface known gateway errors without throwing (avoid 500 from us).
       if (response.status === 429) {
-        return json(429, { error: "Demasiadas solicitudes. Espera un momento y reintenta." });
+        // Provide a hint to clients so they can back off.
+        const retryAfter = response.headers.get("retry-after") ?? "8";
+        return json(
+          429,
+          { error: "Demasiadas solicitudes. Espera un momento y reintenta.", retry_after_seconds: Number(retryAfter) || 8 },
+          { "Retry-After": retryAfter },
+        );
       }
       if (response.status === 402) {
         return json(402, { error: "Créditos insuficientes para IA. Revisa el uso del workspace." });

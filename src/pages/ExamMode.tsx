@@ -10,6 +10,7 @@ export default function ExamMode() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [answers, setAnswers] = useState<Record<number, number>>({});
   const [submitted, setSubmitted] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   const score = useMemo(() => {
     if (!quiz) return 0;
@@ -19,11 +20,14 @@ export default function ExamMode() {
   const generate = async () => {
     if (!extractedText) return;
     setIsGenerating(true);
+    setErrorMsg(null);
     try {
       const result = await nodoiaAi<StudyQuiz>({ mode: "quiz", text: extractedText });
       setQuiz(result);
       setAnswers({});
       setSubmitted(false);
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : "No se pudo generar el test.");
     } finally {
       setIsGenerating(false);
     }
@@ -46,6 +50,11 @@ export default function ExamMode() {
             {isGenerating ? "Generando…" : "Generar test"}
           </Button>
         </div>
+        {errorMsg ? (
+          <div className="mt-3 rounded-xl border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs">
+            {errorMsg}
+          </div>
+        ) : null}
       </div>
 
       {quiz ? (
