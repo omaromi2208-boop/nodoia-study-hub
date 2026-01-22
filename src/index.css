@@ -2,95 +2,78 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Definition of the design system. All colors, gradients, fonts, etc should be defined here. 
-All colors MUST be HSL.
+/* NodoIA design system
+   - Dark, modern, minimal
+   - All colors are HSL
 */
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 222 22% 7%;
+    --foreground: 210 30% 96%;
 
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card: 222 20% 10%;
+    --card-foreground: 210 30% 96%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover: 222 22% 9%;
+    --popover-foreground: 210 30% 96%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 210 30% 96%;
+    --primary-foreground: 222 22% 7%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 222 16% 16%;
+    --secondary-foreground: 210 30% 96%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 222 14% 14%;
+    --muted-foreground: 215 18% 70%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 222 16% 18%;
+    --accent-foreground: 210 30% 96%;
 
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 222 14% 18%;
+    --input: 222 14% 18%;
+    --ring: 190 95% 52%;
 
-    --radius: 0.5rem;
+    --radius: 0.75rem;
 
-    --sidebar-background: 0 0% 98%;
+    /* Brand */
+    --brand: 190 95% 52%;
+    --brand-2: 268 95% 68%;
+    --brand-foreground: 222 22% 7%;
 
-    --sidebar-foreground: 240 5.3% 26.1%;
+    /* Pedagogic node palette */
+    --node-1: 190 95% 52%;
+    --node-2: 268 95% 68%;
+    --node-3: 130 72% 56%;
+    --node-4: 42 96% 58%;
+    --node-5: 6 90% 64%;
+    --node-6: 210 90% 64%;
+    --node-7: 310 90% 68%;
 
-    --sidebar-primary: 240 5.9% 10%;
+    /* Surfaces & shadows */
+    --surface: 222 18% 10%;
+    --surface-2: 222 16% 13%;
+    --shadow-elev: 0 18px 60px -24px hsl(var(--brand) / 0.35);
+    --shadow-soft: 0 14px 40px -22px hsl(220 40% 2% / 0.7);
 
-    --sidebar-primary-foreground: 0 0% 98%;
-
-    --sidebar-accent: 240 4.8% 95.9%;
-
-    --sidebar-accent-foreground: 240 5.9% 10%;
-
-    --sidebar-border: 220 13% 91%;
-
-    --sidebar-ring: 217.2 91.2% 59.8%;
-  }
-
-  .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    /* Sidebar tokens (kept for shadcn sidebar components) */
     --sidebar-background: 240 5.9% 10%;
     --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
-    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-primary: 190 95% 52%;
+    --sidebar-primary-foreground: 222 22% 7%;
     --sidebar-accent: 240 3.7% 15.9%;
     --sidebar-accent-foreground: 240 4.8% 95.9%;
     --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-ring: 190 95% 52%;
+  }
+
+  .dark {
+    /* App defaults to dark in :root; this stays for compatibility */
+    --background: 222 22% 7%;
+    --foreground: 210 30% 96%;
   }
 }
 
@@ -101,5 +84,27 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground;
+  }
+}
+
+@layer utilities {
+  .bg-nodoia-grid {
+    background-image: radial-gradient(circle at 1px 1px, hsl(var(--border) / 0.45) 1px, transparent 0);
+    background-size: 22px 22px;
+  }
+
+  /* Signature moment: pointer-reactive light field (set --mx/--my in %) */
+  .bg-nodoia-veil {
+    background-image:
+      radial-gradient(800px circle at var(--mx, 50%) var(--my, 30%), hsl(var(--brand) / 0.14), transparent 55%),
+      radial-gradient(700px circle at calc(var(--mx, 50%) + 22%) calc(var(--my, 30%) + 12%), hsl(var(--brand-2) / 0.10), transparent 50%);
+  }
+
+  .shadow-elev {
+    box-shadow: var(--shadow-elev);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
   }
 }
