@@ -19,6 +19,24 @@ export default {
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
+        brand: {
+          DEFAULT: "hsl(var(--brand))",
+          2: "hsl(var(--brand-2))",
+          foreground: "hsl(var(--brand-foreground))",
+        },
+        surface: {
+          DEFAULT: "hsl(var(--surface))",
+          2: "hsl(var(--surface-2))",
+        },
+        node: {
+          1: "hsl(var(--node-1))",
+          2: "hsl(var(--node-2))",
+          3: "hsl(var(--node-3))",
+          4: "hsl(var(--node-4))",
+          5: "hsl(var(--node-5))",
+          6: "hsl(var(--node-6))",
+          7: "hsl(var(--node-7))",
+        },
         primary: {
           DEFAULT: "hsl(var(--primary))",
           foreground: "hsl(var(--primary-foreground))",
@@ -80,10 +98,20 @@ export default {
             height: "0",
           },
         },
+        "float-y": {
+          "0%, 100%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(-6px)" },
+        },
+        "fade-up": {
+          "0%": { opacity: "0", transform: "translateY(10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "float-y": "float-y 6s ease-in-out infinite",
+        "fade-up": "fade-up 500ms cubic-bezier(0.22, 1, 0.36, 1) both",
       },
     },
   },

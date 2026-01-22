@@ -1,0 +1,4 @@
+project_id = "fwbqxkjqffexkrapwyyp"
+
+[functions.nodoia-ai]
+verify_jwt = false
