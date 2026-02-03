@@ -3,11 +3,12 @@ export type ExamAttempt = {
   createdAt: number;
   score: number;
   total: number;
+  pdfName: string;
 };
 
-const KEY = "nodoia_exam_history";
+const KEY = "neuroflow_exam_history";
 
-export function loadExamHistory(): ExamAttempt[] {
+export function getExamHistory(): ExamAttempt[] {
   try {
     const raw = localStorage.getItem(KEY);
     if (!raw) return [];
@@ -18,8 +19,14 @@ export function loadExamHistory(): ExamAttempt[] {
   }
 }
 
-export function saveExamAttempt(attempt: ExamAttempt) {
-  const all = loadExamHistory();
+export function saveExamAttempt(data: Omit<ExamAttempt, "id" | "createdAt">): ExamAttempt {
+  const attempt: ExamAttempt = {
+    id: crypto.randomUUID(),
+    createdAt: Date.now(),
+    ...data,
+  };
+  const all = getExamHistory();
   all.unshift(attempt);
   localStorage.setItem(KEY, JSON.stringify(all.slice(0, 20)));
+  return attempt;
 }

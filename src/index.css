@@ -2,110 +2,122 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NodoIA design system
-   - Dark, modern, minimal
-   - All colors are HSL
+/* NeuroFlow Design System
+   - Apple-inspired minimalist aesthetic
+   - White, soft gray, indigo accents
+   - Serif for educational text, Sans-serif for UI
 */
 
 @layer base {
   :root {
-    /* Light mode (crema + lila/violeta) */
-    --background: 36 35% 97%;
-    --foreground: 240 10% 14%;
+    /* Light mode - Clean white with indigo accents */
+    --background: 0 0% 99%;
+    --foreground: 220 15% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 240 10% 14%;
+    --card-foreground: 220 15% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 14%;
+    --popover-foreground: 220 15% 15%;
 
-    --primary: 268 85% 62%;
+    --primary: 239 84% 67%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 268 30% 92%;
-    --secondary-foreground: 240 10% 14%;
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 15% 15%;
 
-    --muted: 36 18% 92%;
-    --muted-foreground: 240 5% 46%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 292 65% 94%;
-    --accent-foreground: 240 10% 14%;
+    --accent: 239 84% 97%;
+    --accent-foreground: 239 84% 47%;
 
     --destructive: 0 84% 60%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 268 18% 84%;
-    --input: 268 18% 84%;
-    --ring: 268 85% 62%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 239 84% 67%;
 
-    --radius: 1.25rem;
+    --radius: 1rem;
 
-    /* Brand */
-    --brand: 268 85% 62%;
-    --brand-2: 292 92% 62%;
+    /* Brand - Indigo */
+    --brand: 239 84% 67%;
+    --brand-2: 263 70% 58%;
     --brand-foreground: 0 0% 100%;
 
-    /* Pedagogic node palette */
-    --node-1: 190 95% 52%;
-    --node-2: 268 95% 68%;
-    --node-3: 130 72% 56%;
-    --node-4: 42 96% 58%;
-    --node-5: 6 90% 64%;
-    --node-6: 210 90% 64%;
-    --node-7: 310 90% 68%;
+    /* Node palette - Subtle pastels */
+    --node-1: 239 84% 67%;
+    --node-2: 263 70% 68%;
+    --node-3: 199 89% 48%;
+    --node-4: 142 76% 46%;
+    --node-5: 38 92% 50%;
+    --node-6: 0 84% 60%;
+    --node-7: 328 85% 60%;
 
     /* Surfaces & shadows */
     --surface: 0 0% 100%;
-    --surface-2: 36 25% 95%;
-    --shadow-elev: 0 22px 60px -24px hsl(var(--brand) / 0.25);
-    --shadow-soft: 0 16px 40px -26px hsl(240 12% 14% / 0.18);
+    --surface-2: 220 14% 98%;
+    --shadow-soft: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+    --shadow-elev: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+    --shadow-card: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
 
-    /* Sidebar tokens (kept for shadcn sidebar components) */
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 190 95% 52%;
-    --sidebar-primary-foreground: 222 22% 7%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 190 95% 52%;
+    /* Sidebar */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 15% 15%;
+    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 96%;
+    --sidebar-accent-foreground: 220 15% 15%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 239 84% 67%;
   }
 
   .dark {
-    /* Night mode (deep blue/black + glass) */
-    --background: 222 22% 7%;
-    --foreground: 210 30% 96%;
+    /* Night mode - Deep slate with indigo glass */
+    --background: 222 47% 8%;
+    --foreground: 210 40% 98%;
 
-    --card: 222 20% 10%;
-    --card-foreground: 210 30% 96%;
+    --card: 222 47% 10%;
+    --card-foreground: 210 40% 98%;
 
-    --popover: 222 22% 9%;
-    --popover-foreground: 210 30% 96%;
+    --popover: 222 47% 10%;
+    --popover-foreground: 210 40% 98%;
 
-    --primary: 210 30% 96%;
-    --primary-foreground: 222 22% 7%;
+    --primary: 239 84% 67%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 16% 16%;
-    --secondary-foreground: 210 30% 96%;
+    --secondary: 222 40% 14%;
+    --secondary-foreground: 210 40% 98%;
 
-    --muted: 222 14% 14%;
-    --muted-foreground: 215 18% 70%;
+    --muted: 222 40% 14%;
+    --muted-foreground: 215 20% 65%;
 
-    --accent: 222 16% 18%;
-    --accent-foreground: 210 30% 96%;
+    --accent: 239 50% 20%;
+    --accent-foreground: 239 84% 80%;
 
-    --border: 222 14% 18%;
-    --input: 222 14% 18%;
-    --ring: 268 85% 62%;
+    --border: 222 40% 18%;
+    --input: 222 40% 18%;
+    --ring: 239 84% 67%;
 
-    --brand: 268 85% 62%;
-    --brand-2: 292 92% 62%;
-    --brand-foreground: 222 22% 7%;
+    --brand: 239 84% 67%;
+    --brand-2: 263 70% 68%;
+    --brand-foreground: 0 0% 100%;
 
-    --surface: 222 18% 10%;
-    --surface-2: 222 16% 13%;
-    --shadow-elev: 0 22px 70px -28px hsl(var(--brand) / 0.35);
-    --shadow-soft: 0 16px 40px -26px hsl(220 40% 2% / 0.7);
+    --surface: 222 47% 10%;
+    --surface-2: 222 40% 14%;
+    --shadow-soft: 0 1px 3px 0 rgb(0 0 0 / 0.3);
+    --shadow-elev: 0 4px 6px -1px rgb(0 0 0 / 0.4);
+    --shadow-card: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+
+    --sidebar-background: 222 47% 10%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 239 84% 67%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 222 40% 14%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 222 40% 18%;
+    --sidebar-ring: 239 84% 67%;
   }
 }
 
@@ -115,28 +127,66 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "cv11", "ss01";
+  }
+
+  /* Educational text uses serif */
+  .font-edu {
+    font-family: "Georgia", "Cambria", "Times New Roman", serif;
   }
 }
 
 @layer utilities {
-  .bg-nodoia-grid {
-    background-image: radial-gradient(circle at 1px 1px, hsl(var(--border) / 0.45) 1px, transparent 0);
-    background-size: 22px 22px;
+  /* Grid pattern for canvas */
+  .bg-neuro-grid {
+    background-image: radial-gradient(circle at 1px 1px, hsl(var(--border)) 1px, transparent 0);
+    background-size: 20px 20px;
   }
 
-  /* Signature moment: pointer-reactive light field (set --mx/--my in %) */
-  .bg-nodoia-veil {
-    background-image:
-      radial-gradient(800px circle at var(--mx, 50%) var(--my, 30%), hsl(var(--brand) / 0.14), transparent 55%),
-      radial-gradient(700px circle at calc(var(--mx, 50%) + 22%) calc(var(--my, 30%) + 12%), hsl(var(--brand-2) / 0.10), transparent 50%);
+  /* Subtle ambient glow */
+  .bg-neuro-glow {
+    background-image: 
+      radial-gradient(600px circle at var(--mx, 50%) var(--my, 30%), hsl(var(--brand) / 0.08), transparent 50%);
+  }
+
+  .shadow-soft {
+    box-shadow: var(--shadow-soft);
   }
 
   .shadow-elev {
     box-shadow: var(--shadow-elev);
   }
 
-  .shadow-soft {
-    box-shadow: var(--shadow-soft);
+  .shadow-card {
+    box-shadow: var(--shadow-card);
   }
+
+  /* Glassmorphism */
+  .glass {
+    @apply bg-surface/80 backdrop-blur-xl border border-border/50;
+  }
+
+  .glass-dark {
+    @apply bg-surface/60 backdrop-blur-xl border border-white/10;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.3);
 }
