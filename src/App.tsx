@@ -2,12 +2,15 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation, Navigate } from "react-router-dom";
+import { ThemeProvider } from "@/components/nodoia/ThemeProvider";
 import Index from "./pages/Index";
 import Dashboard from "./pages/Dashboard";
-import Marketplace from "./pages/Marketplace";
-import Audiobooks from "./pages/Audiobooks";
+import NewStudy from "./pages/NewStudy";
+import MindMap from "./pages/MindMap";
 import ExamMode from "./pages/ExamMode";
+import Marketplace from "./pages/Marketplace";
+import Subscription from "./pages/Subscription";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 import { StudyProvider } from "@/context/StudyContext";
@@ -31,11 +34,14 @@ function AnimatedRoutes() {
         <Routes location={location}>
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/marketplace" element={<Marketplace />} />
-          <Route path="/audiolibros" element={<Audiobooks />} />
+          <Route path="/nuevo-estudio" element={<NewStudy />} />
+          <Route path="/mapa-mental" element={<MindMap />} />
           <Route path="/modo-examen" element={<ExamMode />} />
+          <Route path="/marketplace" element={<Marketplace />} />
+          <Route path="/suscripcion" element={<Subscription />} />
           <Route path="/perfil" element={<Profile />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+          {/* Legacy routes redirect */}
+          <Route path="/audiolibros" element={<Navigate to="/mapa-mental" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </motion.div>
@@ -45,15 +51,17 @@ function AnimatedRoutes() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <StudyProvider>
-        <BrowserRouter>
-          <AnimatedRoutes />
-        </BrowserRouter>
-      </StudyProvider>
-    </TooltipProvider>
+    <ThemeProvider defaultTheme="light" storageKey="neuroflow-theme">
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <StudyProvider>
+          <BrowserRouter>
+            <AnimatedRoutes />
+          </BrowserRouter>
+        </StudyProvider>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 

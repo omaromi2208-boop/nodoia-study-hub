@@ -1,120 +1,121 @@
-import { useState } from "react";
-import { AppShell } from "@/components/nodoia/AppShell";
+import { AppShell } from "@/components/neuroflow/AppShell";
+import { useStudy } from "@/context/StudyContext";
 import { Button } from "@/components/ui/button";
-import { extractPdfText } from "@/lib/pdf/extractPdfText";
-import { useStudy, type StudySummary } from "@/context/StudyContext";
-import { nodoiaAi } from "@/lib/nodoia/ai";
-import { NodeMap } from "@/components/nodoia/NodeMap";
-import { FileUp, Sparkles } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Upload, Network, GraduationCap, BookOpen, Clock, TrendingUp } from "lucide-react";
+import { motion } from "framer-motion";
 
 export default function Dashboard() {
-  const { pdfName, extractedText, summary, setPdf, setSummary } = useStudy();
-  const [isParsing, setIsParsing] = useState(false);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const { summary, pdfName } = useStudy();
 
-  const onPickPdf = async (file: File) => {
-    setIsParsing(true);
-    try {
-      const text = await extractPdfText(file);
-      setPdf({ name: file.name, text });
-    } finally {
-      setIsParsing(false);
-    }
-  };
-
-  const onGenerate = async () => {
-    if (!extractedText) return;
-    setIsGenerating(true);
-    setErrorMsg(null);
-    try {
-      const result = await nodoiaAi<StudySummary>({ mode: "summary", text: extractedText });
-      setSummary(result);
-    } catch (e) {
-      setErrorMsg(e instanceof Error ? e.message : "No se pudo generar el resumen.");
-    } finally {
-      setIsGenerating(false);
-    }
-  };
+  const stats = [
+    { label: "Mapas creados", value: summary ? "1" : "0", icon: Network },
+    { label: "Tiempo de estudio", value: "0h", icon: Clock },
+    { label: "Exámenes completados", value: "0", icon: GraduationCap },
+  ];
 
   return (
     <AppShell title="Dashboard">
-      <div className="grid gap-4">
-        <section className="rounded-[20px] border border-border/60 bg-surface/40 p-4 backdrop-blur-xl shadow-elev">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight">Convierte tu PDF en un mapa visual</h1>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Genera 7 nodos clave, un lienzo estilo pizarra y un resumen premium.
-              </p>
-            </div>
+      <div className="space-y-6">
+        {/* Welcome section */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-border bg-card p-6 shadow-soft"
+        >
+          <h1 className="text-xl font-semibold tracking-tight">
+            ¡Bienvenido a NeuroFlow!
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Tu asistente de estudio con inteligencia artificial
+          </p>
+
+          <div className="mt-4 flex flex-wrap gap-3">
+            <Button asChild variant="hero">
+              <Link to="/nuevo-estudio">
+                <Upload className="h-4 w-4" />
+                Nuevo estudio
+              </Link>
+            </Button>
+            {summary && (
+              <Button asChild variant="outline">
+                <Link to="/mapa-mental">
+                  <Network className="h-4 w-4" />
+                  Ver mi mapa
+                </Link>
+              </Button>
+            )}
           </div>
+        </motion.div>
 
-          <div className="mt-4 grid gap-3">
-            <label className="group relative flex cursor-pointer items-center justify-between gap-3 rounded-[20px] border border-border/60 bg-background/25 px-4 py-4 transition-colors hover:bg-background/35">
+        {/* Stats */}
+        <div className="grid gap-4 sm:grid-cols-3">
+          {stats.map((stat, i) => (
+            <motion.div
+              key={stat.label}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.1 }}
+              className="rounded-2xl border border-border bg-card p-4 shadow-soft"
+            >
               <div className="flex items-center gap-3">
-                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-brand/15 ring-1 ring-brand/25">
-                  <FileUp className="h-5 w-5" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand/10">
+                  <stat.icon className="h-5 w-5 text-brand" />
                 </div>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold">Seleccionar PDF</div>
-                  <div className="text-xs text-muted-foreground truncate">
-                    {pdfName ? pdfName : "Máx. recomendado: 25 páginas para móvil"}
-                  </div>
+                <div>
+                  <p className="text-2xl font-semibold">{stat.value}</p>
+                  <p className="text-xs text-muted-foreground">{stat.label}</p>
                 </div>
               </div>
-              <input
-                type="file"
-                accept="application/pdf"
-                className="absolute inset-0 opacity-0"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) void onPickPdf(f);
-                }}
-              />
-            </label>
+            </motion.div>
+          ))}
+        </div>
 
-            <div className="flex items-center justify-between gap-3">
-              <div className="text-xs text-muted-foreground">
-                {isParsing
-                  ? "Extrayendo texto…"
-                  : extractedText
-                    ? `Texto listo (${extractedText.length.toLocaleString()} caracteres)`
-                    : "Sin PDF cargado"}
+        {/* Current document */}
+        {summary ? (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-2xl border border-border bg-card p-4 shadow-soft"
+          >
+            <div className="flex items-start gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-brand/10">
+                <BookOpen className="h-6 w-6 text-brand" />
               </div>
-              <Button
-                variant="hero"
-                disabled={!extractedText || isParsing || isGenerating}
-                onClick={() => void onGenerate()}
-              >
-                <Sparkles className="h-4 w-4" />
-                {isGenerating ? "Generando…" : "Generar resumen"}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold">{summary.title}</h3>
+                <p className="text-sm text-muted-foreground truncate">{pdfName}</p>
+                <p className="text-xs text-muted-foreground mt-1 font-edu line-clamp-2">
+                  {summary.overview}
+                </p>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link to="/mapa-mental">Ver mapa</Link>
               </Button>
             </div>
-            {errorMsg ? (
-              <div className="rounded-[20px] border border-destructive/50 bg-destructive/10 px-3 py-2 text-xs">
-                {errorMsg}
-              </div>
-            ) : null}
-          </div>
-        </section>
-
-        {summary ? (
-          <section className="animate-fade-up">
-            <div className="mb-3">
-              <div className="text-xs font-semibold tracking-wide text-muted-foreground">Resumen</div>
-              <div className="text-lg font-semibold">{summary.title}</div>
-              <p className="mt-1 text-sm text-muted-foreground">{summary.overview}</p>
-            </div>
-            <NodeMap summary={summary} />
-          </section>
+          </motion.div>
         ) : (
-          <section className="rounded-[20px] border border-border/60 bg-surface/40 p-4 backdrop-blur-xl shadow-soft">
-            <div className="text-sm font-semibold">Aún no hay resumen</div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Sube un PDF y pulsa “Generar resumen”.
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="rounded-2xl border border-dashed border-border bg-card/50 p-8 text-center"
+          >
+            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-brand/10 mx-auto mb-3">
+              <TrendingUp className="h-7 w-7 text-brand" />
+            </div>
+            <h3 className="font-medium">Comienza tu viaje de aprendizaje</h3>
+            <p className="text-sm text-muted-foreground mt-1">
+              Sube tu primer documento para crear un mapa mental interactivo
             </p>
-          </section>
+            <Button asChild variant="hero" className="mt-4">
+              <Link to="/nuevo-estudio">
+                <Upload className="h-4 w-4" />
+                Subir PDF
+              </Link>
+            </Button>
+          </motion.div>
         )}
       </div>
     </AppShell>

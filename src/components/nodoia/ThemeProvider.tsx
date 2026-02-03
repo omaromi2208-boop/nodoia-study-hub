@@ -1,11 +1,21 @@
 import { ThemeProvider as NextThemesProvider } from "next-themes";
 import type { PropsWithChildren } from "react";
 
-export function ThemeProvider({ children }: PropsWithChildren) {
+type ThemeProviderProps = PropsWithChildren<{
+  defaultTheme?: string;
+  storageKey?: string;
+}>;
+
+export function ThemeProvider({
+  children,
+  defaultTheme = "light",
+  storageKey = "neuroflow-theme",
+}: ThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="dark"
+      defaultTheme={defaultTheme}
+      storageKey={storageKey}
       enableSystem
       disableTransitionOnChange
     >
