@@ -190,3 +190,24 @@
 ::-webkit-scrollbar-thumb:hover {
   background: hsl(var(--muted-foreground) / 0.3);
 }
+
+/* React Flow custom styles */
+.neuroflow-canvas .react-flow__node {
+  cursor: grab;
+}
+
+.neuroflow-canvas .react-flow__node:active {
+  cursor: grabbing;
+}
+
+.neuroflow-canvas .react-flow__controls {
+  box-shadow: var(--shadow-soft);
+}
+
+.neuroflow-canvas .react-flow__minimap {
+  box-shadow: var(--shadow-soft);
+}
+
+.neuroflow-canvas .react-flow__background pattern circle {
+  fill: hsl(var(--border));
+}
