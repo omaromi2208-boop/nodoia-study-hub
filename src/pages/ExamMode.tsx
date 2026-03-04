@@ -15,7 +15,8 @@ import {
   ArrowRight,
   RotateCcw,
   Trophy,
-  Brain
+  Brain,
+  Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -135,8 +136,17 @@ export default function ExamMode() {
                   className="mt-6"
                   variant="hero"
                 >
-                  <Sparkles className="h-4 w-4" />
-                  {isGenerating ? "Generando preguntas..." : "Generar examen"}
+                  {isGenerating ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Generando preguntas...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-4 w-4" />
+                      Generar examen
+                    </>
+                  )}
                 </Button>
                 {errorMsg && (
                   <p className="mt-4 text-sm text-destructive">{errorMsg}</p>
@@ -226,7 +236,7 @@ export default function ExamMode() {
                         selected === null
                           ? "border-border hover:border-brand hover:bg-accent cursor-pointer"
                           : isCorrect
-                            ? "border-green-500 bg-green-500/10"
+                            ? "border-success bg-success/10"
                             : isSelected
                               ? "border-destructive bg-destructive/10"
                               : "border-border opacity-50"
@@ -271,8 +281,8 @@ export default function ExamMode() {
           <DialogHeader>
             <div className="flex justify-center mb-2">
               {feedbackCorrect ? (
-                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-green-500/10">
-                  <CheckCircle2 className="h-7 w-7 text-green-500" />
+                <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-success/10">
+                  <CheckCircle2 className="h-7 w-7 text-success" />
                 </div>
               ) : (
                 <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-destructive/10">

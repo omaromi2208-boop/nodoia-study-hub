@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { NavLink } from "@/components/NavLink";
+import { NavLink } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard,
@@ -90,13 +90,16 @@ export function CollapsibleSidebar() {
                 <NavLink
                   key={item.to}
                   to={item.to}
-                  className={cn(
-                    "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium",
-                    "text-sidebar-foreground/70 transition-all duration-200",
-                    "hover:bg-sidebar-accent hover:text-sidebar-foreground"
-                  )}
-                  activeClassName="bg-sidebar-primary/10 text-sidebar-primary hover:bg-sidebar-primary/15"
                   onClick={() => setIsOpen(false)}
+                  className={({ isActive }) =>
+                    cn(
+                      "flex items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium",
+                      "transition-all duration-200",
+                      isActive
+                        ? "bg-sidebar-primary/10 text-sidebar-primary"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                    )
+                  }
                 >
                   <item.icon className="h-5 w-5" />
                   {item.label}

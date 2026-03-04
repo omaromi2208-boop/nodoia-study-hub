@@ -19,6 +19,8 @@ export default function NewStudy() {
   const [progress, setProgress] = useState(0);
   const [fileName, setFileName] = useState<string>("");
 
+  const MIN_TEXT_LENGTH = 200;
+
   const onPickPdf = async (file: File) => {
     setIsProcessing(true);
     setFileName(file.name);
@@ -26,7 +28,6 @@ export default function NewStudy() {
     setProgress(0);
 
     try {
-      // Simulate extraction progress
       const progressInterval = setInterval(() => {
         setProgress((p) => Math.min(p + 5, 30));
       }, 100);
@@ -34,6 +35,12 @@ export default function NewStudy() {
       const text = await extractPdfText(file);
       clearInterval(progressInterval);
       setProgress(35);
+
+      if (text.trim().length < MIN_TEXT_LENGTH) {
+        setIsProcessing(false);
+        toast.error("El PDF no contiene suficiente texto. Asegúrate de que el PDF no sea solo imágenes escaneadas.");
+        return;
+      }
 
       setPdf({ name: file.name, text });
 
