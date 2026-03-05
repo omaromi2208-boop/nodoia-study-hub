@@ -13,7 +13,7 @@ import {
   ReactFlowProvider,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
-import { Download } from "lucide-react";
+import { Download, Maximize2 } from "lucide-react";
 
 import type { StudySummary } from "@/context/StudyContext";
 import { StudyNode, type StudyNodeData } from "./StudyNode";
@@ -29,18 +29,20 @@ interface ReactFlowCanvasProps {
   summary: StudySummary;
   externalActiveId?: string | null;
   onNodeSelect?: (id: string) => void;
+  onExplainSimple?: (label: string, summary: string) => void;
 }
 
 function getStorageKey(title: string) {
-  return `neuroflow_positions_${title.slice(0, 40)}`;
+  return `neuroflow_positions_v2_${title.slice(0, 40)}`;
 }
 
-function generateCircularLayout(count: number, centerX = 400, centerY = 300, radius = 220) {
+function generateCircularLayout(count: number, centerX = 420, centerY = 300, radius = 240) {
+  if (count === 1) return [{ x: centerX, y: centerY }];
   return Array.from({ length: count }, (_, i) => {
     const angle = (Math.PI * 2 * i) / count - Math.PI / 2;
     return {
       x: centerX + Math.cos(angle) * radius,
-      y: centerY + Math.sin(angle) * (radius * 0.8),
+      y: centerY + Math.sin(angle) * (radius * 0.75),
     };
   });
 }
@@ -61,47 +63,67 @@ function loadPositions(key: string): Record<string, { x: number; y: number }> | 
   }
 }
 
+// Node colors synced with index.css --node-* tokens
+const nodeColorMap = [
+  "hsl(258 80% 62%)",
+  "hsl(172 65% 42%)",
+  "hsl(199 89% 48%)",
+  "hsl(142 70% 46%)",
+  "hsl(38 92% 52%)",
+  "hsl(0 80% 60%)",
+  "hsl(320 80% 60%)",
+];
+
 function CanvasInner({
   summary,
   externalActiveId,
   onNodeSelect,
+  onExplainSimple,
 }: ReactFlowCanvasProps) {
   const isMobile = useIsMobile();
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
-  const { getNodes } = useReactFlow();
+  const { getNodes, fitView } = useReactFlow();
   const storageKey = useMemo(() => getStorageKey(summary.title), [summary.title]);
   const saveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const initialNodes = useMemo(() => {
-    const saved = loadPositions(storageKey);
-    const positions = generateCircularLayout(summary.nodes.length);
-    return summary.nodes.map((node, index): Node<StudyNodeData> => ({
+  const buildNode = useCallback(
+    (node: StudySummary["nodes"][number], index: number, pos: { x: number; y: number }): Node<StudyNodeData> => ({
       id: node.id,
       type: "study",
-      position: saved?.[node.id] ?? positions[index] ?? { x: 0, y: 0 },
+      position: pos,
       data: {
         label: node.label,
         summary: node.summary,
         index,
         isActive: false,
         isSelected: false,
+        onExplainSimple,
       },
-    }));
-  }, [summary.nodes, storageKey]);
+    }),
+    [onExplainSimple]
+  );
 
-  const initialEdges = useMemo(() => {
-    return summary.edges.map((edge): Edge => ({
+  const initialNodes = useMemo(() => {
+    const saved = loadPositions(storageKey);
+    const positions = generateCircularLayout(summary.nodes.length);
+    return summary.nodes.map((node, index) =>
+      buildNode(node, index, saved?.[node.id] ?? positions[index] ?? { x: 0, y: 0 })
+    );
+  }, [summary.nodes, storageKey, buildNode]);
+
+  const initialEdges = useMemo((): Edge[] =>
+    summary.edges.map((edge) => ({
       id: `${edge.from}-${edge.to}`,
       source: edge.from,
       target: edge.to,
       type: "study",
-    }));
-  }, [summary.edges]);
+    })),
+    [summary.edges]
+  );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, , onEdgesChange] = useEdgesState(initialEdges);
 
-  // Debounced save on node drag
   const handleNodesChange = useCallback(
     (changes: Parameters<typeof onNodesChange>[0]) => {
       onNodesChange(changes);
@@ -113,23 +135,17 @@ function CanvasInner({
     [onNodesChange, storageKey, getNodes]
   );
 
-  // Sync external active node (TTS highlighting)
+  // Sync active (TTS)
   useEffect(() => {
     setNodes((nds) =>
-      nds.map((node) => ({
-        ...node,
-        data: { ...node.data, isActive: node.id === externalActiveId },
-      }))
+      nds.map((n) => ({ ...n, data: { ...n.data, isActive: n.id === externalActiveId } }))
     );
   }, [externalActiveId, setNodes]);
 
-  // Sync selected node
+  // Sync selected
   useEffect(() => {
     setNodes((nds) =>
-      nds.map((node) => ({
-        ...node,
-        data: { ...node.data, isSelected: node.id === selectedNodeId },
-      }))
+      nds.map((n) => ({ ...n, data: { ...n.data, isSelected: n.id === selectedNodeId } }))
     );
   }, [selectedNodeId, setNodes]);
 
@@ -138,20 +154,11 @@ function CanvasInner({
     const saved = loadPositions(storageKey);
     const positions = generateCircularLayout(summary.nodes.length);
     setNodes(
-      summary.nodes.map((node, index): Node<StudyNodeData> => ({
-        id: node.id,
-        type: "study",
-        position: saved?.[node.id] ?? positions[index] ?? { x: 0, y: 0 },
-        data: {
-          label: node.label,
-          summary: node.summary,
-          index,
-          isActive: node.id === externalActiveId,
-          isSelected: node.id === selectedNodeId,
-        },
-      }))
+      summary.nodes.map((node, index) =>
+        buildNode(node, index, saved?.[node.id] ?? positions[index] ?? { x: 0, y: 0 })
+      )
     );
-  }, [summary, setNodes, externalActiveId, selectedNodeId, storageKey]);
+  }, [summary, setNodes, buildNode, storageKey]);
 
   const onNodeClick = useCallback(
     (_: React.MouseEvent, node: Node) => {
@@ -161,8 +168,8 @@ function CanvasInner({
     [onNodeSelect]
   );
 
-  // Export as PNG using html2canvas-style approach with SVG snapshot
   const canvasRef = useRef<HTMLDivElement>(null);
+
   const handleExport = useCallback(async () => {
     const el = canvasRef.current?.querySelector(".react-flow__viewport") as HTMLElement | null;
     if (!el) return;
@@ -173,26 +180,37 @@ function CanvasInner({
       a.download = `${summary.title.slice(0, 30)}-mapa.png`;
       a.href = dataUrl;
       a.click();
-    } catch {
-      // Fallback: copy canvas to clipboard msg
-    }
+    } catch { /* ignore */ }
   }, [summary.title]);
+
+  const handleFitView = useCallback(() => fitView({ padding: 0.3, duration: 400 }), [fitView]);
 
   return (
     <div
       ref={canvasRef}
-      className="relative h-[480px] md:h-[560px] w-full rounded-2xl border border-border bg-card overflow-hidden"
+      className="relative h-[500px] md:h-[600px] w-full rounded-2xl border border-border bg-card overflow-hidden"
     >
-      {/* Export button */}
-      <Button
-        size="sm"
-        variant="outline"
-        onClick={handleExport}
-        className="absolute top-3 right-3 z-10 h-8 rounded-xl bg-card/80 backdrop-blur-sm border-border/60 text-xs gap-1.5 shadow-soft"
-      >
-        <Download className="h-3.5 w-3.5" />
-        Exportar
-      </Button>
+      {/* Toolbar */}
+      <div className="absolute top-3 right-3 z-10 flex gap-1.5">
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleFitView}
+          title="Centrar mapa"
+          className="h-8 w-8 px-0 rounded-xl bg-card/80 backdrop-blur-sm border-border/60 shadow-soft hover:bg-accent"
+        >
+          <Maximize2 className="h-3.5 w-3.5" />
+        </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleExport}
+          className="h-8 rounded-xl bg-card/80 backdrop-blur-sm border-border/60 text-xs gap-1.5 shadow-soft hover:bg-accent"
+        >
+          <Download className="h-3.5 w-3.5" />
+          Exportar
+        </Button>
+      </div>
 
       <ReactFlow
         nodes={nodes}
@@ -203,26 +221,27 @@ function CanvasInner({
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         fitView
-        fitViewOptions={{ padding: 0.3 }}
-        minZoom={0.3}
-        maxZoom={2}
+        fitViewOptions={{ padding: 0.35 }}
+        minZoom={0.25}
+        maxZoom={2.5}
         defaultEdgeOptions={{ type: "study" }}
         proOptions={{ hideAttribution: true }}
         className="neuroflow-canvas"
       >
         <Background
           variant={BackgroundVariant.Dots}
-          gap={20}
-          size={1}
+          gap={22}
+          size={1.2}
           className="!bg-background"
           color="hsl(var(--border))"
         />
         <Controls
           showInteractive={false}
           className={cn(
-            "!bg-card/80 !backdrop-blur-xl !border-border !rounded-xl !shadow-soft",
-            "[&>button]:!bg-transparent [&>button]:!border-border/50",
-            "[&>button]:hover:!bg-accent [&>button]:!rounded-lg",
+            "!bg-card/90 !backdrop-blur-xl !border-border/60 !rounded-2xl !shadow-soft !overflow-hidden",
+            "[&>button]:!bg-transparent [&>button]:!border-b [&>button]:!border-border/40",
+            "[&>button:last-child]:!border-0",
+            "[&>button]:hover:!bg-accent [&>button]:!rounded-none",
             "[&>button>svg]:!fill-foreground"
           )}
         />
@@ -230,20 +249,11 @@ function CanvasInner({
           <MiniMap
             nodeColor={(node) => {
               const data = node.data as StudyNodeData;
-              const colors = [
-                "hsl(239 84% 67%)",
-                "hsl(263 70% 68%)",
-                "hsl(199 89% 48%)",
-                "hsl(142 76% 46%)",
-                "hsl(38 92% 50%)",
-                "hsl(0 84% 60%)",
-                "hsl(328 85% 60%)",
-              ];
-              return colors[data.index % 7] ?? colors[0];
+              return nodeColorMap[data.index % 7] ?? nodeColorMap[0];
             }}
-            maskColor="hsl(var(--background) / 0.8)"
+            maskColor="hsl(var(--background) / 0.85)"
             className={cn(
-              "!bg-card/60 !backdrop-blur-xl !border-border !rounded-xl",
+              "!bg-card/70 !backdrop-blur-xl !border-border/60 !rounded-2xl",
               "!shadow-soft !overflow-hidden"
             )}
             pannable
