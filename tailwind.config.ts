@@ -13,6 +13,10 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Sora", "system-ui", "sans-serif"],
+        edu: ["Source Serif 4", "Georgia", "serif"],
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -87,20 +91,12 @@ export default {
       },
       keyframes: {
         "accordion-down": {
-          from: {
-            height: "0",
-          },
-          to: {
-            height: "var(--radix-accordion-content-height)",
-          },
+          from: { height: "0" },
+          to: { height: "var(--radix-accordion-content-height)" },
         },
         "accordion-up": {
-          from: {
-            height: "var(--radix-accordion-content-height)",
-          },
-          to: {
-            height: "0",
-          },
+          from: { height: "var(--radix-accordion-content-height)" },
+          to: { height: "0" },
         },
         "float-y": {
           "0%, 100%": { transform: "translateY(0)" },
@@ -110,9 +106,25 @@ export default {
           "0%": { opacity: "0", transform: "translateY(10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "fade-in": {
+          "0%": { opacity: "0", transform: "scale(0.95)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
         "pulse-soft": {
           "0%, 100%": { opacity: "1" },
-          "50%": { opacity: "0.7" },
+          "50%": { opacity: "0.65" },
+        },
+        "slide-in-left": {
+          "0%": { opacity: "0", transform: "translateX(-16px)" },
+          "100%": { opacity: "1", transform: "translateX(0)" },
+        },
+        "glow-pulse": {
+          "0%, 100%": { boxShadow: "0 0 20px -4px hsl(var(--brand) / 0.3)" },
+          "50%": { boxShadow: "0 0 40px -4px hsl(var(--brand) / 0.6)" },
+        },
+        "pomodoro-ring": {
+          "0%": { strokeDashoffset: "113" },
+          "100%": { strokeDashoffset: "0" },
         },
       },
       animation: {
@@ -120,7 +132,10 @@ export default {
         "accordion-up": "accordion-up 0.2s ease-out",
         "float-y": "float-y 6s ease-in-out infinite",
         "fade-up": "fade-up 500ms cubic-bezier(0.22, 1, 0.36, 1) both",
+        "fade-in": "fade-in 400ms cubic-bezier(0.22, 1, 0.36, 1) both",
         "pulse-soft": "pulse-soft 2s ease-in-out infinite",
+        "slide-in-left": "slide-in-left 400ms cubic-bezier(0.22, 1, 0.36, 1) both",
+        "glow-pulse": "glow-pulse 3s ease-in-out infinite",
       },
     },
   },

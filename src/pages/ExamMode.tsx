@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppShell } from "@/components/neuroflow/AppShell";
 import { Button } from "@/components/ui/button";
-import { useStudy, type StudyQuiz } from "@/context/StudyContext";
+import { useStudy, type StudyQuiz, type QuizQuestion } from "@/context/StudyContext";
 import { nodoiaAi, NodoIaApiError } from "@/lib/nodoia/ai";
 import { saveExamAttempt, getExamHistory, type ExamAttempt } from "@/lib/nodoia/examHistory";
 import { Link } from "react-router-dom";
@@ -16,7 +16,8 @@ import {
   RotateCcw,
   Trophy,
   Brain,
-  Loader2
+  Loader2,
+  Repeat2,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Progress } from "@/components/ui/progress";
@@ -28,14 +29,24 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
+// Spaced repetition: questions answered wrong come back with double frequency
+function buildSpacedQueue(questions: QuizQuestion[]): number[] {
+  return questions.map((_, i) => i);
+}
+
 export default function ExamMode() {
   const { extractedText, quiz, setQuiz, pdfName } = useStudy();
   const [isGenerating, setIsGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [currentQ, setCurrentQ] = useState(0);
+
+  // Spaced repetition state
+  const [queue, setQueue] = useState<number[]>([]);
+  const [queueIndex, setQueueIndex] = useState(0);
+  const [wrongIndices, setWrongIndices] = useState<Set<number>>(new Set());
+  const [repeatMode, setRepeatMode] = useState(false);
+
   const [selected, setSelected] = useState<number | null>(null);
   const [score, setScore] = useState(0);
-  const [answered, setAnswered] = useState<boolean[]>([]);
   const [showFeedback, setShowFeedback] = useState(false);
   const [feedbackCorrect, setFeedbackCorrect] = useState(false);
   const [history, setHistory] = useState<ExamAttempt[]>([]);
@@ -44,6 +55,21 @@ export default function ExamMode() {
     setHistory(getExamHistory());
   }, []);
 
+  // Reset queue when quiz changes
+  useEffect(() => {
+    if (quiz) {
+      setQueue(buildSpacedQueue(quiz.questions));
+      setQueueIndex(0);
+      setWrongIndices(new Set());
+      setRepeatMode(false);
+      setScore(0);
+      setSelected(null);
+    }
+  }, [quiz]);
+
+  const currentQ = useMemo(() => queue[queueIndex] ?? 0, [queue, queueIndex]);
+  const isComplete = queue.length > 0 && queueIndex >= queue.length && !showFeedback;
+
   const onGenerate = async () => {
     if (!extractedText) return;
     setIsGenerating(true);
@@ -51,10 +77,6 @@ export default function ExamMode() {
     try {
       const result = await nodoiaAi<StudyQuiz>({ mode: "quiz", text: extractedText });
       setQuiz(result);
-      setCurrentQ(0);
-      setSelected(null);
-      setScore(0);
-      setAnswered([]);
     } catch (e) {
       if (e instanceof NodoIaApiError) {
         setErrorMsg(e.message);
@@ -67,42 +89,60 @@ export default function ExamMode() {
   };
 
   const handleAnswer = (idx: number) => {
-    if (selected !== null) return;
+    if (selected !== null || !quiz) return;
     setSelected(idx);
 
-    const q = quiz!.questions[currentQ];
+    const q = quiz.questions[currentQ];
     const isCorrect = idx === q.correctIndex;
 
-    if (isCorrect) setScore((s) => s + 1);
-    setAnswered((a) => [...a, isCorrect]);
+    if (isCorrect) {
+      setScore((s) => s + 1);
+    } else {
+      // Mark for spaced repetition — add to wrong set
+      setWrongIndices((prev) => new Set(prev).add(currentQ));
+    }
     setFeedbackCorrect(isCorrect);
     setShowFeedback(true);
   };
 
   const nextQuestion = () => {
     setShowFeedback(false);
-    if (currentQ + 1 < (quiz?.questions.length || 0)) {
-      setCurrentQ((c) => c + 1);
-      setSelected(null);
-    } else {
+    const nextIdx = queueIndex + 1;
+
+    if (nextIdx >= queue.length) {
+      // First pass done — check if there are wrong answers to repeat
+      if (!repeatMode && wrongIndices.size > 0) {
+        // Build a repeat queue of wrong questions, shuffled
+        const repeatQueue = Array.from(wrongIndices).sort(() => Math.random() - 0.5);
+        setQueue(repeatQueue);
+        setQueueIndex(0);
+        setRepeatMode(true);
+        setSelected(null);
+        return;
+      }
+      // All done
       const attempt = saveExamAttempt({
         score,
         total: quiz!.questions.length,
         pdfName: pdfName || "Sin nombre",
       });
       setHistory((h) => [attempt, ...h]);
+      setQueueIndex(nextIdx);
+    } else {
+      setQueueIndex(nextIdx);
+      setSelected(null);
     }
   };
 
   const restart = () => {
-    setCurrentQ(0);
     setSelected(null);
     setScore(0);
-    setAnswered([]);
+    setQueue([]);
+    setQueueIndex(0);
+    setWrongIndices(new Set());
+    setRepeatMode(false);
     setQuiz(null);
   };
-
-  const isComplete = quiz && currentQ >= quiz.questions.length - 1 && selected !== null && !showFeedback;
 
   return (
     <AppShell title="Modo Examen">
@@ -206,13 +246,23 @@ export default function ExamMode() {
             animate={{ opacity: 1, y: 0 }}
             className="space-y-4"
           >
+            {/* Spaced repetition banner */}
+            {repeatMode && (
+              <div className="flex items-center gap-2 rounded-xl border border-primary/30 bg-primary/5 px-3 py-2 text-xs">
+                <Repeat2 className="h-3.5 w-3.5 text-primary shrink-0" />
+                <span className="text-foreground/80">
+                  <strong>Repaso inteligente:</strong> Estas son las preguntas que fallaste. ¡A por ellas!
+                </span>
+              </div>
+            )}
+
             <div className="flex items-center gap-3">
               <Progress
-                value={((currentQ + 1) / quiz.questions.length) * 100}
+                value={((queueIndex + 1) / queue.length) * 100}
                 className="h-2 flex-1"
               />
               <span className="text-sm text-muted-foreground">
-                {currentQ + 1}/{quiz.questions.length}
+                {queueIndex + 1}/{queue.length}
               </span>
             </div>
 

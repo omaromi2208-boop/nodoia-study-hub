@@ -2,125 +2,133 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NeuroFlow Design System
-   - Apple-inspired minimalist aesthetic
-   - White, soft gray, indigo accents
-   - Serif for educational text, Sans-serif for UI
+/* NeuroFlow Design System v2
+   - Sora font (tech, modern, distinctive)
+   - Violet-Teal palette (unique, energizing)
+   - Source Serif 4 for educational text
+   - Glassmorphism + depth layers
 */
 
 @layer base {
   :root {
-    /* Light mode - Clean white with indigo accents */
-    --background: 0 0% 99%;
-    --foreground: 220 15% 15%;
+    /* Light mode — Warm white with violet-teal */
+    --background: 250 20% 98%;
+    --foreground: 248 20% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 15% 15%;
+    --card-foreground: 248 20% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 15% 15%;
+    --popover-foreground: 248 20% 12%;
 
-    --primary: 239 84% 67%;
+    /* Violet primary */
+    --primary: 258 80% 62%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 220 14% 96%;
-    --secondary-foreground: 220 15% 15%;
+    --secondary: 248 20% 96%;
+    --secondary-foreground: 248 20% 12%;
 
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 9% 46%;
+    --muted: 248 15% 95%;
+    --muted-foreground: 248 10% 50%;
 
-    --accent: 239 84% 97%;
-    --accent-foreground: 239 84% 47%;
+    /* Teal accent */
+    --accent: 258 60% 96%;
+    --accent-foreground: 258 80% 52%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 142 76% 36%;
+    --success: 160 70% 38%;
     --success-foreground: 0 0% 100%;
 
-    --border: 220 13% 91%;
-    --input: 220 13% 91%;
-    --ring: 239 84% 67%;
+    --border: 248 20% 90%;
+    --input: 248 20% 90%;
+    --ring: 258 80% 62%;
 
     --radius: 1rem;
 
-    /* Brand - Indigo */
-    --brand: 239 84% 67%;
-    --brand-2: 263 70% 58%;
+    /* Brand — Violet + Teal */
+    --brand: 258 80% 62%;
+    --brand-2: 172 65% 42%;
     --brand-foreground: 0 0% 100%;
 
-    /* Node palette - Subtle pastels */
-    --node-1: 239 84% 67%;
-    --node-2: 263 70% 68%;
+    /* Node palette — Vivid but harmonious */
+    --node-1: 258 80% 62%;
+    --node-2: 172 65% 42%;
     --node-3: 199 89% 48%;
-    --node-4: 142 76% 46%;
-    --node-5: 38 92% 50%;
-    --node-6: 0 84% 60%;
-    --node-7: 328 85% 60%;
+    --node-4: 142 70% 46%;
+    --node-5: 38 92% 52%;
+    --node-6: 0 80% 60%;
+    --node-7: 320 80% 60%;
 
-    /* Surfaces & shadows */
+    /* Surfaces */
     --surface: 0 0% 100%;
-    --surface-2: 220 14% 98%;
-    --shadow-soft: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-    --shadow-elev: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
-    --shadow-card: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+    --surface-2: 248 20% 97%;
+
+    /* Shadows */
+    --shadow-soft: 0 2px 8px -2px hsl(258 80% 62% / 0.08), 0 1px 3px -1px hsl(0 0% 0% / 0.06);
+    --shadow-elev: 0 6px 20px -4px hsl(258 80% 62% / 0.15), 0 2px 6px -2px hsl(0 0% 0% / 0.08);
+    --shadow-card: 0 12px 32px -8px hsl(258 80% 62% / 0.18), 0 4px 8px -4px hsl(0 0% 0% / 0.08);
+    --shadow-glow: 0 0 40px -8px hsl(258 80% 62% / 0.30);
 
     /* Sidebar */
     --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 220 15% 15%;
-    --sidebar-primary: 239 84% 67%;
+    --sidebar-foreground: 248 20% 12%;
+    --sidebar-primary: 258 80% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 96%;
-    --sidebar-accent-foreground: 220 15% 15%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-accent: 248 20% 96%;
+    --sidebar-accent-foreground: 248 20% 12%;
+    --sidebar-border: 248 20% 90%;
+    --sidebar-ring: 258 80% 62%;
   }
 
   .dark {
-    /* Night mode - Deep slate with indigo glass */
-    --background: 222 47% 8%;
-    --foreground: 210 40% 98%;
+    /* Night mode — Deep slate with violet glass */
+    --background: 240 25% 6%;
+    --foreground: 248 20% 95%;
 
-    --card: 222 47% 10%;
-    --card-foreground: 210 40% 98%;
+    --card: 240 25% 8%;
+    --card-foreground: 248 20% 95%;
 
-    --popover: 222 47% 10%;
-    --popover-foreground: 210 40% 98%;
+    --popover: 240 25% 8%;
+    --popover-foreground: 248 20% 95%;
 
-    --primary: 239 84% 67%;
+    --primary: 258 80% 68%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 222 40% 14%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: 240 20% 13%;
+    --secondary-foreground: 248 20% 95%;
 
-    --muted: 222 40% 14%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 240 20% 13%;
+    --muted-foreground: 248 15% 60%;
 
-    --accent: 239 50% 20%;
-    --accent-foreground: 239 84% 80%;
+    --accent: 258 50% 18%;
+    --accent-foreground: 258 80% 80%;
 
-    --border: 222 40% 18%;
-    --input: 222 40% 18%;
-    --ring: 239 84% 67%;
+    --border: 240 20% 16%;
+    --input: 240 20% 16%;
+    --ring: 258 80% 68%;
 
-    --brand: 239 84% 67%;
-    --brand-2: 263 70% 68%;
+    --brand: 258 80% 68%;
+    --brand-2: 172 65% 52%;
     --brand-foreground: 0 0% 100%;
 
-    --surface: 222 47% 10%;
-    --surface-2: 222 40% 14%;
-    --shadow-soft: 0 1px 3px 0 rgb(0 0 0 / 0.3);
-    --shadow-elev: 0 4px 6px -1px rgb(0 0 0 / 0.4);
-    --shadow-card: 0 10px 15px -3px rgb(0 0 0 / 0.5);
+    --surface: 240 25% 8%;
+    --surface-2: 240 20% 11%;
 
-    --sidebar-background: 222 47% 10%;
-    --sidebar-foreground: 210 40% 98%;
-    --sidebar-primary: 239 84% 67%;
+    --shadow-soft: 0 2px 8px -2px hsl(0 0% 0% / 0.3);
+    --shadow-elev: 0 6px 20px -4px hsl(0 0% 0% / 0.4);
+    --shadow-card: 0 12px 32px -8px hsl(0 0% 0% / 0.5);
+    --shadow-glow: 0 0 40px -8px hsl(258 80% 68% / 0.35);
+
+    --sidebar-background: 240 25% 8%;
+    --sidebar-foreground: 248 20% 95%;
+    --sidebar-primary: 258 80% 68%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 222 40% 14%;
-    --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 40% 18%;
-    --sidebar-ring: 239 84% 67%;
+    --sidebar-accent: 240 20% 13%;
+    --sidebar-accent-foreground: 248 20% 95%;
+    --sidebar-border: 240 20% 16%;
+    --sidebar-ring: 258 80% 68%;
   }
 }
 
@@ -131,12 +139,18 @@
 
   body {
     @apply bg-background text-foreground antialiased;
+    font-family: "Sora", system-ui, sans-serif;
     font-feature-settings: "cv11", "ss01";
   }
 
-  /* Educational text uses serif */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: "Sora", system-ui, sans-serif;
+    letter-spacing: -0.02em;
+  }
+
+  /* Educational text uses Source Serif */
   .font-edu {
-    font-family: "Georgia", "Cambria", "Times New Roman", serif;
+    font-family: "Source Serif 4", "Georgia", serif;
   }
 }
 
@@ -144,26 +158,20 @@
   /* Grid pattern for canvas */
   .bg-neuro-grid {
     background-image: radial-gradient(circle at 1px 1px, hsl(var(--border)) 1px, transparent 0);
-    background-size: 20px 20px;
+    background-size: 24px 24px;
   }
 
-  /* Subtle ambient glow */
+  /* Neural network ambient glow */
   .bg-neuro-glow {
-    background-image: 
-      radial-gradient(600px circle at var(--mx, 50%) var(--my, 30%), hsl(var(--brand) / 0.08), transparent 50%);
+    background-image:
+      radial-gradient(800px circle at var(--mx, 30%) var(--my, 20%), hsl(var(--brand) / 0.07), transparent 50%),
+      radial-gradient(600px circle at var(--mx2, 70%) var(--my2, 80%), hsl(var(--brand-2) / 0.05), transparent 50%);
   }
 
-  .shadow-soft {
-    box-shadow: var(--shadow-soft);
-  }
-
-  .shadow-elev {
-    box-shadow: var(--shadow-elev);
-  }
-
-  .shadow-card {
-    box-shadow: var(--shadow-card);
-  }
+  .shadow-soft { box-shadow: var(--shadow-soft); }
+  .shadow-elev { box-shadow: var(--shadow-elev); }
+  .shadow-card { box-shadow: var(--shadow-card); }
+  .shadow-glow { box-shadow: var(--shadow-glow); }
 
   /* Glassmorphism */
   .glass {
@@ -173,44 +181,49 @@
   .glass-dark {
     @apply bg-surface/60 backdrop-blur-xl border border-white/10;
   }
+
+  /* Gradient text */
+  .text-gradient {
+    background: linear-gradient(135deg, hsl(var(--brand)), hsl(var(--brand-2)));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
 }
 
 /* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
   background: hsl(var(--border));
-  border-radius: 3px;
+  border-radius: 10px;
 }
-
 ::-webkit-scrollbar-thumb:hover {
-  background: hsl(var(--muted-foreground) / 0.3);
+  background: hsl(var(--muted-foreground) / 0.4);
 }
 
 /* React Flow custom styles */
-.neuroflow-canvas .react-flow__node {
-  cursor: grab;
-}
-
-.neuroflow-canvas .react-flow__node:active {
-  cursor: grabbing;
-}
+.neuroflow-canvas .react-flow__node { cursor: grab; }
+.neuroflow-canvas .react-flow__node:active { cursor: grabbing; }
 
 .neuroflow-canvas .react-flow__controls {
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-soft) !important;
+  border-radius: 12px !important;
 }
 
 .neuroflow-canvas .react-flow__minimap {
-  box-shadow: var(--shadow-soft);
+  box-shadow: var(--shadow-soft) !important;
+  border-radius: 12px !important;
+  overflow: hidden;
 }
 
 .neuroflow-canvas .react-flow__background pattern circle {
   fill: hsl(var(--border));
+}
+
+/* Node category indicator dots */
+.node-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
 }

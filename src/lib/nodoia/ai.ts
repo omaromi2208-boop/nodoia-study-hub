@@ -1,6 +1,6 @@
 import { toast } from "sonner";
 
-export type AiMode = "summary" | "quiz";
+export type AiMode = "summary" | "quiz" | "explain_simple";
 
 export class NodoIaApiError extends Error {
   status: number;

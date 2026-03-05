@@ -5,7 +5,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-type Mode = "summary" | "quiz";
+type Mode = "summary" | "quiz" | "explain_simple";
 
 function json(status: number, body: unknown, extraHeaders: Record<string, string> = {}) {
   return new Response(JSON.stringify(body), {
@@ -23,8 +23,8 @@ serve(async (req) => {
       text?: string;
     };
 
-    if (mode !== "summary" && mode !== "quiz") {
-      return json(400, { error: "Invalid mode. Use 'summary' or 'quiz'." });
+    if (mode !== "summary" && mode !== "quiz" && mode !== "explain_simple") {
+      return json(400, { error: "Invalid mode. Use 'summary', 'quiz', or 'explain_simple'." });
     }
 
     const inputText = typeof text === "string" ? text.trim() : "";
@@ -132,17 +132,38 @@ serve(async (req) => {
       },
     } as const;
 
+    const explainSimpleTool = {
+      type: "function",
+      function: {
+        name: "return_explanation",
+        description: "Return an ultra-simple explanation of a concept using a relatable analogy, as if explaining to a 10-year-old.",
+        parameters: {
+          type: "object",
+          properties: {
+            explanation: { type: "string", description: "Simple explanation with an everyday analogy. Max 3 sentences." },
+          },
+          required: ["explanation"],
+          additionalProperties: false,
+        },
+      },
+    } as const;
+
     const prompt = mode === "summary"
       ? "Genera un resumen estructurado en 7 nodos clave del texto. " +
         "Cada nodo debe ser útil para estudiar (bullets concretos, conceptos y relaciones). " +
         "Incluye un mapa con relaciones dirigidas (edges) entre nodos."
-      : "Genera 5 preguntas tipo test basadas estrictamente en el texto. " +
-        "Opciones plausibles, una correcta, y explica brevemente por qué.";
+      : mode === "quiz"
+        ? "Genera 5 preguntas tipo test basadas estrictamente en el texto. " +
+          "Opciones plausibles, una correcta, y explica brevemente por qué."
+        : "Explica el siguiente concepto de manera ultra-simple, como si se lo explicaras a un niño de 10 años. " +
+          "Usa UNA analogía cotidiana y no más de 3 frases cortas. Habla directo, sin tecnicismos.";
 
-    const tools = mode === "summary" ? [summaryTool] : [quizTool];
+    const tools = mode === "summary" ? [summaryTool] : mode === "quiz" ? [quizTool] : [explainSimpleTool];
     const tool_choice = mode === "summary"
       ? { type: "function", function: { name: "return_summary" } }
-      : { type: "function", function: { name: "return_quiz" } };
+      : mode === "quiz"
+        ? { type: "function", function: { name: "return_quiz" } }
+        : { type: "function", function: { name: "return_explanation" } };
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
