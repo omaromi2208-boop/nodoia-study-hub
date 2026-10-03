@@ -59,5 +59,12 @@ E0.config = {
     { id: 'conducta', name: 'Análisis de conducta', desc: 'Especialista en entrevistas y declaraciones.', perk: 'Doble de XP al practicar interrogatorios en la jornada.', skills: { verbal: 8, memoria: 6 } }
   ],
 
+  forensicTools: [
+    { id: 'luminol', name: 'Luminol', desc: 'Revela restos de sangre aunque se hayan limpiado. Requiere oscuridad.', kit: 4 },
+    { id: 'uv', name: 'Luz UV', desc: 'Hace visibles fluidos, residuos y marcas que no se ven con luz normal.', kit: null },
+    { id: 'polvo', name: 'Polvo revelador', desc: 'Revela huellas latentes en superficies lisas.', kit: 5 },
+    { id: 'lupa', name: 'Lupa', desc: 'Examen de cerca: marcas, desgaste y detalles pequeños.', kit: null }
+  ],
+
   noteCategories: ['Nota', 'Pregunta', 'Teoría', 'Sospecha', 'Contradicción', 'Conclusión']
 };

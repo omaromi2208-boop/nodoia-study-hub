@@ -92,7 +92,8 @@
     const { c, cs } = curCase();
     const okMount = E0.scene3d.mount(el, {
       c, cs, planId: UI.scenePlanId(c, cs), sel: cs.lastView.sceneSel || null, inspect: !!cs.lastView.inspect,
-      onPick: id => { cs.lastView.sceneSel = id; cs.lastView.inspect = false; render(); }
+      fx: cs.lastView.fx && cs.lastView.fx.ev === cs.lastView.sceneSel ? cs.lastView.fx : null,
+      onPick: id => { cs.lastView.sceneSel = id; cs.lastView.inspect = false; cs.lastView.fx = null; render(); }
     });
     if (!okMount) { S().settings.view3d = false; render(); }
   }
@@ -430,7 +431,7 @@
     s.money += cash;
     C.skills.forEach(k => { s.skills[k.id] = clamp(Math.round(s.skills[k.id] * 0.5 + ev.profile[k.id].score * 0.5), 0, 100); });
     cs.rewards = { xp, rep, money: cash, promo };
-    s.history.push({ caseId: c.id, title: c.title, score: ev.total, date: new Date().toLocaleDateString('es-ES'), culpritOk: v.culprit === c.truth.culprit, lines: ev.lines });
+    s.history.push({ caseId: c.id, title: c.title, variant: c.variant || null, score: ev.total, date: new Date().toLocaleDateString('es-ES'), culpritOk: v.culprit === c.truth.culprit, lines: ev.lines });
     toast('Veredicto emitido. Expediente cerrado.');
   }
 
@@ -490,10 +491,32 @@
     'ask-reset': () => { S().view.confirmReset = true; },
     'cancel-reset': () => { S().view.confirmReset = false; },
     'reset-game': () => { store.reset(); applySettings(); toast('Partida borrada. Empezáis de nuevo.'); },
-    'scene-sel': el => { const { cs } = curCase(); cs.lastView.sceneSel = el.dataset.id || null; cs.lastView.inspect = false; },
+    'scene-sel': el => { const { cs } = curCase(); cs.lastView.sceneSel = el.dataset.id || null; cs.lastView.inspect = false; cs.lastView.fx = null; },
     view3d: el => { S().settings.view3d = el.dataset.on === '1'; },
     's3-inspect': () => { const { cs } = curCase(); cs.lastView.inspect = !cs.lastView.inspect; },
     's3-reset': () => { const { cs } = curCase(); cs.lastView.sceneSel = null; cs.lastView.inspect = false; if (E0.scene3d) E0.scene3d.resetView(); },
+    forensic: el => {
+      const { c, cs } = curCase();
+      if (!guardOpen(cs)) return;
+      const id = el.dataset.id, tool = el.dataset.tool;
+      const e = c.evidence.find(x => x.id === id);
+      const T = C.forensicTools.find(x => x.id === tool);
+      const key = id + ':' + tool;
+      if (!cs.examined[id] || cs.forensic[key]) return;
+      if (T.kit) {
+        const used = Object.keys(cs.forensic).filter(k => k.endsWith(':' + tool)).length;
+        if (used >= T.kit) { toast('No te queda ' + T.name.toLowerCase() + ' en el kit de este expediente.', 'warn'); return false; }
+      }
+      const def = (e.forensic || {})[tool];
+      cs.forensic[key] = def ? 'pos' : 'neg';
+      const fresh = def ? EN.discover(cs, def.reveals) : [];
+      EN.log(cs, 'forensic', { ev: id, tool, positive: !!def });
+      cs.lastView.fx = { ev: id, tool, pos: !!def };
+      if (tool === 'lupa') cs.lastView.inspect = true;
+      toast(T.name + ': ' + (def ? 'hay un resultado.' : 'sin hallazgos con esta técnica.'));
+      newInfo(fresh);
+    },
+    'fx-off': () => { curCase().cs.lastView.fx = null; },
     'scene-plan': el => { const { cs } = curCase(); cs.lastView.plan = el.dataset.id; cs.lastView.sceneSel = null; },
     photo: el => {
       const { cs } = curCase();

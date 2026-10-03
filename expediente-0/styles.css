@@ -447,3 +447,17 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 @media (max-width: 560px) { .s3-hint { font-size: 0.6rem; right: 8px; } }
 .portrait { flex: none; border-radius: 50%; border: 1px solid var(--line); background: var(--panel-2); }
 .person[aria-pressed="true"] .portrait { border-color: var(--accent); }
+
+/* Herramientas forenses */
+.forensic { display: flex; flex-direction: column; gap: 8px; border-top: 1px dashed var(--line); padding-top: 10px; }
+.tool-row { display: grid; gap: 6px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 110px), 1fr)); }
+.tool { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; padding: 8px 10px; border-radius: var(--radius); border: 1px solid var(--line); background: var(--bg-2); text-align: left; }
+.tool b { font-size: 0.82rem; }
+.tool small { font: 500 0.66rem/1.2 var(--f-mono); color: var(--muted); }
+.tool:hover { border-color: var(--accent); }
+.tool[disabled] { opacity: 0.5; cursor: not-allowed; }
+.tool.on { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); }
+.tool-luminol b { color: #6fc3ff; }
+.tool-uv b { color: #b08cff; }
+.tool-polvo b { color: var(--text); }
+.tool-lupa b { color: var(--amber); }

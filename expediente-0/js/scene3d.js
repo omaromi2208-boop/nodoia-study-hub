@@ -348,7 +348,68 @@
       scene.add(g); scene.add(marker); scene.add(ringM);
       props[e.id] = { group: g, marker, ring: ringM, pos: new THREE.Vector3(p.x, 0.3, p.z) };
     });
-    return { scene, props };
+    return { scene, props, lights: { hemi, dir, rim }, bg };
+  }
+
+  /* ---------- Efectos de herramientas forenses ---------- */
+  let glowTex = null;
+  function glowTexture() {
+    if (glowTex) return glowTex;
+    const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+    const g = cv.getContext('2d');
+    const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+    grd.addColorStop(0, 'rgba(255,255,255,1)'); grd.addColorStop(0.35, 'rgba(255,255,255,0.55)'); grd.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = grd; g.fillRect(0, 0, 64, 64);
+    glowTex = new THREE.CanvasTexture(cv);
+    return glowTex;
+  }
+  function glow(color, size) {
+    const m = new THREE.Mesh(new THREE.PlaneGeometry(size, size), new THREE.MeshBasicMaterial({ map: glowTexture(), color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    m.raycast = () => {};
+    return m;
+  }
+  function applyFx(fx) {
+    if (R.fxGroup) { R.scene.remove(R.fxGroup); R.fxGroup = null; }
+    const L = R.lights;
+    L.hemi.intensity = 0.9; L.hemi.color.set(0xdfe8ff); L.dir.intensity = 1.0; L.rim.intensity = 0.35;
+    R.scene.background = R.bg; R.scene.fog.color = R.bg;
+    if (!fx || !R.props[fx.ev] || fx.tool === 'lupa') return;
+    const p = R.props[fx.ev].pos;
+    const g = new THREE.Group();
+    let seed = 0; for (const ch of fx.ev) seed = (seed * 31 + ch.charCodeAt(0)) >>> 0;
+    const rnd = () => { seed = (seed * 1664525 + 1013904223) >>> 0; return seed / 4294967296; };
+    if (fx.tool === 'luminol') {
+      L.hemi.intensity = 0.07; L.dir.intensity = 0.04; L.rim.intensity = 0;
+      R.scene.background = new THREE.Color(0x02040a); R.scene.fog.color = R.scene.background;
+      if (fx.pos) {
+        const ang = rnd() * Math.PI * 2;
+        for (let i = 0; i < 14; i++) {
+          const d = i * 0.32 + rnd() * 0.15;
+          const b = glow(0x39a8ff, 0.35 + rnd() * 0.45);
+          b.rotation.x = -Math.PI / 2;
+          b.position.set(p.x + Math.cos(ang) * d + (rnd() - 0.5) * 0.3, 0.07, p.z + Math.sin(ang) * d + (rnd() - 0.5) * 0.3);
+          g.add(b);
+        }
+        const big = glow(0x39a8ff, 1.6); big.rotation.x = -Math.PI / 2; big.position.set(p.x, 0.065, p.z); g.add(big);
+      }
+    } else if (fx.tool === 'uv') {
+      L.hemi.intensity = 0.25; L.hemi.color.set(0x5a3cff); L.dir.intensity = 0.08; L.rim.intensity = 0;
+      R.scene.background = new THREE.Color(0x07031a); R.scene.fog.color = R.scene.background;
+      const uvl = new THREE.PointLight(0x8a5cff, 1.6, 6); uvl.position.set(p.x, 1.6, p.z); g.add(uvl);
+      if (fx.pos) for (let i = 0; i < 6; i++) { const s = glow(0xe6d8ff, 0.18 + rnd() * 0.2); s.position.set(p.x + (rnd() - 0.5) * 0.5, 0.35 + rnd() * 0.5, p.z + (rnd() - 0.5) * 0.5); s.userData.billboard = true; g.add(s); }
+    } else if (fx.tool === 'polvo') {
+      const n = 220, pos = new Float32Array(n * 3);
+      for (let i = 0; i < n; i++) { pos[i * 3] = p.x + (rnd() - 0.5) * 1.2; pos[i * 3 + 1] = 0.1 + rnd() * 1.1; pos[i * 3 + 2] = p.z + (rnd() - 0.5) * 1.2; }
+      const geo = new THREE.BufferGeometry(); geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const pts = new THREE.Points(geo, new THREE.PointsMaterial({ color: 0xf2f2f2, size: 0.025, transparent: true, opacity: 0.8 }));
+      pts.raycast = () => {}; pts.userData.dust = true; g.add(pts);
+      if (fx.pos) for (let i = 0; i < 3; i++) {
+        const ring = new THREE.Mesh(new THREE.RingGeometry(0.03, 0.09, 24), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.9, side: THREE.DoubleSide }));
+        ring.position.set(p.x + (rnd() - 0.5) * 0.4, 0.4 + rnd() * 0.5, p.z + (rnd() - 0.5) * 0.4); ring.userData.billboard = true; ring.raycast = () => {}; g.add(ring);
+      }
+    }
+    R.fxGroup = g;
+    R.scene.add(g);
   }
 
   /* ---------- Cámara orbital propia (ratón, rueda y táctil) ---------- */
@@ -452,6 +513,11 @@
       p.marker.rotation.y = s * 1.5;
       if (p.ring.visible) p.ring.material.opacity = 0.55 + Math.sin(s * 4) * 0.3;
     });
+    if (R.fxGroup) R.fxGroup.children.forEach((o, i) => {
+      if (o.userData.billboard) o.quaternion.copy(R.camera.quaternion);
+      if (o.material && o.material.blending === THREE.AdditiveBlending) o.material.opacity = 0.65 + Math.sin(s * 2.2 + i) * 0.3;
+      if (o.userData.dust) o.rotation.y = s * 0.3;
+    });
     R.renderer.render(R.scene, R.camera);
   }
 
@@ -483,7 +549,7 @@
     if (R.key !== key) {
       if (R.scene) R.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
       const b = build(opts.c, plan);
-      R.scene = b.scene; R.props = b.props; R.key = key;
+      R.scene = b.scene; R.props = b.props; R.lights = b.lights; R.bg = b.bg; R.key = key; R.fxKey = null; R.fxGroup = null;
       R.orbit = { r: 17, theta: -0.55, phi: 0.95 }; R.target.set(0, 0, 0); R.goal = null; R.sel = null; R.inspect = false;
     }
     R.c = opts.c; R.onPick = opts.onPick; R.container = container;
@@ -500,6 +566,8 @@
       R.autoRotate = !!(opts.inspect && p);
       R.sel = opts.sel; R.inspect = !!opts.inspect;
     }
+    const fxKey = opts.fx ? opts.fx.ev + ':' + opts.fx.tool + ':' + opts.fx.pos : '';
+    if (fxKey !== R.fxKey) { applyFx(opts.fx); R.fxKey = fxKey; }
     resize();
     camUpdate();
     if (!R.raf) R.raf = requestAnimationFrame(loop);

@@ -12,16 +12,18 @@ Abre `index.html` en el navegador (doble clic). No necesita instalación ni serv
 - **Centro de investigación**: perfil, 7 rangos, XP, reputación, dinero, energía y jornadas semanales con salario.
 - **Academia**: 12 módulos evaluables y una biblioteca jurídica que separa el contenido educativo interno, las fuentes oficiales (BOE) y la simulación del juego.
 - **Carrera** con historial de intentos, **Cuaderno** con notas de cada investigador, **Perfil** con 12 habilidades y **Ajustes** (6 temas, animaciones, tamaño, sonido, exportar, importar y borrar).
-- **Tres expedientes jugables de principio a fin**, cada uno con su propia verdad interna. Se desbloquean por rango:
+- **Cuatro expedientes jugables de principio a fin**, cada uno con su propia verdad interna. Se desbloquean por rango:
   - **EXP-001 «El Apartamento 17»**: homicidio con una sedación previa, una huida por el garaje y un inocente muy sospechoso.
   - **EXP-002 «La desaparición del puente»**: coche abandonado, peaje, mensajes programados y un audio. Hay que decidir si fue un crimen, un accidente o algo distinto.
   - **EXP-003 «Las cuatro llamadas»**: cámara del ascensor, una llave que falta, un teléfono manipulado después de la muerte y una cronología conflictiva.
+  - **EXP-004 «La masía de los Ballester»** (dificultad extrema): triple homicidio con una superviviente, siete sospechosos y **tres soluciones posibles**. Cada partida elige una en secreto y cambia el contenido de las pruebas clave: los cristales, la herida, los residuos de disparo, el GPS, las antenas, lo que oyó la vecina. Repetirlo es un caso nuevo. Inspirado en patrones de casos documentados, con nombres, lugares y hechos completamente ficticios.
 
 ### Herramientas de cada expediente
 
 | Herramienta | Qué hace |
 |---|---|
 | Escena | Vista 3D (girar, acercar, pulsar objetos e inspeccionarlos de cerca) o plano 2D, con varias zonas. Cada elemento se puede examinar, fotografiar, enviar al laboratorio, añadir al muro o convertir en pregunta. |
+| Herramientas forenses | Luminol, luz UV, polvo revelador y lupa sobre cualquier objeto examinado, con efecto visual en 3D. El luminol y el polvo son limitados en cada expediente. |
 | Laboratorio | Análisis con coste. Los resultados respetan los límites de cada técnica. |
 | Digital | Cámaras, registros, dispositivos, finanzas y vehículos. Las solicitudes judiciales de antenas son limitadas. |
 | Personas | Retrato de cada persona e interrogatorio con memoria y confrontación con pruebas. Las respuestas pueden ser verdad, medias verdades, mentiras o creencias erróneas. |
@@ -68,3 +70,11 @@ Crea `data/caseNN.js` con la misma estructura y enlázalo en `index.html`; el mo
 - `verdictOptions`, `truth`, `evaluation` y `trial`.
 
 Por ejemplo, `verdictOptions.culprits` permite conclusiones que no son una persona, como «desaparición voluntaria».
+
+### Casos con varias soluciones
+
+Añade `variants: { idVersion: { facts, evidence, answers, confront, conflicts, truth, trial, evaluation } }`. Todas las versiones comparten personas, escena, evidencias y solicitudes, así que el jugador no puede distinguirlas por la interfaz. Cada versión sobrescribe solo lo que cambia. Al abrir el caso se elige una versión al azar, distinta de la última jugada. `data/case04.js` es el ejemplo.
+
+### Herramientas forenses
+
+Cada evidencia puede declarar `forensic: { luminol | uv | polvo | lupa: { reveals: [...] } }`. Si una herramienta no tiene resultado definido, el juego responde «sin hallazgos», sin dar pistas.

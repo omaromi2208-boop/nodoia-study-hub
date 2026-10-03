@@ -58,6 +58,7 @@
       custodyNotes: {},
       wall: { cards: [], links: [] },
       mapLinks: [],
+      forensic: {},
       lastView: {}
     };
   }
@@ -158,6 +159,12 @@
 
     startCase(c) {
       const cs = newCaseState(c);
+      const base = E0.cases.find(x => x.id === c.id);
+      if (base && base.variants) {
+        this.state.lastVariants = this.state.lastVariants || {};
+        cs.variant = E0.engine.pickVariant(base, this.state.lastVariants[c.id]);
+        this.state.lastVariants[c.id] = cs.variant;
+      }
       this.state.cases[c.id] = cs;
       return cs;
     }

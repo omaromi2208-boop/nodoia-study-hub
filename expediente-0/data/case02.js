@@ -186,7 +186,7 @@ E0.cases.push({
 
   /* ---------- EVIDENCIAS ---------- */
   evidence: [
-    { id: 'P01', name: 'Coche de Irene', type: 'Vehículo', level: 2, fixed: true, room: 'Arcén',
+    { id: 'P01', name: 'Coche de Irene', type: 'Vehículo', level: 2, fixed: true, forensic: { luminol: { reveals: ['F2_LUMINOL_COCHE'] } }, room: 'Arcén',
       public: 'Renault Clio blanco parado en el arcén con los warnings encendidos.',
       detail: 'Llaves en el contacto, puerta del conductor entreabierta, depósito a tres cuartos. No hay signos de golpe ni de forcejeo en el habitáculo.',
       value: 'Indica cómo y cuándo se abandonó el vehículo.', limits: 'No dice quién lo dejó así ni por qué.',
@@ -197,13 +197,13 @@ E0.cases.push({
       detail: 'Cartera con DNI, tarjetas y 40 €; llaves de casa; un pintalabios. No hay teléfono.',
       value: 'Muestra qué llevaba encima.', limits: 'Lo ausente puede no haber estado nunca en el bolso.',
       reveals: ['F2_BOLSO'] },
-    { id: 'P03', name: 'Zapatilla junto a la barandilla', type: 'Objeto', level: 5, room: 'Barandilla',
+    { id: 'P03', name: 'Zapatilla junto a la barandilla', type: 'Objeto', level: 5, forensic: { lupa: { reveals: ['F2_LUPA_ZAPATO'] } }, room: 'Barandilla',
       public: 'Una zapatilla deportiva al pie de la barandilla.',
       detail: 'Zapatilla izquierda, de pie y alineada con la barandilla. Los cordones siguen atados con doble nudo.',
       value: 'Sugiere a primera vista una caída al río.', limits: 'Una prenda no demuestra qué le ocurrió a su dueña.',
       reveals: ['F2_ZAPATO'],
       lab: { adn: { cost: 200, reveals: ['F2_ZAPATO_ADN'] } } },
-    { id: 'P04', name: 'Barandilla', type: 'Escena', level: 3, fixed: true, room: 'Barandilla',
+    { id: 'P04', name: 'Barandilla', type: 'Escena', level: 3, fixed: true, forensic: { luminol: { reveals: ['F2_LUMINOL_BARANDILLA'] } }, room: 'Barandilla',
       public: 'Barandilla metálica de 1,20 m sobre el río.',
       detail: 'La barandilla tiene una película de polvo y hollín. No se aprecian roces, arrastres ni huellas de apoyo recientes.',
       value: 'Una caída o un salto suelen dejar marcas.', limits: 'La ausencia de marcas no es concluyente por sí sola.',
@@ -220,7 +220,7 @@ E0.cases.push({
       detail: 'Tablet bloqueada, sincronizada con la cuenta de Irene. Requiere análisis forense.',
       value: 'Mensajes, historial y sincronización con el teléfono.', limits: 'Solo refleja lo que pasó por esa cuenta.',
       reveals: ['F2_TABLET_ESCENA'], unlocks: ['D2_TABLET'] },
-    { id: 'V02', name: 'Carpeta de documentos', type: 'Documento', level: 2, room: 'Dormitorio',
+    { id: 'V02', name: 'Carpeta de documentos', type: 'Documento', level: 2, forensic: { polvo: { reveals: ['F2_POLVO_CARPETA'] } }, room: 'Dormitorio',
       public: 'Carpeta de documentos en el cajón de la cómoda.',
       detail: 'Libro de familia, escrituras y el pasaporte de Álvaro. El pasaporte de Irene no está.',
       value: 'Indica qué documentos se llevó o no se llevó.', limits: 'Pudo guardarse en otro sitio.',
@@ -283,6 +283,10 @@ E0.cases.push({
 
   /* ---------- HECHOS ---------- */
   facts: {
+    F2_LUMINOL_COCHE: { text: 'Luminol: ninguna reacción en el habitáculo ni en el maletero del Clio. No hay restos de sangre.', place: 'puente', source: 'laboratorio', tags: ['vehiculo', 'sangre'] },
+    F2_LUMINOL_BARANDILLA: { text: 'Luminol: ninguna reacción en la barandilla ni en el pretil.', place: 'puente', source: 'laboratorio', tags: ['barandilla', 'sangre', 'rio'] },
+    F2_POLVO_CARPETA: { text: 'Polvo revelador: huellas recientes de Irene en la carpeta y en el compartimento donde se guardaba el pasaporte.', person: 'irene', source: 'laboratorio', tags: ['pasaporte', 'huella'] },
+    F2_LUPA_ZAPATO: { text: 'Lupa: la suela de la zapatilla está limpia, sin restos del barro del arcén, y los cordones no tienen tierra: no parece haberse perdido caminando por allí.', source: 'escena', tags: ['zapato', 'rio'] },
     F2_AVISO: { text: 'Un camionero llama al 112: hay un coche parado con los warnings en el Puente del Azud.', time: '01:55', person: 'joaquin', place: 'puente', source: 'informe policial', tags: ['aviso', 'testigo'] },
     F2_HALLAZGO: { text: 'Una patrulla encuentra el Renault Clio de Irene en el arcén del puente, vacío, con la puerta del conductor entreabierta.', time: '02:10', place: 'puente', source: 'informe policial', tags: ['vehiculo', 'hallazgo'] },
     F2_BUSQUEDA: { text: 'El rastreo del río durante el sábado y el domingo no encuentra a Irene ni ningún objeto suyo.', source: 'informe policial', tags: ['rio', 'busqueda'] },

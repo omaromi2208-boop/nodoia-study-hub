@@ -183,7 +183,7 @@
         const p = caseProgress(c, cs);
         const status = !cs ? (unlocked(c) ? 'Disponible' : 'Bloqueado') : cs.status === 'cerrado' ? 'Cerrado' : 'Activo';
         return '<article class="panel dossier stack' + (status === 'Bloqueado' ? ' locked' : '') + '"><div class="spread"><div><div class="case-code">' + c.id + '</div><h2 style="font-size:1.8rem;text-transform:uppercase">' + esc(c.title) + '</h2></div><span class="badge ' + (status === 'Activo' ? 'acc' : status === 'Cerrado' ? 'ok' : '') + '">' + status + '</span></div>' +
-          '<dl class="kv"><dt>Tipo</dt><dd>' + esc(c.type) + '</dd><dt>Dificultad</dt><dd>' + esc(c.difficulty) + '</dd>' + (c.budget ? '<dt>Presupuesto</dt><dd>' + money(c.budget) + (s.budgets && s.budgets[c.id] ? ' (asignado)' : ' (se asigna al abrirlo)') + '</dd>' : '') + '<dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>' + esc(c.victimLabel || 'Víctima') + '</dt><dd>' + esc(c.victim.name) + ', ' + c.victim.age + ' años</dd></dl>' +
+          '<dl class="kv"><dt>Tipo</dt><dd>' + esc(c.type) + '</dd><dt>Dificultad</dt><dd>' + esc(c.difficulty) + '</dd>' + (c.budget ? '<dt>Presupuesto</dt><dd>' + money(c.budget) + (s.budgets && s.budgets[c.id] ? ' (asignado)' : ' (se asigna al abrirlo)') + '</dd>' : '') + '<dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>' + esc(c.victimLabel || 'Víctima') + '</dt><dd>' + esc(c.victim.summary || c.victim.name + ', ' + c.victim.age + ' años') + '</dd>' + (c.variants ? '<dt>Versiones</dt><dd>' + Object.keys(c.variants).length + ' soluciones posibles: los hechos cambian en cada partida</dd>' : '') + '</dl>' +
           (status === 'Bloqueado' ? '<p class="faint" style="font-size:.86rem">Se desbloquea al ascender. Gana XP cerrando expedientes, en la academia o con jornadas de estudio.</p>' : '') +
           (cs ? '<div class="row mono faint" style="font-size:.76rem">EVIDENCIAS ' + p.ev + '/' + c.evidence.length + ' · ENTREVISTAS ' + p.int + '/' + c.people.length + ' · LAB ' + p.lab + ' · DIGITAL ' + p.dig + ' · CONTRADICCIONES ' + p.con + '</div>' : '') +
           (cs && cs.evaluation ? '<div class="result">Resultado: <b>' + cs.evaluation.total + '/100</b>' + (cs.trial ? ' · Juicio: ' + cs.trial.rebutted + '/' + cs.trial.total + ' objeciones respondidas' : '') + '</div>' : '') +
@@ -353,7 +353,7 @@
     const recent = facts.slice(-6).reverse();
     return '<div class="grid grid-2">' +
       '<article class="panel dossier stack"><div class="eyebrow">Informe inicial</div>' + c.briefing.map(b => '<p>' + esc(b) + '</p>').join('') +
-      '<dl class="kv"><dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>' + esc(c.victimLabel || 'Víctima') + '</dt><dd>' + esc(c.victim.name) + ', ' + c.victim.age + ' años. ' + esc(c.victim.job) + '</dd><dt>Ventana</dt><dd>' + esc(c.deathWindow) + '</dd></dl></article>' +
+      '<dl class="kv"><dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>' + esc(c.victimLabel || 'Víctima') + '</dt><dd>' + esc(c.victim.summary || c.victim.name + ', ' + c.victim.age + ' años') + '. ' + esc(c.victim.job) + '</dd><dt>Ventana</dt><dd>' + esc(c.deathWindow) + '</dd></dl></article>' +
       '<article class="panel stack"><div class="panel-head"><h3>Últimas incorporaciones</h3><span class="badge">' + facts.length + ' hechos</span></div>' +
       recent.map(f => factRow(c, f)).join('') +
       '<div class="sub">Personas del expediente</div><div class="stack" style="gap:6px">' + c.people.map(p => '<div class="row" style="flex-wrap:nowrap">' + portrait(p, 34) + '<div class="min0"><b style="font-size:.9rem">' + esc(p.name) + '</b> <span class="muted" style="font-size:.82rem">· ' + esc(p.role) + '</span></div></div>').join('') + '</div></article></div>';
@@ -408,7 +408,8 @@
         (done ? '<button class="btn" data-act="wall-add-ev" data-id="' + e.id + '"' + (onWall ? ' disabled' : '') + '>' + (onWall ? 'En el muro ✓' : 'Añadir al muro') + '</button>' : '') +
         (done ? '<button class="btn" data-act="gen-question" data-id="' + e.id + '">Generar pregunta</button>' : '') +
         (in3d ? '<button class="btn" data-act="s3-inspect">' + (cs.lastView.inspect ? 'Dejar de inspeccionar' : 'Inspeccionar de cerca') + '</button>' : '') +
-        '<button class="btn ghost" data-act="scene-sel" data-id="">Cerrar</button></div></article>';
+        '<button class="btn ghost" data-act="scene-sel" data-id="">Cerrar</button></div>' +
+        (done ? forensicPanel(c, cs, e, in3d) : '') + '</article>';
     }
     const viewTabs = '<div class="row" role="group" aria-label="Tipo de vista" style="margin-bottom:10px">' +
       (can3d ? '<button class="btn small ' + (in3d ? 'primary' : 'ghost') + '" data-act="view3d" data-on="1">Vista 3D</button><button class="btn small ' + (in3d ? 'ghost' : 'primary') + '" data-act="view3d" data-on="0">Plano</button>' : '<span class="faint" style="font-size:.8rem">Tu navegador no permite 3D: se muestra el plano.</span>') + '</div>';
@@ -418,8 +419,26 @@
       '<div class="legend"><span>◯ sin examinar</span><span>● examinado</span><span>' + esc(P.legend) + '</span></div></div>' + side + '</div>';
   }
 
+  function forensicPanel(c, cs, e, in3d) {
+    const used = tool => Object.keys(cs.forensic).filter(k => k.endsWith(':' + tool)).length;
+    const results = C.forensicTools.filter(t => cs.forensic[e.id + ':' + t.id]);
+    const fx = cs.lastView.fx && cs.lastView.fx.ev === e.id ? cs.lastView.fx : null;
+    return '<div class="forensic"><div class="spread"><div class="sub">Herramientas forenses</div>' + (fx && in3d ? '<button class="linkish" data-act="fx-off">Volver a luz normal</button>' : '') + '</div><div class="tool-row">' +
+      C.forensicTools.map(t => {
+        const key = e.id + ':' + t.id;
+        const left = t.kit ? t.kit - used(t.id) : null;
+        const dis = cs.forensic[key] || (left !== null && left <= 0);
+        return '<button class="tool tool-' + t.id + (fx && fx.tool === t.id ? ' on' : '') + '" data-act="forensic" data-id="' + e.id + '" data-tool="' + t.id + '"' + (dis ? ' disabled' : '') + ' title="' + esc(t.desc) + '"><b>' + esc(t.name) + '</b><small>' + (cs.forensic[key] ? 'Aplicado' : left === null ? 'Ilimitado' : left + ' en el kit') + '</small></button>';
+      }).join('') + '</div>' +
+      results.map(t => {
+        const def = (e.forensic || {})[t.id];
+        return def ? def.reveals.map(id => '<div class="result"><b>' + esc(t.name) + '.</b> ' + esc(c.facts[id].text.replace(/^[^:]+:\s*/, '')) + '</div>').join('') : '<div class="result neutral"><b>' + esc(t.name) + '.</b> Sin hallazgos con esta técnica en este elemento.</div>';
+      }).join('') + '</div>';
+  }
+
   function evFacts(c, cs, e) {
     const ids = [].concat(e.reveals || []);
+    Object.keys(e.forensic || {}).forEach(k => { if (cs.forensic[e.id + ':' + k] === 'pos') ids.push.apply(ids, e.forensic[k].reveals); });
     Object.keys(e.lab || {}).forEach(k => { if (cs.lab[e.id + ':' + k]) ids.push.apply(ids, e.lab[k].reveals); });
     return ids.filter(id => EN.known(cs, id)).map(id => c.facts[id]);
   }
@@ -599,7 +618,7 @@
     return '<div class="stack-lg"><div class="spread no-print"><p class="muted" style="max-width:62ch">El informe se compone con tu propio material: cronología, contradicciones registradas, hipótesis y lo que escribas aquí.</p><div class="row"><button class="btn" data-act="copy-report">Copiar texto</button>' + (inFrame ? '' : '<button class="btn ghost" data-act="print">Imprimir</button>') + '</div></div>' +
       '<article class="panel stack-lg" id="report">' +
       sec(1, 'Identificación del expediente', '<p>' + c.id + ' · ' + esc(c.title) + ' · ' + esc(c.type) + ' · ' + esc(c.date) + '. Investigador/a: ' + esc(playerName()) + '.</p>') +
-      sec(2, esc(c.victimLabel || 'Víctima'), '<p>' + esc(c.victim.name) + ', ' + c.victim.age + ' años. ' + esc(c.victim.job) + '.</p>') +
+      sec(2, esc(c.victimLabel || 'Víctima'), '<p>' + esc(c.victim.summary || c.victim.name + ', ' + c.victim.age + ' años') + '. ' + esc(c.victim.job) + '.</p>') +
       sec(3, 'Escena', '<p>' + esc(c.location) + '. ' + esc(c.sceneSummary) + '</p>') +
       sec(4, 'Cronología', tl.length ? tl.map(e => '<div class="fact"><time>' + esc(e.time + (e.end ? '–' + e.end : '')) + '</time><div><span class="src">' + esc(e.source) + '</span>' + esc(e.text) + (e.note ? ' <i class="muted">— ' + esc(e.note) + '</i>' : '') + '</div></div>').join('') : '<p class="muted">Sin cronología elaborada.</p>') +
       sec(5, 'Personas', '<ul style="margin:0;padding-left:18px">' + c.people.map(p => '<li>' + esc(p.name) + ' — ' + esc(p.role) + (cs.asked[p.id] ? ' (entrevistada)' : ' (no entrevistada)') + '</li>').join('') + '</ul>') +
@@ -748,9 +767,9 @@
       '<article class="panel stack"><h3>Lectura de tu investigación</h3>' + ev.lines.map(l => '<p style="font-size:.92rem">' + esc(l) + '</p>').join('') +
       '<div class="sub">Estadísticas</div><dl class="kv">' + ev.stats.map(([k, val]) => '<dt>' + esc(k) + '</dt><dd class="mono">' + esc(val) + '</dd>').join('') + '</dl></article></div>' +
       trial +
-      '<article class="panel stack truth"><h3>Verdad interna del caso</h3>' + c.truth.narrative.map(p => '<p>' + esc(p) + '</p>').join('') + '</article>' +
+      '<article class="panel stack truth"><h3>Verdad interna del caso</h3>' + (c.variants ? '<div class="result">Esta partida tenía la versión ' + (c.variantIndex + 1) + ' de ' + c.variantCount + '. Si repites el expediente te tocará otra: los hechos cambiarán.</div>' : '') + c.truth.narrative.map(p => '<p>' + esc(p) + '</p>').join('') + '</article>' +
       '<article class="panel stack"><h3>Nivel interpretativo de cada evidencia</h3><div class="stack" style="gap:6px">' + c.evidence.map(e => '<div class="spread" style="font-size:.88rem;border-bottom:1px dashed var(--line-soft);padding:4px 0"><span><span class="mono" style="color:var(--accent)">' + e.id + '</span> ' + esc(e.name) + '</span><span class="badge ' + (e.level >= 4 ? 'warn' : '') + '">Nivel ' + e.level + ' · ' + LEVEL[e.level] + '</span></div>').join('') + '</div></article>' +
-      '<div class="row"><button class="btn" data-act="go" data-screen="home">Volver al centro</button><button class="btn ghost" data-act="go" data-screen="cases">Ir a expedientes</button></div></div>';
+      '<div class="row"><button class="btn" data-act="go" data-screen="home">Volver al centro</button><button class="btn ghost" data-act="go" data-screen="cases">Ir a expedientes</button>' + (c.variants ? '<button class="btn primary" data-act="restart-case" data-id="' + c.id + '">Jugar otra versión</button>' : '') + '</div></div>';
   }
 
   /* ---------- Modal de bienvenida y tutorial ---------- */

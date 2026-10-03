@@ -4,7 +4,46 @@
 (function () {
   const NOT_FOUND = 'No consta en el expediente.';
 
-  function getCase(id) { return E0.cases.find(c => c.id === id) || null; }
+  /* ---------- Versiones (varias soluciones por caso) ----------
+   * Un caso con `variants` comparte estructura (personas, escena, evidencias, solicitudes)
+   * y cada versión sobrescribe contenidos: hechos, detalles, respuestas, contradicciones y verdad. */
+  const resolved = {};
+  function resolveCase(base, vid) {
+    const key = base.id + '|' + vid;
+    if (resolved[key]) return resolved[key];
+    const v = base.variants[vid];
+    const c = Object.assign({}, base, { variant: vid, variantIndex: Object.keys(base.variants).indexOf(vid), variantCount: Object.keys(base.variants).length });
+    c.facts = Object.assign({}, base.facts, v.facts || {});
+    c.evidence = base.evidence.map(e => (v.evidence || {})[e.id] ? Object.assign({}, e, v.evidence[e.id]) : e);
+    c.people = base.people.map(p => {
+      const ans = (v.answers || {})[p.id], cf = (v.confront || {})[p.id];
+      if (!ans && !cf) return p;
+      return Object.assign({}, p, {
+        questions: p.questions.map(q => ans && ans[q.id] ? Object.assign({}, q, ans[q.id]) : q),
+        confront: Object.assign({}, p.confront, cf || {})
+      });
+    });
+    c.conflicts = (base.conflicts || []).concat(v.conflicts || []);
+    c.truth = v.truth;
+    c.trial = Object.assign({}, base.trial || {}, v.trial || {});
+    c.trialIntro = Object.assign({}, base.trialIntro || {}, v.trialIntro || {});
+    c.evaluation = Object.assign({}, base.evaluation || {}, v.evaluation || {});
+    resolved[key] = c;
+    return c;
+  }
+  function getCase(id) {
+    const base = E0.cases.find(c => c.id === id) || null;
+    if (!base || !base.variants) return base;
+    const st = E0.store && E0.store.state;
+    const cs = st && st.cases[id];
+    const vid = cs && cs.variant && base.variants[cs.variant] ? cs.variant : Object.keys(base.variants)[0];
+    return resolveCase(base, vid);
+  }
+  function pickVariant(base, avoid) {
+    const ids = Object.keys(base.variants);
+    const pool = ids.length > 1 && avoid ? ids.filter(x => x !== avoid) : ids;
+    return pool[Math.floor(Math.random() * pool.length)];
+  }
 
   /* HH:MM → minutos desde las 12:00 del día del hecho (madrugada = +24 h). */
   function minutes(hhmm) {
@@ -51,6 +90,8 @@
 
   function personName(c, pid) {
     if (pid === c.victim.id) return c.victim.name;
+    const x = (c.extraPersons || []).find(q => q.id === pid);
+    if (x) return x.name;
     const p = c.people.find(x => x.id === pid);
     if (p) return p.name;
     const t = (c.judicial.targets || []).find(x => x.id === pid);
@@ -120,6 +161,7 @@
     };
     c.people.forEach(p => add(p.id, p.name, (c.queryAliases || {})[p.id]));
     add(c.victim.id, c.victim.name, ['victima'].concat((c.queryAliases || {})[c.victim.id] || []));
+    (c.extraPersons || []).forEach(x => add(x.id, x.name, ['victima']));
     (c.judicial.targets || []).forEach(t => { if (!out[t.id]) add(t.id, t.name); });
     return out;
   }
@@ -267,6 +309,8 @@
     const tlCompares = count('timeline_compare');
     const queries = L.filter(e => e.type === 'query');
     const photos = Object.keys(cs.photos || {}).filter(id => cs.examined[id]).length;
+    const forensicUses = Object.keys(cs.forensic || {}).length;
+    const forensicHits = Object.values(cs.forensic || {}).filter(x => x === 'pos').length;
     const wallLinks = ((cs.wall || {}).links || []).length;
     const mapLinks = (cs.mapLinks || []).length;
     const stmtConflicts = conflictsFound.filter(id => { const k = c.conflicts.find(x => x.id === id); return k && (c.facts[k.a].kind === 'statement' || c.facts[k.b].kind === 'statement'); }).length;
@@ -306,8 +350,8 @@
     P.contradicciones = { score: clamp(conflictsFound.length / c.conflicts.length * 55 + keyFound.length / T.keyConflicts.length * 45),
       why: 'Registraste ' + conflictsFound.length + ' de ' + c.conflicts.length + ' diferencias objetivas posibles; ' + keyFound.length + ' eran clave para la reconstrucción.' };
     const subtle = X.subtle.ids.filter(has);
-    P.atencion = { score: clamp(examined / totalEv * 50 + subtle.length * 10 + (examined ? photos / examined * 10 : 0)),
-      why: 'Examinaste ' + examined + ' de ' + totalEv + ' elementos, ' + subtle.length + ' de ' + X.subtle.ids.length + ' detalles discretos (' + X.subtle.label + ') y fotografiaste ' + photos + '.' };
+    P.atencion = { score: clamp(examined / totalEv * 45 + subtle.length * 9 + (examined ? photos / examined * 8 : 0) + Math.min(12, forensicHits * 4)),
+      why: 'Examinaste ' + examined + ' de ' + totalEv + ' elementos, ' + subtle.length + ' de ' + X.subtle.ids.length + ' detalles discretos (' + X.subtle.label + '), fotografiaste ' + photos + ' y obtuviste ' + forensicHits + ' hallazgo(s) con herramientas forenses.' };
     const tc = X.temporalConflicts.filter(id => cs.conflicts[id]).length;
     P.temporal = { score: clamp(Math.min(10, cs.timeline.length) * 4 + (tlCompares ? 20 : 0) + (wPts === 10 ? 25 : 0) + tc * 8),
       why: cs.timeline.length + ' eventos en tu cronología; ' + (tlCompares ? 'usaste la comparación de cronologías' : 'no usaste la comparación de cronologías') + '; franja final ' + (wPts === 10 ? 'correcta' : 'no correcta') + '.' };
@@ -356,6 +400,7 @@
     else bias = 'No se observa una fijación clara en una hipótesis inicial.';
     lines.push(bias);
     if (examined) lines.push('Cadena de custodia: documentaste fotográficamente ' + photos + ' de ' + examined + ' indicios examinados.');
+    if (forensicUses) lines.push('Usaste herramientas forenses ' + forensicUses + ' vez/veces; ' + forensicHits + ' dieron un hallazgo.');
 
     const stats = [
       ['Evidencias examinadas', examined + '/' + totalEv],
@@ -387,5 +432,5 @@
     return { res, rebutted, total: set.length, verdict };
   }
 
-  E0.engine = { NOT_FOUND, getCase, costOf, judicialMax, minutes, fmt, known, discover, knownFacts, personName, judicialTargets, placeDistance, knownPlaces, log, query, findConflict, timelineCompare, hypStatus, custody, evaluate, trialSet, trialResolve, norm };
+  E0.engine = { NOT_FOUND, getCase, resolveCase, pickVariant, costOf, judicialMax, minutes, fmt, known, discover, knownFacts, personName, judicialTargets, placeDistance, knownPlaces, log, query, findConflict, timelineCompare, hypStatus, custody, evaluate, trialSet, trialResolve, norm };
 })();
