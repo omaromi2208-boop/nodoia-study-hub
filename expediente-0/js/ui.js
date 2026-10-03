@@ -1,0 +1,614 @@
+/* EXPEDIENTE 0 — render de pantallas. Solo genera HTML a partir del estado;
+ * las acciones se resuelven en app.js mediante atributos data-act. */
+(function () {
+  const C = E0.config;
+  const EN = E0.engine;
+
+  const esc = s => String(s === undefined || s === null ? '' : s).replace(/[&<>"']/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[ch]));
+  const S = () => E0.store.state;
+
+  const ICONS = {
+    home: '<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+    cases: '<path d="M3 6a1 1 0 0 1 1-1h5l2 2h9a1 1 0 0 1 1 1v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/>',
+    academy: '<path d="M2 8l10-4 10 4-10 4z"/><path d="M6 10v5c3 2 9 2 12 0v-5"/>',
+    career: '<path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/>',
+    notebook: '<path d="M6 3h11a1 1 0 0 1 1 1v16a1 1 0 0 1-1 1H6z"/><path d="M6 3v18M9 8h6M9 12h6"/>',
+    profile: '<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',
+    settings: '<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1L7 17M17 7l2.1-2.1"/>',
+    case: '<path d="M6 2h9l5 5v15H6z"/><circle cx="12" cy="14" r="3"/><path d="M14.2 16.2L17 19"/>'
+  };
+  const icon = k => '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[k] + '</svg>';
+
+  function rankIndex(xp) {
+    let i = 0;
+    C.ranks.forEach((r, k) => { if (xp >= r.xp) i = k; });
+    return i;
+  }
+  function rankInfo(xp) {
+    const i = rankIndex(xp);
+    const cur = C.ranks[i], next = C.ranks[i + 1] || null;
+    const pct = next ? Math.round((xp - cur.xp) / (next.xp - cur.xp) * 100) : 100;
+    return { i, cur, next, pct };
+  }
+  const invName = id => S().investigators[id] || id;
+  const money = n => n.toLocaleString('es-ES') + ' €';
+
+  /* ---------- Shell ---------- */
+  function topbar() {
+    const s = S();
+    const r = rankInfo(s.xp);
+    return '<button class="burger" data-act="nav-toggle" aria-label="Abrir menú"><i></i><i></i><i></i></button>' +
+      '<div class="brand"><b>EXPEDIENTE <span>0</span></b><small>INVESTIGACIÓN</small></div>' +
+      '<div class="top-stats">' +
+      '<span class="chip opt" title="Rango">' + esc(r.cur.name) + '</span>' +
+      '<span class="chip" title="Dinero"><em>€</em>' + s.money.toLocaleString('es-ES') + '</span>' +
+      '<span class="chip opt" title="Energía"><em>EN</em>' + s.energy + '</span>' +
+      '<div class="turn" role="group" aria-label="Investigador activo">' +
+      ['omi', 'rebe'].map(id => '<button data-act="set-active" data-id="' + id + '" aria-pressed="' + (s.active === id) + '">' + esc(invName(id)) + '</button>').join('') +
+      '</div></div>';
+  }
+
+  function sidebar() {
+    const s = S();
+    const cur = s.view.screen;
+    const items = [['home', 'Inicio'], ['cases', 'Expedientes'], ['academy', 'Academia'], ['career', 'Carrera'], ['notebook', 'Cuaderno'], ['profile', 'Perfil'], ['settings', 'Ajustes']];
+    let h = items.map(([id, label]) => '<button class="nav-btn" data-act="go" data-screen="' + id + '"' + (cur === id ? ' aria-current="page"' : '') + '>' + icon(id) + label + '</button>').join('');
+    const active = Object.keys(s.cases).find(id => s.cases[id].status === 'activo');
+    const shown = s.view.caseId || active;
+    if (shown) {
+      const c = EN.getCase(shown);
+      h += '<div class="eyebrow nav-sep">Expediente activo</div>' +
+        '<button class="nav-btn nav-case" data-act="open-case" data-id="' + c.id + '"' + (cur === 'case' ? ' aria-current="page"' : '') + '>' + icon('case') +
+        '<span>' + esc(c.title) + '<small>' + c.id + ' · ' + (s.cases[c.id] && s.cases[c.id].status === 'cerrado' ? 'cerrado' : 'activo') + '</small></span></button>';
+    }
+    h += '<div class="side-foot">Semana ' + s.week + ' · jornada ' + (s.jornada % C.jornadasPorSemana + 1) + '/' + C.jornadasPorSemana + (E0.store.storageOk ? '<br>Guardado automático activo' : '<br><span style="color:var(--amber)">Sin almacenamiento local: exporta la partida para no perderla</span>') + '</div>';
+    return h;
+  }
+
+  /* ---------- Inicio ---------- */
+  function caseProgress(c, cs) {
+    if (!cs) return { ev: 0, int: 0, hyp: 0, lab: 0, dig: 0, con: 0 };
+    return {
+      ev: Object.keys(cs.examined).length,
+      int: c.people.filter(p => cs.asked[p.id] && Object.keys(cs.asked[p.id]).length).length,
+      hyp: cs.hypotheses.filter(h => h.status !== 'descartada').length,
+      lab: Object.keys(cs.lab).length,
+      dig: Object.keys(cs.digital).length + cs.judicial.length,
+      con: Object.keys(cs.conflicts).length
+    };
+  }
+
+  function caseButton(c) {
+    const cs = S().cases[c.id];
+    if (!cs) return '<button class="btn primary" data-act="open-case" data-id="' + c.id + '">Abrir expediente</button>';
+    if (cs.status === 'cerrado') return '<button class="btn" data-act="open-case" data-id="' + c.id + '">Revisar expediente</button>';
+    return '<button class="btn primary" data-act="open-case" data-id="' + c.id + '">Continuar investigación</button>';
+  }
+
+  function screenHome() {
+    const s = S();
+    const r = rankInfo(s.xp);
+    const c = E0.cases[0];
+    const cs = s.cases[c.id];
+    const solved = s.history.length;
+    const doneMods = E0.academy.filter(m => s.academy[m.id]).length;
+    const status = !cs ? 'Sin abrir' : cs.status === 'cerrado' ? 'Cerrado' : 'Activo';
+    const p = caseProgress(c, cs);
+    return '<section class="screen stack-lg">' +
+      '<div class="screen-head"><div><div class="eyebrow">Centro de investigación · Semana ' + s.week + '</div><h1>Unidad ' + esc(invName('omi')) + ' &amp; ' + esc(invName('rebe')) + '</h1></div>' +
+      '<div class="team">' + ['omi', 'rebe'].map(id => '<div class="team-member"><div class="avatar ' + (s.active === id ? 'acc' : '') + '">' + esc(invName(id).replace(/^La\s+/i, '').slice(0, 2).toUpperCase()) + '</div><div><b>' + esc(invName(id)) + '</b><div class="faint mono" style="font-size:.72rem">' + (s.active === id ? 'TURNO ACTIVO' : 'EN EQUIPO') + '</div></div></div>').join('') + '</div></div>' +
+      '<div class="hero">' +
+      '<article class="panel dossier hero-case stack"><span class="stamp badge ' + (status === 'Activo' ? 'acc' : status === 'Cerrado' ? 'ok' : '') + '">' + status + '</span>' +
+      '<div><div class="case-code">' + c.id + ' · EXPEDIENTE DESTACADO</div><div class="case-title">' + esc(c.title) + '</div>' +
+      '<p class="muted">' + esc(c.type) + ' · Dificultad ' + esc(c.difficulty) + ' · ' + esc(c.location) + '</p></div>' +
+      '<p>' + esc(c.briefing[0]) + '</p>' +
+      (cs ? '<div class="row mono faint" style="font-size:.76rem">EVIDENCIAS ' + p.ev + '/' + c.evidence.length + ' · ENTREVISTAS ' + p.int + '/' + c.people.length + ' · HIPÓTESIS ' + p.hyp + ' · CONTRADICCIONES ' + p.con + '</div>' : '') +
+      '<div class="row">' + caseButton(c) + '</div></article>' +
+      '<article class="panel stack"><div class="panel-head"><h3>Carrera</h3><span class="badge acc">' + esc(r.cur.name) + '</span></div>' +
+      '<div class="stack" style="gap:6px"><div class="spread mono" style="font-size:.78rem"><span>' + s.xp + ' XP</span><span class="muted">' + (r.next ? r.next.xp + ' XP → ' + esc(r.next.name) : 'Rango máximo') + '</span></div><div class="bar"><i style="width:' + r.pct + '%"></i></div></div>' +
+      '<div class="grid-sm" style="grid-template-columns:repeat(2,minmax(0,1fr))">' +
+      '<div class="stat"><b>' + s.reputation + '</b><span>Reputación</span></div>' +
+      '<div class="stat"><b>' + money(s.money) + '</b><span>Dinero</span></div>' +
+      '<div class="stat"><b>' + solved + '/' + E0.cases.length + '</b><span>Casos cerrados</span></div>' +
+      '<div class="stat"><b>' + doneMods + '/' + E0.academy.length + '</b><span>Academia</span></div></div>' +
+      '<div class="stack" style="gap:6px"><div class="spread mono" style="font-size:.78rem"><span>Energía de jornada</span><span>' + s.energy + '/100</span></div><div class="bar energy ' + (s.energy < 30 ? 'low' : '') + '"><i style="width:' + s.energy + '%"></i></div></div>' +
+      '</article></div>' +
+      '<div class="grid">' +
+      '<article class="panel stack"><div class="panel-head"><h3>Realizar jornada</h3><span class="eyebrow">Semana ' + s.week + ' · jornada ' + (s.jornada % C.jornadasPorSemana + 1) + '/' + C.jornadasPorSemana + '</span></div>' +
+      '<div class="jornada-list">' + C.jornada.map(j => {
+        const fx = [j.energy ? (j.energy > 0 ? '+' : '') + j.energy + ' EN' : '', j.xp ? '+' + j.xp + ' XP' : '', j.money ? '+' + j.money + ' €' : ''].filter(Boolean).join(' · ');
+        const can = j.energy >= 0 || s.energy + j.energy >= 0;
+        return '<div class="jornada-item"><div class="min0"><b>' + esc(j.name) + '</b><p>' + esc(j.desc) + '</p></div><div class="row" style="flex-wrap:nowrap"><span class="fx">' + fx + '</span><button class="btn small" data-act="jornada" data-id="' + j.id + '"' + (can ? '' : ' disabled title="Energía insuficiente"') + '>Hacer</button></div></div>';
+      }).join('') + '</div><p class="faint" style="font-size:.8rem">Al completar ' + C.jornadasPorSemana + ' jornadas se cobra el salario semanal de tu rango (' + money(r.cur.salary) + ').</p></article>' +
+      '<article class="panel stack"><div class="panel-head"><h3>Academia</h3><button class="btn small ghost" data-act="go" data-screen="academy">Abrir</button></div>' +
+      E0.academy.map(m => '<div class="spread" style="padding:6px 0;border-bottom:1px dashed var(--line-soft)"><div class="min0"><div class="eyebrow">' + esc(m.area) + '</div><div>' + esc(m.title) + '</div></div>' + (s.academy[m.id] ? '<span class="badge ok">Completado</span>' : '<span class="badge">+' + m.xp + ' XP</span>') + '</div>').join('') +
+      '</article></div></section>';
+  }
+
+  /* ---------- Expedientes ---------- */
+  function screenCases() {
+    const s = S();
+    return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Archivo de la unidad</div><h1>Expedientes</h1></div></div>' +
+      E0.cases.map(c => {
+        const cs = s.cases[c.id];
+        const p = caseProgress(c, cs);
+        const status = !cs ? 'Disponible' : cs.status === 'cerrado' ? 'Cerrado' : 'Activo';
+        return '<article class="panel dossier stack"><div class="spread"><div><div class="case-code">' + c.id + '</div><h2 style="font-size:1.8rem;text-transform:uppercase">' + esc(c.title) + '</h2></div><span class="badge ' + (status === 'Activo' ? 'acc' : status === 'Cerrado' ? 'ok' : '') + '">' + status + '</span></div>' +
+          '<dl class="kv"><dt>Tipo</dt><dd>' + esc(c.type) + '</dd><dt>Dificultad</dt><dd>' + esc(c.difficulty) + '</dd><dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>Víctima</dt><dd>' + esc(c.victim.name) + ', ' + c.victim.age + ' años</dd></dl>' +
+          (cs ? '<div class="row mono faint" style="font-size:.76rem">EVIDENCIAS ' + p.ev + '/' + c.evidence.length + ' · ENTREVISTAS ' + p.int + '/' + c.people.length + ' · LAB ' + p.lab + ' · DIGITAL ' + p.dig + ' · CONTRADICCIONES ' + p.con + '</div>' : '') +
+          (cs && cs.evaluation ? '<div class="result">Resultado: <b>' + cs.evaluation.total + '/100</b>' + (cs.trial ? ' · Juicio: ' + cs.trial.rebutted + '/' + cs.trial.total + ' objeciones respondidas' : '') + '</div>' : '') +
+          '<div class="row">' + caseButton(c) +
+          (cs ? (s.view.confirmRestart === c.id ? '<button class="btn danger" data-act="restart-case" data-id="' + c.id + '">Confirmar: borrar progreso y repetir</button><button class="btn ghost" data-act="cancel-restart">Cancelar</button>' : '<button class="btn ghost" data-act="ask-restart" data-id="' + c.id + '">Repetir desde cero</button>') : '') +
+          '</div></article>';
+      }).join('') + '</section>';
+  }
+
+  /* ---------- Academia ---------- */
+  function screenAcademy() {
+    const s = S();
+    const open = s.view.module;
+    return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Formación continua</div><h1>Academia</h1></div><span class="badge">' + E0.academy.filter(m => s.academy[m.id]).length + '/' + E0.academy.length + ' módulos</span></div>' +
+      '<div class="grid">' + E0.academy.map(m => {
+        const st = s.academy[m.id];
+        const isOpen = open === m.id;
+        let body = '';
+        if (isOpen) {
+          body = '<p>' + esc(m.lesson) + '</p><div class="result neutral"><div class="sub">Ejemplo</div>' + esc(m.example) + '</div>' +
+            '<div class="sub">Evaluación</div><p><b>' + esc(m.question) + '</b></p><div class="stack" style="gap:6px">' +
+            m.options.map((o, i) => {
+              let cls = '';
+              if (st) cls = i === m.correct ? ' right' : (st.answer === i ? ' wrong' : '');
+              return '<button class="option' + cls + '" data-act="academy-answer" data-id="' + m.id + '" data-i="' + i + '"' + (st ? ' disabled' : '') + '>' + esc(o) + '</button>';
+            }).join('') + '</div>' +
+            (st ? '<div class="result ' + (st.correct ? '' : 'neutral') + '">' + (st.correct ? 'Respuesta correcta. ' : 'Respuesta incorrecta. ') + esc(m.explain) + ' <span class="mono">(+' + (st.correct ? m.xp : Math.round(m.xp / 4)) + ' XP)</span></div>' : '');
+        }
+        return '<article class="panel module"><div class="spread"><div class="eyebrow">' + esc(m.area) + '</div>' + (st ? '<span class="badge ok">Completado</span>' : '<span class="badge">+' + m.xp + ' XP</span>') + '</div><h3>' + esc(m.title) + '</h3>' + body +
+          '<div class="row"><button class="btn small ' + (isOpen ? 'ghost' : '') + '" data-act="academy-open" data-id="' + m.id + '">' + (isOpen ? 'Cerrar' : (st ? 'Repasar' : 'Empezar módulo')) + '</button></div></article>';
+      }).join('') + '</div></section>';
+  }
+
+  /* ---------- Carrera ---------- */
+  function screenCareer() {
+    const s = S();
+    const r = rankInfo(s.xp);
+    return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Progresión profesional</div><h1>Carrera</h1></div><span class="badge acc">' + s.xp + ' XP</span></div>' +
+      '<div class="grid"><article class="panel stack"><h3>Escalafón</h3><div class="ladder">' + C.ranks.map((rk, i) =>
+        '<div class="rung ' + (i === r.i ? 'now' : i < r.i ? 'done' : '') + '"><span class="mono faint">' + (i + 1) + '</span><div class="min0"><b>' + esc(rk.name) + '</b><div class="faint mono" style="font-size:.72rem">Salario semanal ' + money(rk.salary) + '</div></div><span class="mono" style="font-size:.8rem">' + rk.xp + ' XP</span></div>').join('') + '</div></article>' +
+      '<article class="panel stack"><h3>Situación</h3><dl class="kv"><dt>Rango</dt><dd>' + esc(r.cur.name) + '</dd><dt>Siguiente</dt><dd>' + (r.next ? esc(r.next.name) + ' (faltan ' + (r.next.xp - s.xp) + ' XP)' : '—') + '</dd><dt>Reputación</dt><dd>' + s.reputation + '/100</dd><dt>Dinero</dt><dd>' + money(s.money) + '</dd><dt>Calendario</dt><dd>Semana ' + s.week + ', jornada ' + (s.jornada % C.jornadasPorSemana + 1) + '</dd></dl>' +
+      '<h3 style="margin-top:8px">Historial de casos</h3>' + (s.history.length ? s.history.map(hh => '<div class="result neutral"><b>' + esc(hh.caseId) + ' · ' + esc(hh.title) + '</b><br><span class="mono" style="font-size:.8rem">' + hh.score + '/100 · ' + esc(hh.date) + ' · ' + (hh.culpritOk ? 'atribución correcta' : 'atribución no correcta') + '</span></div>').join('') : '<p class="muted">Todavía no has cerrado ningún expediente.</p>') +
+      '</article></div></section>';
+  }
+
+  /* ---------- Cuaderno ---------- */
+  function screenNotebook() {
+    const s = S();
+    const filter = s.view.noteFilter || 'all';
+    const notes = s.notes.filter(n => filter === 'all' || n.author === filter).slice().reverse();
+    return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Libreta de la unidad</div><h1>Cuaderno</h1></div></div>' +
+      '<div class="grid"><form class="panel stack" data-form="note"><h3>Nueva entrada de ' + esc(invName(s.active)) + '</h3>' +
+      '<div class="row" style="flex-wrap:nowrap"><label class="field" style="flex:1">Categoría<select id="note-cat" name="cat">' + C.noteCategories.map(c => '<option>' + c + '</option>').join('') + '</select></label>' +
+      '<label class="field" style="flex:1">Expediente<select id="note-case" name="caseId"><option value="">General</option>' + E0.cases.map(c => '<option value="' + c.id + '"' + (s.view.caseId === c.id ? ' selected' : '') + '>' + c.id + '</option>').join('') + '</select></label></div>' +
+      '<label class="field">Texto<textarea id="note-text" name="text" required placeholder="Escribe libremente: dudas, horas, ideas por comprobar…"></textarea></label>' +
+      '<div class="row"><button class="btn primary" type="submit">Guardar nota</button><span class="faint" style="font-size:.8rem">El autor es el investigador activo (cámbialo arriba).</span></div></form>' +
+      '<div class="stack"><div class="row" role="group" aria-label="Filtrar notas">' + [['all', 'Todas'], ['omi', invName('omi')], ['rebe', invName('rebe')]].map(([id, l]) => '<button class="btn small ' + (filter === id ? 'primary' : 'ghost') + '" data-act="note-filter" data-id="' + id + '">' + esc(l) + '</button>').join('') + '</div>' +
+      (notes.length ? notes.map(n => '<div class="note"><div class="spread"><span class="row"><span class="badge acc">' + esc(n.cat) + '</span><span class="badge">' + esc(invName(n.author)) + '</span>' + (n.caseId ? '<span class="badge">' + esc(n.caseId) + '</span>' : '') + '</span><button class="linkish" data-act="note-del" data-id="' + n.id + '">Eliminar</button></div><p>' + esc(n.text) + '</p><span class="faint mono" style="font-size:.7rem">' + new Date(n.t).toLocaleString('es-ES') + '</span></div>').join('') : '<p class="muted">No hay notas' + (filter !== 'all' ? ' de ' + esc(invName(filter)) : '') + '.</p>') +
+      '</div></div></section>';
+  }
+
+  /* ---------- Perfil ---------- */
+  function screenProfile() {
+    const s = S();
+    const r = rankInfo(s.xp);
+    const last = s.history.length ? s.history[s.history.length - 1] : null;
+    return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Ficha del investigador</div><h1>' + esc(invName('omi')) + '</h1></div></div>' +
+      '<div class="grid"><article class="panel stack"><dl class="kv"><dt>Nombre</dt><dd>' + esc(invName('omi')) + '</dd><dt>Compañera</dt><dd>' + esc(invName('rebe')) + '</dd><dt>Rango</dt><dd>' + esc(r.cur.name) + '</dd><dt>XP</dt><dd>' + s.xp + '</dd><dt>Reputación</dt><dd>' + s.reputation + '/100</dd><dt>Casos</dt><dd>' + s.history.length + ' cerrados / ' + E0.cases.length + ' disponibles</dd></dl>' +
+      '<h3>Perfil de razonamiento acumulado</h3>' + (last ? '<div class="stack" style="gap:6px">' + last.lines.map(l => '<p style="font-size:.9rem">' + esc(l) + '</p>').join('') + '</div>' : '<p class="muted">Aparecerá al cerrar el primer expediente. Se basa en tus acciones reales durante la investigación.</p>') +
+      '</article><article class="panel stack"><h3>Habilidades</h3>' + C.skills.map(k => '<div class="skill-row"><span>' + k.name + '</span><div class="bar"><i style="width:' + s.skills[k.id] + '%"></i></div><span class="mono">' + s.skills[k.id] + '</span></div>').join('') +
+      '<p class="faint" style="font-size:.78rem">Las habilidades se actualizan con la evaluación de cada caso y con la academia. No son un test psicológico ni una medida de inteligencia.</p></article></div></section>';
+  }
+
+  /* ---------- Ajustes ---------- */
+  function screenSettings() {
+    const s = S();
+    const st = s.settings;
+    const inFrame = window.self !== window.top;
+    return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Configuración</div><h1>Ajustes</h1></div></div>' +
+      '<div class="grid"><form class="panel stack" data-form="names"><h3>Investigadores</h3>' +
+      '<label class="field">Investigador 1<input type="text" id="name-omi" name="omi" maxlength="24" value="' + esc(s.investigators.omi) + '"></label>' +
+      '<label class="field">Investigador 2<input type="text" id="name-rebe" name="rebe" maxlength="24" value="' + esc(s.investigators.rebe) + '"></label>' +
+      '<div class="row"><button class="btn primary" type="submit">Guardar nombres</button></div></form>' +
+      '<article class="panel stack"><h3>Tema visual</h3><div class="swatches">' + C.themes.map(t => '<button class="swatch" data-act="theme" data-id="' + t.id + '" aria-pressed="' + (st.theme === t.id) + '"><i class="sw-' + t.id + '"></i>' + esc(t.name) + '</button>').join('') + '</div>' +
+      '<h3>Interfaz</h3><label class="check"><input type="checkbox" id="set-anim" data-act="toggle-setting" data-key="anim"' + (st.anim ? ' checked' : '') + '>Animaciones activadas</label>' +
+      '<label class="check"><input type="checkbox" id="set-sound" data-act="toggle-setting" data-key="sound"' + (st.sound ? ' checked' : '') + '>Sonido de interfaz discreto</label>' +
+      '<label class="field">Tamaño de interfaz<select id="set-scale" data-act="set-scale">' + [90, 100, 112, 125].map(v => '<option value="' + v + '"' + (st.scale === v ? ' selected' : '') + '>' + v + ' %</option>').join('') + '</select></label>' +
+      '<p class="faint" style="font-size:.78rem">Si tu sistema pide reducir el movimiento, las animaciones se desactivan automáticamente.</p></article>' +
+      '<article class="panel stack"><h3>Exportar partida</h3><p class="muted" style="font-size:.88rem">Copia este JSON para guardar una copia de seguridad o pasarla a otro dispositivo.</p>' +
+      '<textarea class="copy-area" id="export-area" readonly>' + esc(E0.store.exportJSON()) + '</textarea>' +
+      '<div class="row"><button class="btn" data-act="copy-export">Copiar JSON</button>' + (inFrame ? '' : '<button class="btn ghost" data-act="download-export">Descargar .json</button>') + '</div></article>' +
+      '<form class="panel stack" data-form="import"><h3>Importar partida</h3><p class="muted" style="font-size:.88rem">Pega aquí un JSON exportado o elige un archivo. Se valida antes de sustituir la partida actual.</p>' +
+      '<textarea class="copy-area" id="import-area" name="json" placeholder="{ &quot;v&quot;: 1, … }"></textarea>' +
+      '<input type="file" id="import-file" accept="application/json,.json" data-act="import-file">' +
+      '<div class="row"><button class="btn primary" type="submit">Validar e importar</button></div></form>' +
+      '<article class="panel stack"><h3>Borrar partida</h3><p class="muted" style="font-size:.88rem">Elimina perfil, progreso, notas y casos de este navegador.</p><div class="row">' +
+      (s.view.confirmReset ? '<button class="btn danger" data-act="reset-game">Confirmar: borrar todo</button><button class="btn ghost" data-act="cancel-reset">Cancelar</button>' : '<button class="btn danger" data-act="ask-reset">Borrar partida</button>') +
+      '</div></article></div></section>';
+  }
+
+  /* ---------- Caso ---------- */
+  const TABS = [
+    ['resumen', 'Resumen'], ['escena', 'Escena'], ['evidencias', 'Evidencias'], ['laboratorio', 'Laboratorio'], ['digital', 'Digital'],
+    ['personas', 'Personas'], ['comparador', 'Comparador'], ['cronologia', 'Cronología'], ['hipotesis', 'Hipótesis'], ['consulta', 'Consulta'],
+    ['informe', 'Informe'], ['veredicto', 'Veredicto']
+  ];
+
+  function factRow(c, f, extra) {
+    const t = f.time ? f.time + (f.end ? '–' + f.end : '') : (f.date ? f.date.split(',')[0] : '—');
+    return '<div class="fact ' + (f.kind === 'statement' ? 'statement' : '') + '"><time>' + esc(t) + '</time><div class="min0"><span class="src">' + esc(f.source) + '</span>' + esc(f.text) + (extra || '') + '</div></div>';
+  }
+
+  function factLabel(c, id) {
+    const f = c.facts[id];
+    const t = f.time ? f.time + ' · ' : '';
+    const txt = f.text.length > 90 ? f.text.slice(0, 88) + '…' : f.text;
+    return '[' + f.source + '] ' + t + txt;
+  }
+
+  function factOptions(c, cs, opts) {
+    opts = opts || {};
+    const facts = EN.knownFacts(c, cs, opts.filter);
+    const stm = facts.filter(f => f.kind === 'statement');
+    const rec = facts.filter(f => f.kind !== 'statement');
+    const o = list => list.map(f => '<option value="' + f.id + '"' + (opts.selected === f.id ? ' selected' : '') + '>' + esc(factLabel(c, f.id)) + '</option>').join('');
+    return '<option value="">' + (opts.placeholder || 'Elige un hecho del expediente…') + '</option>' +
+      (stm.length ? '<optgroup label="Declaraciones">' + o(stm) + '</optgroup>' : '') +
+      (rec.length ? '<optgroup label="Registros y hallazgos">' + o(rec) + '</optgroup>' : '');
+  }
+
+  function screenCase() {
+    const s = S();
+    const c = EN.getCase(s.view.caseId);
+    const cs = s.cases[c.id];
+    const tab = s.view.tab || 'resumen';
+    const p = caseProgress(c, cs);
+    const closed = cs.status === 'cerrado';
+    const counts = { evidencias: p.ev, personas: p.int, hipotesis: p.hyp, laboratorio: p.lab, digital: p.dig, comparador: p.con };
+    const R = {
+      resumen: tabResumen, escena: tabEscena, evidencias: tabEvidencias, laboratorio: tabLab, digital: tabDigital, personas: tabPersonas,
+      comparador: tabComparador, cronologia: tabCronologia, hipotesis: tabHipotesis, consulta: tabConsulta, informe: tabInforme, veredicto: tabVeredicto
+    };
+    return '<section class="screen">' +
+      '<div class="case-head"><div class="min0"><div class="crumbs"><button data-act="go" data-screen="cases">Expedientes</button> / ' + c.id + ' / ' + esc(TABS.find(t => t[0] === tab)[1]) + '</div>' +
+      '<div class="case-code">' + c.id + '</div><h1>' + esc(c.title) + '</h1>' +
+      '<div class="row" style="margin-top:8px"><span class="badge">Víctima: ' + esc(c.victim.name) + '</span><span class="badge ' + (closed ? 'ok' : 'acc') + '">' + (closed ? 'Cerrado' : 'Activo') + '</span><span class="badge warn">Dificultad ' + esc(c.difficulty) + '</span></div></div>' +
+      '<div class="stack" style="gap:4px;align-items:flex-end"><span class="eyebrow">Objetivo</span><span style="font-size:.9rem">Reconstrucción del caso</span><span class="faint mono" style="font-size:.72rem">Turno: ' + esc(invName(s.active)) + '</span></div></div>' +
+      '<nav class="tabs" role="tablist" aria-label="Herramientas del expediente">' + TABS.map(([id, l]) => '<button class="tab" role="tab" data-act="tab" data-tab="' + id + '" aria-selected="' + (tab === id) + '">' + l + (counts[id] ? '<sup>' + counts[id] + '</sup>' : '') + '</button>').join('') + '</nav>' +
+      '<div id="tab-body">' + R[tab](c, cs) + '</div>' +
+      '<div class="case-bar" aria-label="Estado de la investigación"><span>Evidencias <b>' + p.ev + '/' + c.evidence.length + '</b></span><span>Entrevistas <b>' + p.int + '/' + c.people.length + '</b></span><span>Hipótesis <b>' + p.hyp + '</b></span><span>Lab <b>' + p.lab + '</b></span><span>Digital <b>' + p.dig + '</b></span><span>Contradicciones <b>' + p.con + '</b></span></div>' +
+      '</section>';
+  }
+
+  function tabResumen(c, cs) {
+    const facts = EN.knownFacts(c, cs);
+    const recent = facts.slice(-6).reverse();
+    return '<div class="grid grid-2">' +
+      '<article class="panel dossier stack"><div class="eyebrow">Informe inicial</div>' + c.briefing.map(b => '<p>' + esc(b) + '</p>').join('') +
+      '<dl class="kv"><dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>Víctima</dt><dd>' + esc(c.victim.name) + ', ' + c.victim.age + ' años. ' + esc(c.victim.job) + '</dd><dt>Ventana</dt><dd>' + esc(c.deathWindow) + '</dd></dl></article>' +
+      '<article class="panel stack"><div class="panel-head"><h3>Últimas incorporaciones</h3><span class="badge">' + facts.length + ' hechos</span></div>' +
+      recent.map(f => factRow(c, f)).join('') +
+      '<div class="sub">Personas del expediente</div><div class="stack" style="gap:6px">' + c.people.map(p => '<div class="row" style="flex-wrap:nowrap"><div class="avatar" style="width:32px;height:32px;font-size:.75rem">' + p.initials + '</div><div class="min0"><b style="font-size:.9rem">' + esc(p.name) + '</b> <span class="muted" style="font-size:.82rem">· ' + esc(p.role) + '</span></div></div>').join('') + '</div></article></div>';
+  }
+
+  function tabEscena(c, cs) {
+    const sel = cs.lastView.sceneSel || null;
+    const evById = id => c.evidence.find(e => e.id === id);
+    const plan = '<div class="plan" role="group" aria-label="Plano de la vivienda">' +
+      c.scene.rooms.map(r => '<div class="room" style="left:' + r.x + '%;top:' + r.y + '%;width:' + r.w + '%;height:' + r.h + '%"><span>' + r.name + '</span></div>').join('') +
+      c.scene.hotspots.map(hs => {
+        const e = evById(hs.ev);
+        return '<button class="hotspot ' + (cs.examined[e.id] ? 'done ' : '') + (sel === e.id ? 'sel' : '') + '" style="left:' + hs.x + '%;top:' + hs.y + '%" data-act="scene-sel" data-id="' + e.id + '" title="' + esc(e.name) + '" aria-label="' + esc(e.name) + '">' + e.id.slice(1) + '</button>';
+      }).join('') + '</div>';
+    const g = evById(c.scene.garage.ev);
+    let side;
+    if (!sel) {
+      side = '<article class="panel stack"><h3>Inspección ocular</h3><p class="muted">Selecciona un punto del plano para ver el elemento y decidir qué hacer con él. Los puntos con anillo animado no se han examinado todavía.</p>' +
+        '<div class="sub">Elementos</div><div class="stack" style="gap:4px">' + c.evidence.map(e => '<button class="linkish" style="text-align:left;text-decoration:none;color:' + (cs.examined[e.id] ? 'var(--muted)' : 'var(--text)') + '" data-act="scene-sel" data-id="' + e.id + '"><span class="mono" style="color:var(--accent)">' + e.id + '</span> ' + esc(e.name) + (cs.examined[e.id] ? ' ✓' : '') + '</button>').join('') + '</div></article>';
+    } else {
+      const e = evById(sel);
+      const done = cs.examined[e.id];
+      side = '<article class="panel stack ev-card"><header><div><div class="ev-id">' + e.id + ' · ' + esc(e.room) + '</div><h3>' + esc(e.name) + '</h3></div><span class="badge">' + esc(e.type) + '</span></header>' +
+        '<p>' + esc(done ? e.detail : e.public) + '</p>' +
+        (done ? '<dl class="kv"><dt>Valor posible</dt><dd>' + esc(e.value) + '</dd><dt>Limitaciones</dt><dd>' + esc(e.limits) + '</dd></dl>' : '') +
+        '<div class="row">' + (done ? '<button class="btn" data-act="examine" data-id="' + e.id + '">Volver a examinar</button>' : '<button class="btn primary" data-act="examine" data-id="' + e.id + '">Examinar</button>') +
+        (done && e.lab ? '<button class="btn" data-act="to-lab" data-id="' + e.id + '">Enviar a laboratorio</button>' : '') +
+        (done && e.unlocks ? '<button class="btn" data-act="tab" data-tab="digital">Solicitar análisis digital</button>' : '') +
+        '<button class="btn ghost" data-act="scene-sel" data-id="">Cerrar</button></div></article>';
+    }
+    return '<div class="scene-wrap"><div class="min0">' + plan +
+      '<button class="btn garage-btn ' + (sel === g.id ? 'primary' : '') + '" data-act="scene-sel" data-id="' + g.id + '"><span><span class="mono">' + g.id + '</span> ' + esc(c.scene.garage.label) + '</span><span>' + (cs.examined[g.id] ? '✓' : '→') + '</span></button>' +
+      '<div class="legend"><span>◯ sin examinar</span><span>● examinado</span><span>Planta 3.ª · vivienda 17 · 78 m²</span></div></div>' + side + '</div>';
+  }
+
+  function evFacts(c, cs, e) {
+    const ids = [].concat(e.reveals || []);
+    Object.keys(e.lab || {}).forEach(k => { if (cs.lab[e.id + ':' + k]) ids.push.apply(ids, e.lab[k].reveals); });
+    return ids.filter(id => EN.known(cs, id)).map(id => c.facts[id]);
+  }
+
+  function tabEvidencias(c, cs) {
+    const show = cs.lastView.evFilter || 'all';
+    const list = c.evidence.filter(e => show === 'all' || (show === 'done' ? cs.examined[e.id] : !cs.examined[e.id]));
+    return '<div class="stack"><div class="spread"><div class="row" role="group" aria-label="Filtrar evidencias">' +
+      [['all', 'Todas'], ['done', 'Examinadas'], ['todo', 'Sin examinar']].map(([id, l]) => '<button class="btn small ' + (show === id ? 'primary' : 'ghost') + '" data-act="ev-filter" data-id="' + id + '">' + l + '</button>').join('') +
+      '</div><span class="badge">' + Object.keys(cs.examined).length + '/' + c.evidence.length + ' examinadas</span></div>' +
+      '<div class="grid">' + list.map(e => {
+        const done = cs.examined[e.id];
+        const facts = done ? evFacts(c, cs, e) : [];
+        return '<article class="panel ev-card ' + (done ? '' : 'locked') + '"><header><div><div class="ev-id">' + e.id + ' · ' + esc(e.room) + '</div><h3>' + esc(e.name) + '</h3></div><span class="badge">' + esc(e.type) + '</span></header>' +
+          '<p style="font-size:.9rem">' + esc(done ? e.detail : e.public) + '</p>' +
+          (done ? '<dl class="kv"><dt>Valor</dt><dd>' + esc(e.value) + '</dd><dt>Límites</dt><dd>' + esc(e.limits) + '</dd></dl>' : '') +
+          (facts.length ? '<div class="sub">Información incorporada</div>' + facts.map(f => '<div class="result neutral" style="font-size:.86rem">' + esc(f.text) + '</div>').join('') : '') +
+          '<div class="row">' + (done ? '<button class="btn small ghost" data-act="examine" data-id="' + e.id + '">Volver a examinar</button>' + (e.lab ? '<button class="btn small" data-act="to-lab" data-id="' + e.id + '">Laboratorio</button>' : '') : '<button class="btn small primary" data-act="examine" data-id="' + e.id + '">Examinar</button>') + '</div></article>';
+      }).join('') + '</div></div>';
+  }
+
+  function tabLab(c, cs) {
+    const s = S();
+    const focus = cs.lastView.labFocus;
+    const avail = c.evidence.filter(e => e.lab && cs.examined[e.id]);
+    const pending = c.evidence.filter(e => e.lab && !cs.examined[e.id]).length;
+    return '<div class="stack"><div class="spread"><p class="muted" style="max-width:62ch">Decide qué análisis solicitar. Cada análisis tiene un coste para el presupuesto de la unidad. Los resultados respetan los límites de cada técnica.</p><span class="chip keep"><em>Fondos</em>' + money(s.money) + '</span></div>' +
+      (avail.length ? '<div class="grid">' + avail.map(e => '<article class="panel stack" ' + (focus === e.id ? 'style="border-color:var(--accent)"' : '') + ' id="lab-' + e.id + '"><div><div class="ev-id">' + e.id + '</div><h3>' + esc(e.name) + '</h3></div>' +
+        Object.keys(e.lab).map(k => {
+          const a = e.lab[k];
+          const key = e.id + ':' + k;
+          const done = cs.lab[key];
+          const label = a.label || c.labKinds[k];
+          return '<div class="lab-row"><span>' + esc(label) + '</span>' + (done ? '<span class="badge ok">Completado</span>' : '<button class="btn small" data-act="lab" data-id="' + e.id + '" data-kind="' + k + '"' + (s.money < a.cost ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + a.cost + ' €</span></button>') + '</div>' +
+            (done ? a.reveals.map(id => '<div class="result">' + esc(c.facts[id].text) + '</div>').join('') : '');
+        }).join('') + '</article>').join('') + '</div>' : '<div class="panel"><p class="muted">Todavía no has examinado ningún elemento que admita análisis. Empieza por la escena.</p></div>') +
+      (pending ? '<p class="faint" style="font-size:.82rem">Hay elementos de la escena sin examinar que podrían admitir análisis.</p>' : '') +
+      (s.money < 120 ? '<div class="result neutral">Fondos bajos. Puedes conseguir presupuesto con «Trabajo administrativo» en el centro de investigación.</div>' : '') + '</div>';
+  }
+
+  function tabDigital(c, cs) {
+    const s = S();
+    const jud = c.judicial;
+    const left = jud.max - cs.judicial.length;
+    return '<div class="stack-lg"><div class="spread"><p class="muted" style="max-width:62ch">Solicita registros digitales y compáralos después con las declaraciones y la cronología.</p><span class="chip keep"><em>Fondos</em>' + money(s.money) + '</span></div>' +
+      '<div class="grid">' + c.digital.map(d => {
+        const done = cs.digital[d.id];
+        const reqOk = !d.requires || cs.examined[d.requires];
+        const reqName = d.requires ? c.evidence.find(e => e.id === d.requires).name : '';
+        const facts = done ? d.reveals.map(id => c.facts[id]) : [];
+        return '<article class="panel stack"><div class="spread"><h3>' + esc(d.name) + '</h3>' + (done ? '<span class="badge ok">Recibido</span>' : '<span class="badge">' + d.cost + ' €</span>') + '</div><p class="muted" style="font-size:.88rem">' + esc(d.desc) + '</p>' +
+          (done ? '<div>' + facts.map(f => factRow(c, f)).join('') + '</div>' :
+            (reqOk ? '<div class="row"><button class="btn" data-act="digital" data-id="' + d.id + '"' + (s.money < d.cost ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + d.cost + ' €</span></button></div>' : '<p class="faint" style="font-size:.84rem">Requiere examinar antes: ' + esc(reqName) + '.</p>')) + '</article>';
+      }).join('') + '</div>' +
+      '<article class="panel stack"><div class="spread"><h3>Solicitud judicial de antenas</h3><span class="badge ' + (left ? 'acc' : '') + '">' + left + '/' + jud.max + ' disponibles</span></div><p class="muted" style="font-size:.88rem">' + esc(jud.desc) + '</p>' +
+      (left ? '<div class="row" style="flex-wrap:nowrap"><select id="jud-person" aria-label="Persona">' + c.people.filter(p => !cs.judicial.includes(p.id)).map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('') + '</select><button class="btn" data-act="judicial">Solicitar</button></div>' : '') +
+      cs.judicial.map(pid => jud.results[pid].map(id => factRow(c, c.facts[id])).join('')).join('') + '</article></div>';
+  }
+
+  function tabPersonas(c, cs) {
+    const sel = cs.lastView.person || null;
+    const grid = '<div class="people">' + c.people.map(p => {
+      const n = cs.asked[p.id] ? Object.keys(cs.asked[p.id]).length : 0;
+      return '<button class="person" data-act="person" data-id="' + p.id + '" aria-pressed="' + (sel === p.id) + '"><div class="avatar">' + p.initials + '</div><div class="min0"><b>' + esc(p.name) + '</b><small>' + esc(p.role) + '</small><div class="faint mono" style="font-size:.7rem">' + (n ? n + ' pregunta(s)' : 'Sin entrevistar') + '</div></div></button>';
+    }).join('') + '</div>';
+    if (!sel) return '<div class="stack">' + grid + '<p class="muted">Elige a quién interrogar. Las personas pueden decir la verdad, medias verdades, mentir, no saber o estar equivocadas. Ninguna lo anunciará.</p></div>';
+    const p = c.people.find(x => x.id === sel);
+    const asked = cs.asked[p.id] || {};
+    const avail = p.questions.filter(q => !asked[q.id] && (!q.requires || q.requires.some(id => EN.known(cs, id))));
+    const tr = cs.transcripts[p.id] || [];
+    return '<div class="stack-lg">' + grid +
+      '<div class="interview"><article class="panel stack"><div class="row" style="flex-wrap:nowrap"><div class="avatar lg acc">' + p.initials + '</div><div class="min0"><h3>' + esc(p.name) + ', ' + p.age + ' años</h3><div class="muted" style="font-size:.88rem">' + esc(p.role) + ' · ' + esc(p.relation) + '</div></div></div>' +
+      '<div class="spread"><span class="eyebrow">Estado de la entrevista</span><span class="badge">' + Object.keys(asked).length + ' preguntas · ' + (cs.confronted[p.id] ? Object.keys(cs.confronted[p.id]).length : 0) + ' confrontaciones</span></div>' +
+      '<div class="sub">Nueva pregunta</div>' + (avail.length ? '<div class="q-list">' + avail.map(q => '<button class="q-btn" data-act="ask" data-person="' + p.id + '" data-q="' + q.id + '">' + esc(q.q) + '</button>').join('') + '</div>' : '<p class="muted" style="font-size:.88rem">No quedan preguntas nuevas con la información actual. Confrontarle con datos puede abrir otras líneas.</p>') +
+      '<div class="sub">Confrontar con información del expediente</div><select id="confront-fact" aria-label="Hecho para confrontar">' + factOptions(c, cs) + '</select>' +
+      '<div class="row"><button class="btn" data-act="confront" data-person="' + p.id + '">Confrontar</button></div></article>' +
+      '<article class="panel stack"><div class="panel-head"><h3>Transcripción</h3><span class="badge">' + tr.length + ' intervenciones</span></div>' +
+      (tr.length ? '<div class="transcript" id="transcript">' + tr.map((t, i) => '<div><div class="turn-q">' + (t.kind === 'c' ? 'CONFRONTACIÓN · ' : t.kind === 'r' ? 'REPASO · ' : '') + esc(t.q) + '</div><div class="turn-a ' + (t.kind === 'c' ? 'conf' : '') + '">' + esc(t.a) + '</div>' +
+        '<div class="turn-tools"><button class="linkish" data-act="recall" data-person="' + p.id + '" data-i="' + i + '">Volver sobre esta respuesta</button></div></div>').join('') + '</div>' : '<p class="muted">Aún no has hablado con ' + esc(p.name.split(' ')[0]) + '.</p>') +
+      '</article></div></div>';
+  }
+
+  function tabComparador(c, cs) {
+    const res = cs.lastView.compare;
+    const found = Object.keys(cs.conflicts).sort((a, b) => cs.conflicts[a] - cs.conflicts[b]).map(id => c.conflicts.find(k => k.id === id));
+    let resHtml = '';
+    if (res) {
+      const fa = c.facts[res.a], fb = c.facts[res.b];
+      resHtml = '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr))"><div class="panel tight"><div class="sub">Fuente A · ' + esc(fa.source) + '</div>' + esc(fa.text) + '</div><div class="panel tight"><div class="sub">Fuente B · ' + esc(fb.source) + '</div>' + esc(fb.text) + '</div></div>' +
+        (res.conflict ? (() => { const k = c.conflicts.find(x => x.id === res.conflict); return '<div class="result"><b>Diferencia objetiva: ' + esc(k.type) + '.</b> ' + esc(k.desc) + '</div>'; })() : '<div class="result neutral">No se aprecian diferencias objetivas entre ambas fuentes.</div>');
+    }
+    return '<div class="stack-lg"><article class="panel stack"><h3>Comparador de declaraciones y fuentes</h3><p class="muted" style="font-size:.88rem">Elige dos elementos del expediente: dos declaraciones, o una declaración y un registro objetivo. El comparador solo señala diferencias objetivas (hora, lugar, secuencia, hecho omitido o añadido). No dice quién miente.</p>' +
+      '<div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr))"><label class="field">Fuente A<select id="cmp-a">' + factOptions(c, cs, { selected: res && res.a }) + '</select></label><label class="field">Fuente B<select id="cmp-b">' + factOptions(c, cs, { selected: res && res.b }) + '</select></label></div>' +
+      '<div class="row"><button class="btn primary" data-act="compare">Comparar</button></div>' + resHtml + '</article>' +
+      '<article class="panel stack"><div class="panel-head"><h3>Registro de contradicciones</h3><span class="badge">' + found.length + '</span></div>' +
+      (found.length ? found.map(k => '<div class="note"><div class="spread"><span class="row"><span class="badge ' + (k.severity === 'alta' ? 'crit' : k.severity === 'media' ? 'warn' : '') + '">' + esc(k.type) + ' · ' + esc(k.severity) + '</span></span>' +
+        '<label class="check" style="font-size:.8rem"><input type="checkbox" data-act="conflict-resolve" data-id="' + k.id + '"' + ((cs.resolved || {})[k.id] ? ' checked' : '') + '>Resuelta</label></div><p>' + esc(k.desc) + '</p><span class="faint mono" style="font-size:.7rem">Origen: ' + esc(c.facts[k.a].source) + ' ↔ ' + esc(c.facts[k.b].source) + '</span></div>').join('') : '<p class="muted">Todavía no has registrado contradicciones.</p>') +
+      '</article></div>';
+  }
+
+  function tabCronologia(c, cs) {
+    const pool = EN.knownFacts(c, cs, f => f.time && !cs.timeline.some(e => e.factId === f.id));
+    const items = cs.timeline.filter(e => e.time).map(e => Object.assign({}, e, { a: EN.minutes(e.time), b: e.end ? EN.minutes(e.end) : EN.minutes(e.time) })).sort((x, y) => x.a - y.a);
+    let visual = '<p class="muted">Añade eventos para construir la línea temporal.</p>';
+    if (items.length) {
+      const minT = Math.floor(Math.min.apply(null, items.map(i => i.a)) / 60) * 60;
+      const maxT = Math.ceil(Math.max.apply(null, items.map(i => i.b)) / 60) * 60 + (items.some(i => i.b % 60 === 0) ? 0 : 0);
+      const span = Math.max(60, maxT - minT);
+      const lanes = [];
+      items.forEach(i => { const k = i.person || '_'; if (!lanes.includes(k)) lanes.push(k); });
+      const pos = m => ((m - minT) / span * 100).toFixed(2);
+      const ticks = [];
+      for (let t = minT; t <= minT + span; t += 60) ticks.push(t);
+      visual = '<div class="tl-scroll"><div class="tl"><div class="tl-axis">' + ticks.map(t => '<div class="tl-tick" style="left:' + pos(t) + '%"><span>' + EN.fmt(t) + '</span></div>').join('') + '</div>' +
+        lanes.map(l => '<div class="tl-lane"><label>' + esc(l === '_' ? 'Sin persona' : EN.personName(c, l)) + '</label>' +
+          items.filter(i => (i.person || '_') === l).map(i => {
+            const point = i.a === i.b;
+            const cls = (i.kind === 'statement' ? 'statement' : i.custom ? 'custom' : '') + (point ? ' point' : '');
+            return '<span class="tl-mark ' + cls + '" style="left:' + pos(i.a) + '%;' + (point ? '' : 'width:' + Math.max(0.8, (i.b - i.a) / span * 100).toFixed(2) + '%') + '" title="' + esc(i.time + (i.end ? '–' + i.end : '') + ' · ' + i.text) + '"></span>';
+          }).join('') + '</div>').join('') + '</div></div>' +
+        '<div class="legend"><span style="color:var(--accent)">■ registro objetivo</span><span style="color:var(--amber)">■ declaración</span><span>■ evento propio</span><span>Desliza horizontalmente si no cabe.</span></div>';
+    }
+    const cmp = cs.lastView.tlCompare;
+    return '<div class="stack-lg"><article class="panel stack"><div class="panel-head"><h3>Línea temporal</h3><div class="row"><span class="badge">' + cs.timeline.length + ' eventos</span><button class="btn small primary" data-act="tl-compare">Comparar cronologías</button></div></div>' + visual +
+      (cmp ? '<div class="stack" style="gap:8px"><div class="sub">Resultado de la comparación</div>' + (cmp.length ? cmp.map(r => '<div class="result">' + esc(r) + '</div>').join('') : '<div class="result neutral">No se detectan solapamientos ni diferencias objetivas entre los eventos de tu cronología.</div>') + '</div>' : '') + '</article>' +
+      '<div class="grid"><article class="panel stack"><h3>Añadir desde el expediente</h3>' +
+      (pool.length ? '<select id="tl-fact" aria-label="Hecho con hora">' + '<option value="">Elige un hecho con hora…</option>' + pool.map(f => '<option value="' + f.id + '">' + esc(factLabel(c, f.id)) + '</option>').join('') + '</select><div class="row"><button class="btn" data-act="tl-add-fact">Añadir a la cronología</button></div>' : '<p class="muted" style="font-size:.88rem">No hay hechos con hora pendientes de añadir.</p>') + '</article>' +
+      '<form class="panel stack" data-form="tl-custom"><h3>Evento propio</h3><div class="row" style="flex-wrap:nowrap"><label class="field" style="flex:1">Hora<input type="time" id="tl-time" name="time" required></label><label class="field" style="flex:1">Hasta (opcional)<input type="time" id="tl-end" name="end"></label></div>' +
+      '<label class="field">Descripción<input type="text" id="tl-text" name="text" required maxlength="160" placeholder="Ej.: posible salida por la escalera"></label>' +
+      '<div class="row" style="flex-wrap:nowrap"><label class="field" style="flex:1">Fuente<select id="tl-src" name="source">' + C.sources.map(s => '<option>' + s + '</option>').join('') + '</select></label><label class="field" style="flex:1">Persona<select id="tl-person" name="person"><option value="">—</option>' + c.people.map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('') + '<option value="daniel">' + esc(c.victim.name) + '</option></select></label></div>' +
+      '<label class="field">Lugar<select id="tl-place" name="place"><option value="">—</option>' + Object.keys(c.places).map(k => '<option value="' + k + '">' + esc(c.places[k].name) + '</option>').join('') + '</select></label>' +
+      '<div class="row"><button class="btn" type="submit">Añadir evento</button></div></form></div>' +
+      (items.length ? '<article class="panel stack tl-list"><h3>Eventos</h3>' + items.map(i => '<div class="fact ' + (i.kind === 'statement' ? 'statement' : '') + '"><time>' + esc(i.time + (i.end ? '–' + i.end : '')) + '</time><div class="min0"><span class="src">' + esc(i.source) + (i.custom ? ' · propio' : '') + '</span>' + esc(i.text) +
+        '<div class="tl-note"><input type="text" id="tl-note-' + i.id + '" data-act="tl-note" data-id="' + i.id + '" value="' + esc(i.note || '') + '" placeholder="Nota sobre este evento…" aria-label="Nota"></div></div><button class="linkish" data-act="tl-del" data-id="' + i.id + '">Quitar</button></div>').join('') + '</article>' : '') +
+      '</div>';
+  }
+
+  function tabHipotesis(c, cs) {
+    const s = S();
+    const actives = cs.hypotheses.filter(h => h.status !== 'descartada');
+    const theory = who => {
+      const mine = actives.filter(h => h.author === who);
+      if (!mine.length) return '<p class="muted" style="font-size:.88rem">Sin hipótesis activas.</p>';
+      return mine.map(h => '<div style="font-size:.9rem;margin-top:4px">• ' + esc(h.suspect && h.suspect !== 'nd' ? EN.personName(c, h.suspect) : 'Sin persona determinada') + ' <span class="mono faint">(' + h.conf + ' %)</span></div>').join('');
+    };
+    const sus = who => new Set(actives.filter(h => h.author === who && h.suspect && h.suspect !== 'nd').map(h => h.suspect));
+    const a = sus('omi'), b = sus('rebe');
+    const conflict = a.size && b.size && ![...a].some(x => b.has(x));
+    return '<div class="stack-lg"><div class="theories"><div class="theory"><div class="eyebrow">Teoría de ' + esc(invName('omi')) + '</div>' + theory('omi') + '</div><div class="theory"><div class="eyebrow">Teoría de ' + esc(invName('rebe')) + '</div>' + theory('rebe') + '</div>' +
+      (conflict ? '<div class="conflict-note">Teorías en conflicto: ' + esc(invName('omi')) + ' apunta a ' + esc([...a].map(x => EN.personName(c, x)).join(', ')) + ' y ' + esc(invName('rebe')) + ' a ' + esc([...b].map(x => EN.personName(c, x)).join(', ')) + '. El sistema no decide quién tiene razón hasta el cierre.</div>' : '') + '</div>' +
+      '<form class="panel stack" data-form="hyp"><h3>Nueva hipótesis de ' + esc(invName(s.active)) + '</h3>' +
+      '<label class="field">Enunciado<textarea id="hyp-text" name="text" required maxlength="400" placeholder="Ej.: Creo que X entró por el garaje y salió en un vehículo antes de las 00:05."></textarea></label>' +
+      '<div class="row" style="flex-wrap:nowrap;align-items:flex-end"><label class="field" style="flex:1">Persona de interés<select id="hyp-suspect" name="suspect"><option value="nd">Sin determinar</option>' + c.people.map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('') + '</select></label>' +
+      '<label class="field" style="flex:1">Confianza inicial: <span id="hyp-conf-out">50</span> %<input type="range" id="hyp-conf" name="conf" min="0" max="100" step="5" value="50" data-act="range-out" data-out="hyp-conf-out"></label></div>' +
+      '<div class="row"><button class="btn primary" type="submit">Crear hipótesis</button></div></form>' +
+      (cs.hypotheses.length ? cs.hypotheses.slice().reverse().map(h => {
+        const st = EN.hypStatus(h);
+        const lst = arr => arr.length ? '<ul>' + arr.map(id => '<li>' + esc(c.facts[id].text) + ' <button class="linkish" data-act="hyp-unlink" data-id="' + h.id + '" data-fact="' + id + '">quitar</button></li>').join('') + '</ul>' : '<p class="faint" style="font-size:.82rem">Ninguno.</p>';
+        return '<article class="panel hyp ' + (h.status === 'descartada' ? 'off' : '') + '"><div class="spread"><span class="row"><span class="badge acc">' + esc(invName(h.author)) + '</span><span class="badge">' + esc(h.suspect && h.suspect !== 'nd' ? EN.personName(c, h.suspect) : 'Sin persona') + '</span></span><span class="badge ' + st.key + '">' + st.label + '</span></div>' +
+          '<p class="hyp-text">' + esc(h.text) + '</p>' +
+          '<div class="links"><div><div class="sub">Hechos a favor</div>' + lst(h.supports) + '</div><div><div class="sub">Hechos en contra</div>' + lst(h.against) + '</div></div>' +
+          (h.status !== 'descartada' ? '<div class="row" style="flex-wrap:nowrap"><select id="hyp-link-' + h.id + '" aria-label="Hecho a vincular">' + factOptions(c, cs, { placeholder: 'Vincular un hecho…' }) + '</select></div><div class="row"><button class="btn small" data-act="hyp-link" data-id="' + h.id + '" data-side="supports">A favor</button><button class="btn small" data-act="hyp-link" data-id="' + h.id + '" data-side="against">En contra</button></div>' +
+            '<label class="field">Confianza: <span id="hyp-c-out-' + h.id + '">' + h.conf + '</span> %<input type="range" id="hyp-c-' + h.id + '" min="0" max="100" step="5" value="' + h.conf + '" data-act="hyp-conf" data-id="' + h.id + '" data-out="hyp-c-out-' + h.id + '"></label>' : '') +
+          '<div class="spread"><span class="faint mono" style="font-size:.7rem">Historial de confianza: ' + h.confHistory.join(' → ') + ' %</span>' + (h.status !== 'descartada' ? '<button class="btn small danger" data-act="hyp-discard" data-id="' + h.id + '">Descartar</button>' : '<button class="btn small ghost" data-act="hyp-restore" data-id="' + h.id + '">Reactivar</button>') + '</div></article>';
+      }).join('') : '<p class="muted">Aún no hay hipótesis. Una buena práctica es mantener al menos dos alternativas abiertas.</p>') + '</div>';
+  }
+
+  function tabConsulta(c, cs) {
+    const qs = cs.queries.slice().reverse().slice(0, 8);
+    return '<div class="stack-lg"><form class="panel stack" data-form="query"><h3>Consulta al expediente</h3><p class="muted" style="font-size:.88rem">Escribe una pregunta libre. El motor busca únicamente en la información ya incorporada al expediente. Si el dato no existe, lo dirá.</p>' +
+      '<div class="row" style="flex-wrap:nowrap"><input type="search" id="query-input" name="q" required maxlength="160" placeholder="Ej.: ¿Dónde estaba Javier a las 23:18?" aria-label="Pregunta"><button class="btn primary" type="submit">Consultar</button></div>' +
+      '<div class="row faint" style="font-size:.78rem">Ejemplos: «¿Qué llamadas hizo Daniel?» · «¿Qué se sabe del portátil?» · «¿Quién tenía acceso a la vivienda?» · «vehículo oscuro»</div></form>' +
+      qs.map(q => '<article class="panel stack"><div class="turn-q">› ' + esc(q.q) + '</div>' + (q.ids.length ? q.ids.map(id => factRow(c, Object.assign({ id }, c.facts[id]))).join('') : '<div class="result neutral">' + EN.NOT_FOUND + '</div>') + '</article>').join('') + '</div>';
+  }
+
+  function tabInforme(c, cs) {
+    const inFrame = window.self !== window.top;
+    const facts = EN.knownFacts(c, cs);
+    const tl = cs.timeline.slice().sort((a, b) => EN.minutes(a.time) - EN.minutes(b.time));
+    const conf = Object.keys(cs.conflicts).map(id => c.conflicts.find(k => k.id === id));
+    const ex = c.evidence.filter(e => cs.examined[e.id]);
+    const sec = (n, t, body) => '<section class="stack" style="gap:6px"><h3>' + n + '. ' + t + '</h3>' + body + '</section>';
+    return '<div class="stack-lg"><div class="spread no-print"><p class="muted" style="max-width:62ch">El informe se compone con tu propio material: cronología, contradicciones registradas, hipótesis y lo que escribas aquí.</p><div class="row"><button class="btn" data-act="copy-report">Copiar texto</button>' + (inFrame ? '' : '<button class="btn ghost" data-act="print">Imprimir</button>') + '</div></div>' +
+      '<article class="panel stack-lg" id="report">' +
+      sec(1, 'Identificación del expediente', '<p>' + c.id + ' · ' + esc(c.title) + ' · ' + esc(c.type) + ' · ' + esc(c.date) + '. Equipo: ' + esc(invName('omi')) + ' y ' + esc(invName('rebe')) + '.</p>') +
+      sec(2, 'Víctima', '<p>' + esc(c.victim.name) + ', ' + c.victim.age + ' años. ' + esc(c.victim.job) + '.</p>') +
+      sec(3, 'Escena', '<p>' + esc(c.location) + '. ' + esc(c.facts.F_PUERTA.text) + '</p>') +
+      sec(4, 'Cronología', tl.length ? tl.map(e => '<div class="fact"><time>' + esc(e.time + (e.end ? '–' + e.end : '')) + '</time><div><span class="src">' + esc(e.source) + '</span>' + esc(e.text) + (e.note ? ' <i class="muted">— ' + esc(e.note) + '</i>' : '') + '</div></div>').join('') : '<p class="muted">Sin cronología elaborada.</p>') +
+      sec(5, 'Personas', '<ul style="margin:0;padding-left:18px">' + c.people.map(p => '<li>' + esc(p.name) + ' — ' + esc(p.role) + (cs.asked[p.id] ? ' (entrevistada)' : ' (no entrevistada)') + '</li>').join('') + '</ul>') +
+      sec(6, 'Evidencias examinadas', ex.length ? '<ul style="margin:0;padding-left:18px">' + ex.map(e => '<li>' + e.id + ' ' + esc(e.name) + '</li>').join('') + '</ul>' : '<p class="muted">Ninguna.</p>') +
+      sec(7, 'Contradicciones', conf.length ? conf.map(k => '<p>• ' + esc(k.type) + ': ' + esc(k.desc) + '</p>').join('') : '<p class="muted">Ninguna registrada.</p>') +
+      sec(8, 'Hipótesis', cs.hypotheses.length ? cs.hypotheses.map(h => '<p>• [' + esc(invName(h.author)) + ', ' + EN.hypStatus(h).label + ', ' + h.conf + ' %] ' + esc(h.text) + '</p>').join('') : '<p class="muted">Ninguna.</p>') +
+      sec(9, 'Hechos incorporados', '<p class="muted">' + facts.length + ' hechos en el expediente.</p>') +
+      '<label class="field no-print-label">10–11. Reconstrucción y conclusión<textarea id="rep-rec" data-act="report-field" data-key="reconstruccion" rows="6" placeholder="Qué ocurrió, en qué orden y por qué lo sostienes.">' + esc(cs.report.reconstruccion) + '</textarea></label>' +
+      '<label class="field">13. Incertidumbres pendientes<textarea id="rep-unc" data-act="report-field" data-key="incertidumbres" rows="4" placeholder="Qué no está acreditado o podría explicarse de otra forma.">' + esc(cs.report.incertidumbres) + '</textarea></label>' +
+      '</article></div>';
+  }
+
+  function tabVeredicto(c, cs) {
+    if (!cs.evaluation) return verdictForm(c, cs);
+    return verdictResult(c, cs);
+  }
+
+  function verdictForm(c, cs) {
+    const facts = EN.knownFacts(c, cs);
+    const vo = c.verdictOptions;
+    const sel = (id, name, opts) => '<select id="' + id + '" name="' + name + '" required><option value="">Elige…</option>' + opts.map(o => '<option value="' + o.id + '">' + esc(o.label) + '</option>').join('') + '</select>';
+    return '<form class="stack-lg" data-form="verdict"><article class="panel dossier stack"><h3>Emitir veredicto</h3><p class="muted" style="font-size:.9rem">El veredicto se compara con la verdad interna del caso. Se evalúan identidad, móvil, método, cronología, pruebas, contradicciones detectadas y la calidad del proceso, no solo el nombre. Reconocer que la evidencia es insuficiente es una conclusión válida.</p>' +
+      '<p class="faint" style="font-size:.84rem">Una vez emitido, el caso se cierra. Podrás revisarlo o repetirlo desde cero.</p></article>' +
+      '<div class="grid"><article class="panel stack"><label class="field">Autoría<select id="v-culprit" name="culprit" required><option value="">Elige…</option>' + c.people.map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('') + '<option value="insuficiente">Evidencia insuficiente para una atribución concluyente</option></select></label>' +
+      '<label class="field">Móvil' + sel('v-motive', 'motive', vo.motives) + '</label><label class="field">Método' + sel('v-method', 'method', vo.methods) + '</label><label class="field">Momento de la agresión' + sel('v-window', 'window', vo.windows) + '</label>' +
+      '<div class="sub">Cómplices</div><div class="grid-sm">' + c.people.map(p => '<label class="check"><input type="checkbox" name="acc" value="' + p.id + '" id="v-acc-' + p.id + '">' + esc(p.name) + '</label>').join('') + '</div></article>' +
+      '<article class="panel stack"><div class="sub">Pruebas principales (máximo 6)</div><div class="stack" style="gap:6px;max-height:360px;overflow-y:auto">' +
+      facts.map(f => '<label class="check"><input type="checkbox" name="ev" value="' + f.id + '" id="v-ev-' + f.id + '" data-act="ev-limit">' + esc(factLabel(c, f.id)) + '</label>').join('') + '</div></article></div>' +
+      '<article class="panel stack"><label class="field">Explicación global<textarea id="v-expl" name="explain" rows="5" required placeholder="Reconstruye el caso con tus palabras."></textarea></label><div class="row"><button class="btn primary" type="submit">Emitir veredicto y cerrar el caso</button></div></article></form>';
+  }
+
+  function verdictResult(c, cs) {
+    const ev = cs.evaluation;
+    const v = cs.verdict;
+    const lab = (arr, id) => { const o = arr.find(x => x.id === id); return o ? o.label : '—'; };
+    const accused = v.culprit !== 'insuficiente' ? v.culprit : null;
+    const LEVEL = { 1: 'Directamente observable', 2: 'Requiere interpretación', 3: 'Admite varias explicaciones', 4: 'Contradictoria o ambigua', 5: 'Parece incriminatoria pero engaña' };
+    let trial = '';
+    if (accused) {
+      if (cs.trial) {
+        trial = '<article class="panel stack"><h3>Juicio simulado · resultado</h3>' + cs.trial.res.map(r => '<div class="objection"><b>Defensa:</b> ' + esc(r.text) + '<div class="result ' + (r.ok ? '' : 'neutral') + '">' + (r.answer ? 'Respuesta: ' + esc(c.facts[r.answer].text) + ' — ' + (r.ok ? 'el tribunal la considera pertinente.' : 'el tribunal no la considera suficiente.') : 'Sin respuesta.') + '</div></div>').join('') + '<div class="result">' + esc(cs.trial.verdict) + '</div></article>';
+      } else {
+        const set = c.trial[accused] || c.trial.generic;
+        trial = '<form class="panel stack" data-form="trial"><h3>Juicio simulado</h3><p class="muted" style="font-size:.88rem">La defensa de ' + esc(EN.personName(c, accused)) + ' ataca tu reconstrucción. Responde a cada objeción con el elemento del expediente que mejor la rebata.</p>' +
+          set.map(o => '<div class="objection"><b>Defensa:</b> ' + esc(o.text) + '<select id="trial-' + o.id + '" name="' + o.id + '">' + factOptions(c, cs, { placeholder: 'Responder con…' }) + '</select></div>').join('') +
+          '<div class="row"><button class="btn primary" type="submit">Presentar respuestas</button></div></form>';
+      }
+    }
+    return '<div class="stack-lg"><article class="panel dossier stack"><div class="spread"><div><div class="eyebrow">Resultado del caso</div><div class="score-big">' + ev.total + '<span style="font-size:1.2rem;color:var(--muted)">/100</span></div></div>' +
+      '<div class="stack" style="gap:4px;font-size:.88rem"><span>Autoría: <b>' + esc(accused ? EN.personName(c, accused) : 'Evidencia insuficiente') + '</b></span><span>Móvil: ' + esc(lab(c.verdictOptions.motives, v.motive)) + '</span><span>Método: ' + esc(lab(c.verdictOptions.methods, v.method)) + '</span></div></div>' +
+      ev.comp.map(x => '<div class="skill-row"><span>' + esc(x.name) + '</span><div class="bar"><i style="width:' + Math.round(x.pts / x.max * 100) + '%"></i></div><span class="mono">' + x.pts + '/' + x.max + '</span><div class="skill-why">' + esc(x.text) + '</div></div>').join('') +
+      (cs.rewards ? '<div class="result">Recompensa: +' + cs.rewards.xp + ' XP · ' + (cs.rewards.rep >= 0 ? '+' : '') + cs.rewards.rep + ' reputación · +' + money(cs.rewards.money) + (cs.rewards.promo ? ' · Ascenso: ' + esc(cs.rewards.promo) : '') + '</div>' : '') + '</article>' +
+      '<div class="grid"><article class="panel stack"><h3>Perfil de razonamiento observado en esta partida</h3>' +
+      C.skills.map(k => { const p = ev.profile[k.id]; return '<div class="skill-row"><span>' + k.name + '</span><div class="bar"><i style="width:' + p.score + '%"></i></div><span class="mono">' + p.score + '</span><div class="skill-why">' + esc(p.why) + '</div></div>'; }).join('') +
+      '<p class="faint" style="font-size:.78rem">No es un diagnóstico ni una estimación de inteligencia: describe conductas observadas en esta investigación.</p></article>' +
+      '<article class="panel stack"><h3>Lectura de tu investigación</h3>' + ev.lines.map(l => '<p style="font-size:.92rem">' + esc(l) + '</p>').join('') +
+      '<div class="sub">Estadísticas</div><dl class="kv">' + ev.stats.map(([k, val]) => '<dt>' + esc(k) + '</dt><dd class="mono">' + esc(val) + '</dd>').join('') + '</dl></article></div>' +
+      trial +
+      '<article class="panel stack truth"><h3>Verdad interna del caso</h3>' + c.truth.narrative.map(p => '<p>' + esc(p) + '</p>').join('') + '</article>' +
+      '<article class="panel stack"><h3>Nivel interpretativo de cada evidencia</h3><div class="stack" style="gap:6px">' + c.evidence.map(e => '<div class="spread" style="font-size:.88rem;border-bottom:1px dashed var(--line-soft);padding:4px 0"><span><span class="mono" style="color:var(--accent)">' + e.id + '</span> ' + esc(e.name) + '</span><span class="badge ' + (e.level >= 4 ? 'warn' : '') + '">Nivel ' + e.level + ' · ' + LEVEL[e.level] + '</span></div>').join('') + '</div></article>' +
+      '<div class="row"><button class="btn" data-act="go" data-screen="home">Volver al centro</button><button class="btn ghost" data-act="go" data-screen="cases">Ir a expedientes</button></div></div>';
+  }
+
+  /* ---------- Modal de bienvenida y tutorial ---------- */
+  const TUTORIAL = [
+    ['Escena', 'Abre la pestaña Escena y pulsa los puntos del plano. «Examinar» incorpora lo que observas al expediente; nada te dirá si es importante.'],
+    ['Personas y comparador', 'Interroga, vuelve sobre respuestas y confronta con datos. El comparador señala diferencias objetivas entre fuentes, nunca quién miente.'],
+    ['Cronología e hipótesis', 'Construye tu línea temporal y compara intervalos. Formula hipótesis, vincula hechos a favor y en contra, y ajusta tu confianza.'],
+    ['Cuaderno y turnos', 'Cambia entre ' + 'Omi y La Rebe arriba a la derecha: cada uno tiene sus notas e hipótesis. Todo se guarda solo en este navegador.']
+  ];
+
+  function modal() {
+    const s = S();
+    const m = s.view.modal;
+    if (!m) return '';
+    if (m === 'intro') {
+      return '<div class="modal-back" role="dialog" aria-modal="true" aria-labelledby="intro-t"><div class="modal"><div class="eyebrow">Unidad de investigación · Valencia</div><div class="intro-title" id="intro-t">EXPEDIENTE <span>0</span></div>' +
+        '<p class="intro-quote">Bienvenido a EXPEDIENTE 0.<br>Aquí no ganas por adivinar.<br>Ganas por reconstruir.</p>' +
+        '<p class="muted">Investigáis en equipo: ' + esc(invName('omi')) + ' y ' + esc(invName('rebe')) + '. Empezáis como aspirantes, con un expediente abierto y una academia inicial.</p>' +
+        '<div class="row"><button class="btn primary" data-act="tutorial-start">Ver tutorial rápido</button><button class="btn ghost" data-act="modal-close">Saltar e ir al centro</button></div></div></div>';
+    }
+    if (m.startsWith('tut')) {
+      const i = Number(m.slice(3));
+      const [t, d] = TUTORIAL[i];
+      return '<div class="modal-back" role="dialog" aria-modal="true" aria-labelledby="tut-t"><div class="modal"><div class="steps">' + TUTORIAL.map((_, k) => '<i class="' + (k <= i ? 'on' : '') + '"></i>').join('') + '</div>' +
+        '<div class="eyebrow">Tutorial ' + (i + 1) + '/' + TUTORIAL.length + '</div><h2 id="tut-t">' + esc(t) + '</h2><p>' + esc(d) + '</p>' +
+        '<div class="row">' + (i < TUTORIAL.length - 1 ? '<button class="btn primary" data-act="tutorial-next" data-i="' + (i + 1) + '">Siguiente</button>' : '<button class="btn primary" data-act="modal-close">Empezar</button>') + '<button class="btn ghost" data-act="modal-close">Saltar tutorial</button></div></div></div>';
+    }
+    return '';
+  }
+
+  E0.ui = {
+    esc, rankInfo, topbar, sidebar, modal, factLabel,
+    screens: { home: screenHome, cases: screenCases, academy: screenAcademy, career: screenCareer, notebook: screenNotebook, profile: screenProfile, settings: screenSettings, case: screenCase }
+  };
+})();
