@@ -343,7 +343,9 @@
     const acc = v.accomplices || [];
     const aPts = sameSet(acc, T.accomplices) ? 5 : 0;
     comp.push({ name: vo.accompliceLabel || 'Cómplices', pts: aPts, max: 5, text: aPts ? (T.accomplices.length ? 'Identificaste correctamente a quien colaboró.' : 'Correcto: nadie más participó.') : (T.accomplices.length ? 'No identificaste correctamente a quien colaboró.' : 'Atribuiste una colaboración que no existió.') });
-    const total = comp.reduce((n, x) => n + x.pts, 0);
+    const raw = comp.reduce((n, x) => n + x.pts, 0);
+    /* Señalar a quien no fue nunca aprueba, por buena que sea la investigación. */
+    const total = okCulprit || insufficient ? raw : Math.min(raw, 45);
 
     /* --- Perfil de razonamiento observado --- */
     const P = {};

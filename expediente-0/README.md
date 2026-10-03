@@ -12,11 +12,11 @@ Abre `index.html` en el navegador (doble clic). No necesita instalación ni serv
 - **Centro de investigación**: perfil, 7 rangos, XP, reputación, dinero, energía y jornadas semanales con salario.
 - **Academia**: 12 módulos evaluables y una biblioteca jurídica que separa el contenido educativo interno, las fuentes oficiales (BOE) y la simulación del juego.
 - **Carrera** con historial de intentos, **Cuaderno** con notas de cada investigador, **Perfil** con 12 habilidades y **Ajustes** (6 temas, animaciones, tamaño, sonido, exportar, importar y borrar).
-- **Cuatro expedientes jugables de principio a fin**, cada uno con su propia verdad interna. Se desbloquean por rango:
-  - **EXP-001 «El Apartamento 17»**: homicidio con una sedación previa, una huida por el garaje y un inocente muy sospechoso.
-  - **EXP-002 «La desaparición del puente»**: coche abandonado, peaje, mensajes programados y un audio. Hay que decidir si fue un crimen, un accidente o algo distinto.
-  - **EXP-003 «Las cuatro llamadas»**: cámara del ascensor, una llave que falta, un teléfono manipulado después de la muerte y una cronología conflictiva.
-  - **EXP-004 «La masía de los Ballester»** (dificultad extrema): triple homicidio con una superviviente, siete sospechosos y **tres soluciones posibles**. Cada partida elige una en secreto y cambia el contenido de las pruebas clave: los cristales, la herida, los residuos de disparo, el GPS, las antenas, lo que oyó la vecina. Repetirlo es un caso nuevo. Inspirado en patrones de casos documentados, con nombres, lugares y hechos completamente ficticios.
+- **Cuatro expedientes jugables de principio a fin**, y todos tienen **varias soluciones posibles** (9 versiones en total). Cada partida elige una en secreto: las personas, la escena y las solicitudes son las mismas, pero cambian las pruebas clave, las declaraciones y quién lo hizo. Repetir un caso es jugar otro. Se desbloquean por rango:
+  - **EXP-001 «El Apartamento 17»** (2 versiones): homicidio con una sedación previa, una salida por el garaje y una persona inocente muy sospechosa.
+  - **EXP-002 «La desaparición del puente»** (2 versiones): coche abandonado, peaje, mensajes programados y un audio. Hay que decidir si fue un crimen, un accidente o algo distinto.
+  - **EXP-003 «Las cuatro llamadas»** (2 versiones): cámara del ascensor, una escalera sin cámara, una llave que falta, un testamento a punto de cambiar y una cronología conflictiva.
+  - **EXP-004 «La masía de los Ballester»** (dificultad extrema, 3 versiones): triple homicidio con una superviviente y siete sospechosos. Cambian los cristales, la herida, los residuos de disparo, el GPS, las antenas y lo que oyó la vecina. Inspirado en patrones de casos documentados, con nombres, lugares y hechos completamente ficticios.
 
 ### Herramientas de cada expediente
 
@@ -26,16 +26,16 @@ Abre `index.html` en el navegador (doble clic). No necesita instalación ni serv
 | Herramientas forenses | Luminol, luz UV, polvo revelador y lupa sobre cualquier objeto examinado, con efecto visual en 3D. El luminol y el polvo son limitados en cada expediente. |
 | Laboratorio | Análisis con coste. Los resultados respetan los límites de cada técnica. |
 | Digital | Cámaras, registros, dispositivos, finanzas y vehículos. Las solicitudes judiciales de antenas son limitadas. |
-| Personas | Retrato de cada persona e interrogatorio con memoria y confrontación con pruebas. Las respuestas pueden ser verdad, medias verdades, mentiras o creencias erróneas. |
+| Personas | Sala de interrogatorio en 3D: la persona se sienta frente a ti, habla, parpadea y reacciona a las confrontaciones según su carácter (sus gestos nunca delatan si miente). Botón «Escuchar» con la voz del navegador. Interrogatorio con memoria y confrontación con pruebas. Las respuestas pueden ser verdad, medias verdades, mentiras o creencias erróneas. |
 | Comparador | Señala solo diferencias objetivas entre fuentes. Nunca dice quién miente. |
 | Cronología | Línea temporal visual con detección de solapamientos. |
 | Mapa | Lugares descubiertos, conexiones trazadas por el jugador y distancias aproximadas. |
 | Muro | Tarjetas que se arrastran, con conexiones etiquetadas que se guardan. |
-| Hipótesis | Teorías de Omi y de La Rebe, aviso de teorías en conflicto y confianza de 0 a 100. |
+| Hipótesis | Tus teorías, aviso de teorías en conflicto y confianza de 0 a 100. |
 | Consulta | Preguntas libres. Si el dato no consta, responde «No consta en el expediente.». |
 | Informe | Informe de 13 apartados compuesto con el material propio del jugador. |
 | Custodia | Trazabilidad de cada indicio: identificación, recogida, almacenamiento, transferencia, análisis, resultado y documentación. |
-| Veredicto | Evaluación de la conclusión, el móvil, el método, la cronología, las pruebas, las contradicciones y los cómplices. Incluye un perfil de razonamiento observado y un juicio simulado. |
+| Veredicto | Evaluación de la conclusión (señalar a quien no fue nunca aprueba), el móvil, el método, la cronología, las pruebas, las contradicciones y los cómplices. Incluye un perfil de razonamiento observado y un juicio simulado. |
 
 ## Arquitectura
 
@@ -48,8 +48,10 @@ data/legal.js      biblioteca jurídica (fuentes BOE)
 data/case01.js     EXP-001 · única fuente de verdad del caso
 data/case02.js     EXP-002
 data/case03.js     EXP-003
+data/case04.js     EXP-004
 js/state.js        estado, guardado, exportar/importar con validación
 js/scene3d.js      escena 3D generada a partir de los planos del caso
+js/room3d.js       sala de interrogatorio 3D y aspecto de cada persona
 js/engine.js       motor genérico: consulta, comparador, cronología, mapa, custodia, evaluación
 js/ui.js           render de pantallas
 js/app.js          acciones del jugador, muro (arrastre) y arranque
@@ -73,7 +75,7 @@ Por ejemplo, `verdictOptions.culprits` permite conclusiones que no son una perso
 
 ### Casos con varias soluciones
 
-Añade `variants: { idVersion: { facts, evidence, answers, confront, conflicts, truth, trial, evaluation } }`. Todas las versiones comparten personas, escena, evidencias y solicitudes, así que el jugador no puede distinguirlas por la interfaz. Cada versión sobrescribe solo lo que cambia. Al abrir el caso se elige una versión al azar, distinta de la última jugada. `data/case04.js` es el ejemplo.
+Añade `variants: { idVersion: { facts, evidence, answers, confront, conflicts, truth, trial, evaluation } }`. Todas las versiones comparten personas, escena, evidencias y solicitudes, así que el jugador no puede distinguirlas por la interfaz. Cada versión sobrescribe solo lo que cambia. Al abrir el caso se elige una versión al azar, distinta de la última jugada. `data/case04.js` es el ejemplo más completo. En los casos 1 a 3, la primera versión guarda la verdad original y las contradicciones que solo existen en ella.
 
 ### Herramientas forenses
 

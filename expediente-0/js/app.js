@@ -83,7 +83,41 @@
     if (tr) tr.scrollTop = tr.scrollHeight;
     drawWall();
     mount3d();
+    mountRoom();
     store.save();
+  }
+
+  /* Sala de interrogatorio 3D de la pestaña Personas. */
+  function mountRoom() {
+    const el = document.getElementById('room3d');
+    if (!el || !E0.room3d) return;
+    const { c, cs } = curCase();
+    const p = c.people.find(x => x.id === el.dataset.person);
+    const tr = cs.transcripts[p.id] || [];
+    if (!E0.room3d.mount(el, { c, person: p, line: tr[tr.length - 1], lineNo: tr.length })) { S().settings.view3d = false; render(); }
+  }
+
+  /* Voz sintetizada del navegador para la última respuesta. El tono sale del identificador
+     de la persona, no de su nombre ni de nada que se suponga sobre ella. */
+  function speak(pid) {
+    if (!('speechSynthesis' in window)) return;
+    const { c, cs } = curCase();
+    const p = c.people.find(x => x.id === pid);
+    const tr = cs.transcripts[pid] || [];
+    const last = tr[tr.length - 1];
+    if (!last) return;
+    const synth = window.speechSynthesis;
+    synth.cancel();
+    const u = new SpeechSynthesisUtterance(last.a.replace(/\([^)]*\)/g, ' '));
+    const voices = synth.getVoices().filter(v => /^es/i.test(v.lang));
+    const A = E0.appearance(p);
+    if (voices.length) u.voice = voices.find(v => /es-ES/i.test(v.lang)) || voices[0];
+    u.lang = 'es-ES';
+    u.pitch = 0.8 + (A.h % 41) / 100;
+    u.rate = 0.92 + ((p.hidden && p.hidden.miedo) || 50) / 500;
+    u.onstart = () => E0.room3d && E0.room3d.talk(30);
+    u.onend = u.onerror = () => E0.room3d && E0.room3d.stopTalk();
+    synth.speak(u);
   }
 
   function mount3d() {
@@ -471,6 +505,8 @@
     'cancel-restart': () => { S().view.confirmRestart = null; },
     'restart-case': el => {
       const s = S();
+      const prev = s.cases[el.dataset.id];
+      if (prev && prev.variant) { s.lastVariants = s.lastVariants || {}; s.lastVariants[el.dataset.id] = prev.variant; }
       delete s.cases[el.dataset.id];
       s.view.confirmRestart = null;
       openCase(el.dataset.id);
@@ -582,6 +618,7 @@
     person: el => { curCase().cs.lastView.person = el.dataset.id; },
     ask: el => ask(el.dataset.person, el.dataset.q),
     confront: el => confront(el.dataset.person),
+    speak: el => { speak(el.dataset.person); return false; },
     recall: el => recall(el.dataset.person, Number(el.dataset.i)),
     compare: () => compare(),
     'tl-add-fact': () => addTimelineFact(),

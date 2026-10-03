@@ -21,15 +21,8 @@
 
   /* Retrato procedural: rasgos derivados del identificador de la persona (estable entre partidas). */
   function portrait(p, size) {
-    let h = 0; for (const ch of p.id + p.name) h = (h * 33 + ch.charCodeAt(0)) >>> 0;
-    const pick = (arr, k) => arr[(h >>> k) % arr.length];
-    const skin = pick(['#f1d3b8', '#e2b896', '#c99470', '#a8734f', '#7d5236', '#5b3a26'], 1);
-    const old = p.age >= 55;
-    const hair = old ? pick(['#b9b5ad', '#d6d2ca', '#8f8a82'], 3) : pick(['#1d1612', '#3b2617', '#6b4423', '#a8783f', '#2b2b2b', '#5a2e1c'], 3);
-    const cloth = pick(['#2f3a4a', '#4a2f2f', '#2f4a3c', '#3c3c46', '#4a432f', '#1f2833'], 5);
-    const style = (h >>> 7) % 4;
-    const glasses = (h >>> 9) % 3 === 0;
-    const beard = (h >>> 11) % 5 === 0;
+    const A = E0.appearance(p);
+    const { skin, hair, cloth, style, glasses, beard, old } = A;
     const hairSvg = [
       '<path d="M30 44c0-14 9-22 20-22s20 8 20 22c-3-6-9-10-20-10s-17 4-20 10z" fill="' + hair + '"/>',
       '<path d="M28 50c-2-18 8-28 22-28s24 10 22 28c-1 10-2 22-4 30h-6c2-10 3-20 2-30-6-6-22-6-28 0-1 10 0 20 2 30h-6c-2-8-3-20-4-30z" fill="' + hair + '"/>',
@@ -510,7 +503,13 @@
     const asked = cs.asked[p.id] || {};
     const avail = p.questions.filter(q => !asked[q.id] && (!q.requires || q.requires.some(id => EN.known(cs, id))));
     const tr = cs.transcripts[p.id] || [];
-    return '<div class="stack-lg">' + grid +
+    const last = tr[tr.length - 1];
+    const room = use3d() && E0.room3d ? '<div class="room3d" id="room3d" data-person="' + p.id + '" aria-label="Sala de interrogatorio con ' + esc(p.name) + '">' +
+      '<div class="room-bubble" aria-live="polite">' + (last ? '<div class="room-bubble-q">' + (last.kind === 'c' ? 'Confrontación · ' : '') + esc(last.q) + '</div><div class="room-bubble-a">' + esc(last.a) + '</div>' : '<div class="room-bubble-q">Sala 2 · grabación en curso</div><div class="room-bubble-a muted">' + esc(p.name.split(' ')[0]) + ' espera tu primera pregunta.</div>') + '</div>' +
+      '<div class="room-tools">' + (last && 'speechSynthesis' in window ? '<button class="btn small" data-act="speak" data-person="' + p.id + '">Escuchar</button>' : '') + '<button class="btn small ghost" data-act="view3d" data-on="0">Solo texto</button></div>' +
+      '<div class="s3-hint">Arrastra para mirar · rueda para acercar</div></div>' : '';
+    const roomOff = !use3d() && E0.scene3d && E0.scene3d.available() ? '<div class="row"><button class="btn small ghost" data-act="view3d" data-on="1">Ver la sala en 3D</button></div>' : '';
+    return '<div class="stack-lg">' + grid + room + roomOff +
       '<div class="interview"><article class="panel stack"><div class="row" style="flex-wrap:nowrap">' + portrait(p, 84) + '<div class="min0"><h3>' + esc(p.name) + ', ' + p.age + ' años</h3><div class="muted" style="font-size:.88rem">' + esc(p.role) + ' · ' + esc(p.relation) + '</div></div></div>' +
       '<div class="spread"><span class="eyebrow">Estado de la entrevista</span><span class="badge">' + Object.keys(asked).length + ' preguntas · ' + (cs.confronted[p.id] ? Object.keys(cs.confronted[p.id]).length : 0) + ' confrontaciones</span></div>' +
       '<div class="sub">Nueva pregunta</div>' + (avail.length ? '<div class="q-list">' + avail.map(q => '<button class="q-btn" data-act="ask" data-person="' + p.id + '" data-q="' + q.id + '">' + esc(q.q) + '</button>').join('') + '</div>' : '<p class="muted" style="font-size:.88rem">No quedan preguntas nuevas con la información actual. Confrontarle con datos puede abrir otras líneas.</p>') +
@@ -760,6 +759,7 @@
     return '<div class="stack-lg"><article class="panel dossier stack"><div class="spread"><div><div class="eyebrow">Resultado del caso</div><div class="score-big">' + ev.total + '<span style="font-size:1.2rem;color:var(--muted)">/100</span></div></div>' +
       '<div class="stack" style="gap:4px;font-size:.88rem"><span>' + esc(vo.culpritLabel || 'Autoría') + ': <b>' + esc(lab(culpritOptions(c), v.culprit)) + '</b></span><span>Móvil: ' + esc(lab(vo.motives, v.motive)) + '</span><span>Método: ' + esc(lab(vo.methods, v.method)) + '</span></div></div>' +
       ev.comp.map(x => '<div class="skill-row"><span>' + esc(x.name) + '</span><div class="bar"><i style="width:' + Math.round(x.pts / x.max * 100) + '%"></i></div><span class="mono">' + x.pts + '/' + x.max + '</span><div class="skill-why">' + esc(x.text) + '</div></div>').join('') +
+      (ev.total < ev.comp.reduce((n, x) => n + x.pts, 0) ? '<p class="result warn-note">Nota limitada a ' + ev.total + ': la conclusión principal no es correcta, así que el resto del trabajo no basta para aprobar.</p>' : '') +
       (cs.rewards ? '<div class="result">Recompensa: +' + cs.rewards.xp + ' XP · ' + (cs.rewards.rep >= 0 ? '+' : '') + cs.rewards.rep + ' reputación · +' + money(cs.rewards.money) + (cs.rewards.promo ? ' · Ascenso: ' + esc(cs.rewards.promo) : '') + '</div>' : '') + '</article>' +
       '<div class="grid"><article class="panel stack"><h3>Perfil de razonamiento observado en esta partida</h3>' +
       C.skills.map(k => { const p = ev.profile[k.id]; return '<div class="skill-row"><span>' + k.name + '</span><div class="bar"><i style="width:' + p.score + '%"></i></div><span class="mono">' + p.score + '</span><div class="skill-why">' + esc(p.why) + '</div></div>'; }).join('') +

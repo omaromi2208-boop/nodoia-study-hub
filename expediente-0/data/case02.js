@@ -23,7 +23,7 @@ E0.cases.push({
   deathWindow: 'Último contacto confirmado: mensaje de voz a las 23:52. Coche hallado a las 02:10.',
   briefing: [
     'A las 01:55 del sábado 10 de octubre, un camionero avisa al 112 de un coche parado con los warnings en el Puente del Azud. A las 02:10 una patrulla encuentra el Renault Clio de Irene Soler: puerta del conductor entreabierta, llaves puestas, bolso en el asiento. Nadie dentro.',
-    'Junto a la barandilla hay una zapatilla. Durante el fin de semana se rastrea el río sin resultados. A las 01:30 su marido recibió un mensaje desde el teléfono de Irene: «Lo siento. No me busquéis. Es mejor así.»',
+    'Junto a la barandilla hay una zapatilla. Durante el fin de semana se rastrea el río sin resultados. A las 01:30 su marido recibió un mensaje desde la cuenta de Irene: «Lo siento. No me busquéis. Es mejor así.»',
     'Irene iba a declarar el lunes como testigo en una investigación de la Fiscalía sobre su empresa. Esa noche discutió con su marido y salió de casa en coche a las diez y cuarto.',
     'Un caso de desaparición no siempre termina en un culpable. Puede ser un accidente, un crimen o algo que nadie ha contado. Tu trabajo es determinar qué es compatible con los datos.'
   ],
@@ -290,7 +290,7 @@ E0.cases.push({
     F2_AVISO: { text: 'Un camionero llama al 112: hay un coche parado con los warnings en el Puente del Azud.', time: '01:55', person: 'joaquin', place: 'puente', source: 'informe policial', tags: ['aviso', 'testigo'] },
     F2_HALLAZGO: { text: 'Una patrulla encuentra el Renault Clio de Irene en el arcén del puente, vacío, con la puerta del conductor entreabierta.', time: '02:10', place: 'puente', source: 'informe policial', tags: ['vehiculo', 'hallazgo'] },
     F2_BUSQUEDA: { text: 'El rastreo del río durante el sábado y el domingo no encuentra a Irene ni ningún objeto suyo.', source: 'informe policial', tags: ['rio', 'busqueda'] },
-    F2_MENSAJE: { text: 'Álvaro recibe desde el teléfono de Irene: «Lo siento. No me busquéis. Es mejor así.»', time: '01:30', person: 'alvaro', source: 'mensaje', tags: ['mensaje'] },
+    F2_MENSAJE: { text: 'Álvaro recibe desde la cuenta de mensajería de Irene: «Lo siento. No me busquéis. Es mejor así.»', time: '01:30', person: 'alvaro', source: 'mensaje', tags: ['mensaje'] },
 
     F2_COCHE: { text: 'El Clio tiene las llaves puestas, el depósito a tres cuartos y ningún signo de golpe ni de forcejeo.', place: 'puente', source: 'escena', tags: ['vehiculo'] },
     F2_COCHE_HUELLAS: { text: 'Huellas en el volante y la palanca: solo de Irene. En el tirador exterior del copiloto, una parcial no apta para cotejo.', source: 'laboratorio', tags: ['vehiculo', 'huella'] },
@@ -381,14 +381,7 @@ E0.cases.push({
 
   conflicts: [
     { id: 'C01', a: 'S2_ALV_CASA', b: 'F2_CV_2327', type: 'Hecho distinto', severity: 'alta', desc: 'Álvaro dice que se quedó en casa; la cámara de la vecina registra la salida de su coche a las 23:27 y su vuelta a la 01:12.' },
-    { id: 'C02', a: 'S2_ALV_CASA', b: 'S2_CARMEN_SALIDAS', type: 'Hecho distinto', severity: 'media', desc: 'Álvaro dice que se quedó en casa; la vecina le vio salir en coche hacia las 23:30.' },
-    { id: 'C03', a: 'S2_HUGO_CASA', b: 'F2_PJ_2344', type: 'Lugar distinto', severity: 'alta', desc: 'Hugo dice que estuvo en Sagunto; la furgoneta de su taller pasa el peaje del Molinar a las 23:44, tres minutos después del coche de Irene.' },
-    { id: 'C04', a: 'S2_HUGO_CASA', b: 'F2_ANT_HUGO', type: 'Lugar distinto', severity: 'alta', desc: 'Hugo dice que estuvo en Sagunto; su teléfono conecta en El Puig, en la zona del puente (00:28–00:48) y en la A-3 (01:31).' },
-    { id: 'C05', a: 'S2_HUGO_ULTIMO', b: 'F2_LL_2209', type: 'Hecho omitido', severity: 'media', desc: 'Hugo dice llevar una semana sin hablar con Irene; ella le llamó a las 22:09 de esa noche.' },
-    { id: 'C06', a: 'F2_TAB_PROG', b: 'S2_CARMEN_DISC', type: 'Secuencia incompatible', severity: 'alta', desc: 'El mensaje de despedida se programó a las 18:02, antes de la discusión de las 21:30.' },
-    { id: 'C07', a: 'F2_ANT_IRENE', b: 'F2_ZAPATO', type: 'Lugar distinto', severity: 'alta', desc: 'La zapatilla junto a la barandilla sugiere una caída al río; el teléfono de Irene conecta en la A-3, a la altura de Chiva, a las 01:30.' },
-    { id: 'C08', a: 'S2_HUGO_ULTIMO', b: 'S2_CARMEN_MALETA', type: 'Hecho omitido', severity: 'media', desc: 'Hugo dice no haber visto a su hermana en una semana; la vecina le sitúa con ella el miércoles cargando una maleta.' },
-    { id: 'C09', a: 'S2_HUGO_GRUA', b: 'F2_ANT_HUGO', type: 'Secuencia incompatible', severity: 'media', desc: 'Hugo atribuye el paso por el peaje a un servicio de grúa; su teléfono va después a la zona del puente y a la A-3, y no vuelve a Sagunto hasta las 09:10.' }
+    { id: 'C02', a: 'S2_ALV_CASA', b: 'S2_CARMEN_SALIDAS', type: 'Hecho distinto', severity: 'media', desc: 'Álvaro dice que se quedó en casa; la vecina le vio salir en coche hacia las 23:30.' }
   ],
 
   verdictOptions: {
@@ -441,7 +434,22 @@ E0.cases.push({
     usefulLab: ['P05:comparativa', 'P01:vehiculo', 'P04:fibras']
   },
 
-  truth: {
+  trial: {},
+  trialIntro: {},
+
+  /* ================= VERSIONES ================= */
+  variants: {
+    voluntaria: {
+      conflicts: [
+    { id: 'C03', a: 'S2_HUGO_CASA', b: 'F2_PJ_2344', type: 'Lugar distinto', severity: 'alta', desc: 'Hugo dice que estuvo en Sagunto; la furgoneta de su taller pasa el peaje del Molinar a las 23:44, tres minutos después del coche de Irene.' },
+    { id: 'C04', a: 'S2_HUGO_CASA', b: 'F2_ANT_HUGO', type: 'Lugar distinto', severity: 'alta', desc: 'Hugo dice que estuvo en Sagunto; su teléfono conecta en El Puig, en la zona del puente (00:28–00:48) y en la A-3 (01:31).' },
+    { id: 'C05', a: 'S2_HUGO_ULTIMO', b: 'F2_LL_2209', type: 'Hecho omitido', severity: 'media', desc: 'Hugo dice llevar una semana sin hablar con Irene; ella le llamó a las 22:09 de esa noche.' },
+    { id: 'C06', a: 'F2_TAB_PROG', b: 'S2_CARMEN_DISC', type: 'Secuencia incompatible', severity: 'alta', desc: 'El mensaje de despedida se programó a las 18:02, antes de la discusión de las 21:30.' },
+    { id: 'C07', a: 'F2_ANT_IRENE', b: 'F2_ZAPATO', type: 'Lugar distinto', severity: 'alta', desc: 'La zapatilla junto a la barandilla sugiere una caída al río; el teléfono de Irene conecta en la A-3, a la altura de Chiva, a las 01:30.' },
+    { id: 'C08', a: 'S2_HUGO_ULTIMO', b: 'S2_CARMEN_MALETA', type: 'Hecho omitido', severity: 'media', desc: 'Hugo dice no haber visto a su hermana en una semana; la vecina le sitúa con ella el miércoles cargando una maleta.' },
+    { id: 'C09', a: 'S2_HUGO_GRUA', b: 'F2_ANT_HUGO', type: 'Secuencia incompatible', severity: 'media', desc: 'Hugo atribuye el paso por el peaje a un servicio de grúa; su teléfono va después a la zona del puente y a la A-3, y no vuelve a Sagunto hasta las 09:10.' }
+      ],
+      truth: {
     culprit: 'voluntaria',
     motive: 'v_huida',
     method: 'me_montaje',
@@ -459,14 +467,10 @@ E0.cases.push({
       'A las 01:30 el mensaje programado salió desde su teléfono, ya en la A-3 a la altura de Chiva; lo apagó a las 01:34. Álvaro mintió sobre su salida por miedo: estuvo buscándola por Burjassot y Benimàmet. Ricardo tenía un móvil fuerte y una coartada sólida hasta las 00:40, pero no tuvo relación con la desaparición.'
     ]
   },
-
-  trialIntro: {
-    voluntaria: 'Audiencia sobre la línea de investigación. La acusación particular, en nombre de la familia de Álvaro, sostiene que Irene fue víctima de un delito.'
-  },
-  trial: {
+      trial: {
     voluntaria: [
       { id: 'O1', text: 'El coche abandonado, la zapatilla junto a la barandilla y el mensaje de despedida indican que Irene cayó o se arrojó al río.', accept: ['F2_ANT_IRENE', 'F2_TAB_PROG', 'F2_PASAPORTE', 'F2_BARANDILLA', 'F2_TAB_SYNC'] },
-      { id: 'O2', text: 'El marido mintió sobre esa noche y es beneficiario de un seguro de 200.000 €. Debería ser el principal sospechoso.', accept: ['F2_ANT_ALV'] },
+      { id: 'O2', text: 'El marido mintió sobre esa noche y es beneficiario de un seguro de 200.000 €. Debería ser el principal sospechoso.', accept: ['F2_ANT_ALV', 'F2_GS_0031', 'F2_GS_0046'] },
       { id: 'O3', text: 'Nadie pudo llevársela de allí: no hay ninguna prueba de otro vehículo en el puente.', accept: ['F2_PJ_2344', 'F2_GS_0031', 'F2_GS_0046', 'F2_ANT_HUGO', 'F2_NEUMATICO', 'S2_JOAQ_0038', 'F2_MARCAS'] }
     ],
     generic: [
@@ -474,5 +478,137 @@ E0.cases.push({
       { id: 'O2', text: 'La acusación no explica por qué el teléfono de Irene estaba en la A-3 a las 01:30.', accept: [] },
       { id: 'O3', text: 'La acusación no explica por qué falta su pasaporte ni por qué el mensaje se programó a las 18:02.', accept: [] }
     ]
+  },
+      trialIntro: {
+    voluntaria: 'Audiencia sobre la línea de investigación. La acusación particular, en nombre de la familia de Álvaro, sostiene que Irene fue víctima de un delito.'
+  }
+    },
+
+    /* ---------- Versión 2: el marido ---------- */
+    alvaro: {
+      facts: {
+        F2_ZAPATO: { text: 'Zapatilla izquierda de Irene al pie de la barandilla, volcada, con los cordones desatados y barro en la suela.', place: 'puente', source: 'escena', tags: ['zapato', 'rio'] },
+        F2_LUPA_ZAPATO: { text: 'Lupa: barro del arcén en la suela y un roce reciente en la puntera, como de un arrastre.', source: 'escena', tags: ['zapato', 'rio'] },
+        F2_BARANDILLA: { text: 'La película de polvo de la barandilla tiene roces recientes a la altura de la cintura; en el suelo, una uña postiza rota.', place: 'puente', source: 'escena', tags: ['rio', 'barandilla'] },
+        F2_BARANDILLA_FIBRAS: { text: 'Fibras de forro polar negro enganchadas en una arista del pretil.', source: 'laboratorio', tags: ['fibra', 'barandilla'] },
+        F2_LUMINOL_BARANDILLA: { text: 'Luminol: reacción débil en el pretil, a la altura de la cintura: restos de sangre.', place: 'puente', source: 'laboratorio', tags: ['barandilla', 'sangre', 'rio'] },
+        F2_MARCAS: { text: 'A seis metros detrás del Clio, huella parcial de un neumático ancho de todoterreno, distinto de los del Clio.', place: 'puente', source: 'escena', tags: ['vehiculo', 'neumatico'] },
+        F2_NEUMATICO: { text: 'El neumático es de medida 225/65 R17, habitual en todoterrenos compactos (RAV4, Tucson, Qashqai…). Compatible con muchos modelos.', source: 'laboratorio', tags: ['vehiculo', 'neumatico'] },
+        F2_PASAPORTE: { text: 'En la carpeta de documentos del dormitorio están los pasaportes de Irene y de Álvaro.', place: 'paterna', source: 'escena', tags: ['pasaporte', 'documento'] },
+        F2_POLVO_CARPETA: { text: 'Polvo revelador: huellas de Irene y de Álvaro en la carpeta; el pasaporte de Irene sigue dentro.', source: 'laboratorio', tags: ['pasaporte', 'huella'] },
+        F2_ARMARIO: { text: 'El armario de Irene está completo y la maleta pequeña sigue en el altillo.', place: 'paterna', source: 'escena', tags: ['maleta', 'ropa'] },
+        F2_TIQUES: { text: 'Tiques en la papelera: la compra semanal del supermercado y una farmacia.', source: 'documento', tags: ['dinero'] },
+        F2_FIN_EFECTIVO: { text: 'Cuentas de Irene: movimientos habituales, sin retiradas extraordinarias de efectivo.', person: 'irene', source: 'documento', tags: ['dinero'] },
+        F2_FIN_HUGO: { text: 'No hay transferencias entre Hugo e Irene en los últimos meses.', person: 'hugo', source: 'documento', tags: ['dinero'] },
+        F2_TAB_PROG: { text: 'Tablet: el mensaje «Lo siento. No me busquéis. Es mejor así.» se redactó y programó el viernes 9/10 a las 23:21 para enviarse a las 01:30.', time: '23:21', person: 'irene', place: 'paterna', source: 'dispositivo', tags: ['mensaje', 'tablet'] },
+        F2_TAB_SYNC: { text: 'La tablet estaba en casa: el mensaje programado salió desde la tablet, no desde el teléfono. Además, la tablet tiene activa la ubicación compartida del teléfono de Irene y se consultó a las 00:12.', time: '00:12', place: 'paterna', source: 'dispositivo', tags: ['tablet', 'mensaje', 'ubicacion'] },
+        F2_TAB_BUSQ: { text: 'Historial de la tablet (semana anterior), con la sesión de Irene: «abogado divorcio Valencia», «separación de bienes seguro de vida».', person: 'irene', source: 'dispositivo', tags: ['tablet', 'divorcio'] },
+        F2_ANT_IRENE: { text: 'Antenas del teléfono de Irene: El Puig de 23:02 a 23:38; zona del puente de 00:15 a 00:41. Después, el teléfono deja de conectar.', time: '00:15', end: '00:41', person: 'irene', place: 'puente', source: 'antena', tags: ['ubicacion', 'telefono'] },
+        F2_ANT_HUGO: { text: 'Antenas del teléfono de Hugo: Sagunto toda la noche; llamadas sin respuesta a Irene a las 23:10 y a las 00:20.', time: '22:00', end: '02:00', person: 'hugo', place: 'sagunto', source: 'antena', tags: ['ubicacion', 'telefono'] },
+        F2_ANT_ALV: { text: 'Antenas del teléfono de Álvaro: Paterna de 23:30 a 00:20; zona del puente de 00:25 a 00:50; Paterna desde la 01:00. No conecta con Burjassot ni con Benimàmet.', time: '00:25', end: '00:50', person: 'alvaro', place: 'puente', source: 'antena', tags: ['ubicacion', 'telefono'] },
+        F2_LL_0130: { text: 'Cuenta de Irene: se envía el mensaje de despedida a Álvaro.', time: '01:30', person: 'irene', source: 'mensaje', tags: ['mensaje'] },
+        F2_LL_0134: { text: 'Línea de Irene: último registro de red del teléfono.', time: '00:41', person: 'irene', source: 'registro', tags: ['telefono'] },
+        F2_GS_0031: { text: 'Cámara de la gasolinera: un todoterreno oscuro pasa hacia el puente. Matrícula no legible.', time: '00:31', place: 'gasolinera', source: 'cámara', tags: ['camara', 'vehiculo'] },
+        F2_GS_0046: { text: 'Cámara de la gasolinera: el todoterreno oscuro vuelve del puente en dirección a Paterna.', time: '00:47', place: 'gasolinera', source: 'cámara', tags: ['camara', 'vehiculo'] },
+        F2_PJ_2344: { text: 'Peaje del Molinar: tras el Clio pasan un camión de reparto y dos turismos. Ningún vehículo de las personas del expediente.', time: '23:44', place: 'peaje', source: 'registro', tags: ['peaje', 'vehiculo'] },
+        F2_AUDIO_FONDO: { text: 'Fondo del mensaje: el motor del propio coche y la radio a bajo volumen. No hay otras voces.', time: '23:52', source: 'laboratorio', tags: ['audio'] },
+        S2_JOAQ_0038: { kind: 'statement', text: 'Joaquín vio en el puente el coche con warnings, un todoterreno oscuro detrás con las luces apagadas y un hombre con capucha junto a la barandilla.', time: '00:38', person: 'joaquin', place: 'puente', source: 'testigo', tags: ['testigo', 'vehiculo'] },
+        S2_JOAQ_DUDA: { kind: 'statement', text: 'Joaquín está seguro de que la persona de la barandilla era un hombre corpulento.', person: 'joaquin', source: 'testigo', tags: ['testigo'] },
+        S2_CARMEN_MALETA: { kind: 'statement', text: 'Carmen oyó el miércoles otra discusión fuerte: Álvaro gritaba que «no se iba a quedar sin nada».', person: 'alvaro', source: 'testigo', tags: ['testigo', 'discusion'] },
+        S2_NURIA_PREGUNTA: { kind: 'statement', text: 'Nuria declara que Irene le dijo que quería separarse y que tenía miedo de cómo se lo tomaría Álvaro.', person: 'nuria', source: 'declaración', tags: ['divorcio'] },
+        S2_HUGO_ULTIMO: { kind: 'statement', text: 'Hugo declara que Irene le llamó a las 22:09 llorando y que le dijo que fuera a su casa de Sagunto.', time: '22:09', person: 'hugo', source: 'declaración', tags: ['contacto', 'llamada'] },
+        S2_HUGO_RUIDO: { kind: 'statement', text: 'Hugo dice que en la llamada de las 22:09 Irene lloraba y quería ir a su casa.', time: '22:09', person: 'hugo', source: 'declaración', tags: ['llamada'] },
+        S2_HUGO_GRUA: { kind: 'statement', text: 'Hugo dice que esa noche no salió de Sagunto.', person: 'hugo', place: 'sagunto', source: 'declaración', tags: ['coartada'] },
+        S2_HUGO_SILENCIO: { kind: 'statement', text: 'Hugo explica que llamó a Irene a las 23:10 y a las 00:20 porque no llegaba.', person: 'hugo', source: 'declaración', tags: ['llamada'] }
+      },
+      evidence: {
+        P03: { detail: 'Zapatilla izquierda, volcada junto a la barandilla, con los cordones desatados y barro en la suela.' },
+        P04: { detail: 'La barandilla tiene roces recientes en la película de polvo, a la altura de la cintura. En el suelo hay una uña postiza rota.' },
+        P05: { detail: 'A seis metros detrás del Clio, barro con la huella parcial de un neumático ancho, de dibujo de todoterreno.' },
+        V02: { detail: 'Libro de familia, escrituras y los dos pasaportes, el de Álvaro y el de Irene.' },
+        V03: { detail: 'Armario ordenado; la maleta pequeña sigue en el altillo.' },
+        V05: { detail: 'Tiques arrugados: la compra semanal y una farmacia.' }
+      },
+      answers: {
+        alvaro: { discusion: { type: 'mentira' } },
+        hugo: {
+          noche: { type: 'verdad' },
+          ultimo: { a: 'El viernes a las diez me llamó llorando. Le dije que se viniera a casa. No llegó nunca.', type: 'verdad' },
+          problemas: { a: 'Me dijo que quería dejar a Álvaro y que tenía miedo de decírselo.', type: 'verdad' }
+        },
+        joaquin: {
+          vio: { a: 'Pasé sobre las doce y cuarenta en sentido contrario. Había un coche blanco con los warnings y, detrás, un todoterreno oscuro con las luces apagadas. Junto a la barandilla, un hombre con capucha. A las dos menos diez volví a pasar: solo quedaba el coche. Entonces llamé.' },
+          hombre: { a: 'Era un hombre, de eso sí estoy seguro: grande, corpulento.', type: 'verdad' }
+        },
+        carmen: { irene: { a: 'Estaba muy reservada. El miércoles oí otra discusión fuerte; él gritaba que no se iba a quedar sin nada.' } },
+        nuria: {
+          raro: { a: 'Me dijo que quería separarse y que tenía miedo de cómo se lo tomaría Álvaro. Ya había mirado abogados.' },
+          problemas: { a: 'Lo de la Fiscalía la tenía nerviosa, sí. Pero lo que más le preocupaba era Álvaro. Quería separarse.', type: 'verdad' }
+        }
+      },
+      confront: {
+        alvaro: {
+          F2_ANT_ALV: { a: 'Pasaría cerca del puente buscándola. No la encontré.', reveals: [] },
+          F2_TAB_PROG: { a: 'Yo no programé nada. La tablet es suya.', reveals: [] },
+          F2_TAB_SYNC: { a: 'Miré dónde estaba porque estaba preocupado. ¿Eso es delito?', reveals: [] },
+          F2_TAB_BUSQ: { a: '¿Divorcio? No sabía nada de eso.', reveals: [] },
+          F2_GS_0031: { a: 'Hay miles de todoterrenos oscuros.', reveals: [] },
+          F2_LUMINOL_BARANDILLA: { a: 'Se caería. Estaba muy mal.', reveals: [] },
+          F2_PASAPORTE: { a: 'Ahí está, ¿lo ve? No se iba a ninguna parte.', reveals: [] }
+        },
+        hugo: {
+          F2_LL_2209: { a: 'Me llamó llorando. Quería venirse a mi casa.', reveals: ['S2_HUGO_RUIDO'] },
+          F2_PJ_2344: { a: 'Yo no pasé por ese peaje. No salí de Sagunto.', reveals: ['S2_HUGO_GRUA'] },
+          F2_ANT_HUGO: { a: 'La llamé dos veces porque no llegaba. No contestó.', reveals: ['S2_HUGO_SILENCIO'] },
+          F2_FIN_HUGO: { a: 'No le he dado dinero. ¿Por qué iba a hacerlo?', reveals: [] },
+          S2_CARMEN_MALETA: { a: 'A mí no me contó lo de esa discusión, pero no me extraña.', reveals: [] },
+          F2_GS_0031: { a: 'Yo tengo una furgoneta, no un todoterreno.', reveals: [] },
+          F2_NEUMATICO: { a: 'Esa medida es de todoterreno, no de mi furgoneta.', reveals: [] }
+        }
+      },
+      conflicts: [
+        { id: 'CV1', a: 'S2_ALV_SALIO', b: 'F2_ANT_ALV', type: 'Lugar distinto', severity: 'alta', desc: 'Álvaro dice que buscó a Irene por Burjassot y Benimàmet; su teléfono conecta con la antena del puente de 00:25 a 00:50 y nunca con esas zonas.' },
+        { id: 'CV2', a: 'F2_TAB_PROG', b: 'F2_CV_2214', type: 'Secuencia incompatible', severity: 'alta', desc: 'El mensaje de despedida se programó en la tablet de casa a las 23:21; Irene se había ido a las 22:14.' },
+        { id: 'CV3', a: 'F2_LL_0130', b: 'F2_LL_0134', type: 'Secuencia incompatible', severity: 'alta', desc: 'El mensaje de despedida se envía a las 01:30, pero el teléfono de Irene no tiene red desde las 00:41.' },
+        { id: 'CV4', a: 'S2_ALV_BUZON', b: 'F2_TAB_SYNC', type: 'Hecho omitido', severity: 'media', desc: 'Álvaro no menciona que a las 00:12 consultó en la tablet la ubicación compartida del teléfono de Irene.' }
+      ],
+      truth: {
+        culprit: 'alvaro', motive: 'v_pareja', method: 'me_rio', window: 'w_puente', accomplices: [],
+        partialMethods: { me_caida: 'Viste la caída al río, pero no que alguien la provocó.' },
+        decisive: ['F2_TAB_PROG', 'F2_CV_2214', 'F2_ANT_ALV', 'F2_GS_0031', 'F2_GS_0046', 'F2_NEUMATICO', 'F2_BARANDILLA', 'F2_LUMINOL_BARANDILLA', 'F2_LL_0134', 'F2_TAB_SYNC', 'F2_TAB_BUSQ', 'S2_CARMEN_MALETA', 'F2_CV_2327', 'F2_CV_0112', 'S2_JOAQ_0038', 'F2_BARANDILLA_FIBRAS', 'F2_PASAPORTE', 'S2_NURIA_PREGUNTA'],
+        weak: ['F2_LAP_RICARDO', 'S2_NURIA_AMENAZAS', 'F2_PJ_2344', 'F2_LL_2209', 'F2_NOTA', 'F2_ZAPATO_ADN', 'F2_MENSAJE', 'F2_LAP_AMENAZA'],
+        keyConflicts: ['CV1', 'CV2', 'CV3'],
+        narrative: [
+          'Álvaro Pons mató a su mujer. Irene quería separarse: había buscado abogados y se lo había contado a Nuria. El miércoles discutieron y Carmen le oyó gritar que "no se iba a quedar sin nada". Irene tenía un seguro de vida de 200.000 € a su nombre.',
+          'El viernes, tras otra discusión, Irene llamó llorando a su hermano Hugo (22:09) y salió hacia Sagunto (22:14). En El Puig se lo pensó durante media hora y dio la vuelta (peaje sur a las 23:41). Le dejó a Álvaro un mensaje de voz desde el coche (23:52) y fue al puente, un sitio al que solía ir a pensar.',
+          'En casa, Álvaro programó en la tablet de Irene, a las 23:21, el mensaje de despedida para la 01:30, y salió a las 23:27. A las 00:12 consultó en la tablet la ubicación compartida de su teléfono. Llegó al puente en su RAV4 (gasolinera, 00:31) y aparcó detrás del Clio con las luces apagadas.',
+          'Discutieron junto a la barandilla. Hacia las 00:40 la empujó al río; la uña rota, los roces, las fibras de su forro polar y la sangre del pretil son de ese forcejeo. El teléfono cayó con ella y dejó de conectar a las 00:41. Joaquín pasó a las 00:38 y vio a un hombre corpulento con capucha. Álvaro volvió a casa a la 01:12; a la 01:30 la tablet envió sola el mensaje.',
+          'Hugo dijo la verdad: estuvo en Sagunto esperándola. Ricardo tenía un móvil para silenciar a una testigo y envió un correo inquietante, pero estaba en el centro de Valencia. El cuerpo no ha aparecido todavía.'
+        ]
+      },
+      trial: {
+        alvaro: [
+          { id: 'O1', text: 'Mi cliente estuvo buscando a su mujer por Burjassot y Benimàmet.', accept: ['F2_ANT_ALV', 'F2_GS_0031', 'F2_GS_0046', 'F2_NEUMATICO'] },
+          { id: 'O2', text: 'Irene se quitó la vida: dejó un mensaje de despedida.', accept: ['F2_TAB_PROG', 'F2_LL_0134', 'F2_TAB_SYNC'] },
+          { id: 'O3', text: 'No hay cuerpo ni ninguna señal de violencia.', accept: ['F2_LUMINOL_BARANDILLA', 'F2_BARANDILLA', 'F2_BARANDILLA_FIBRAS', 'S2_JOAQ_0038'] }
+        ],
+        generic: [
+          { id: 'O1', text: 'Ningún registro sitúa a la persona señalada en el puente esa noche.', accept: [] },
+          { id: 'O2', text: 'La acusación no explica quién programó el mensaje en la tablet de casa a las 23:21.', accept: [] },
+          { id: 'O3', text: 'La acusación no explica qué todoterreno estuvo en el puente entre las 00:31 y las 00:47.', accept: [] }
+        ]
+      },
+      evaluation: {
+        judicialRelevant: ['alvaro', 'irene'],
+        spatialBonus: ['F2_ANT_ALV', 'F2_GS_0031'],
+        temporalConflicts: ['CV2', 'CV3'],
+        lateral: [
+          { type: 'fact', id: 'S2_CARMEN_MALETA', pts: 20, yes: 'Preguntaste a la vecina por los días previos, no solo por la noche.', no: 'No exploraste los días previos a la desaparición.' },
+          { type: 'conflict', id: 'CV2', pts: 30, yes: 'Viste que el mensaje se programó cuando Irene ya no estaba en casa.', no: 'No comprobaste cuándo y dónde se programó el mensaje de despedida.' },
+          { type: 'conflict', id: 'CV3', pts: 25 },
+          { type: 'chosen', id: 'F2_TAB_SYNC', pts: 25 }
+        ]
+      }
+    }
   }
 });

@@ -22,7 +22,7 @@ E0.cases.push({
   deathWindow: 'Entre las 21:30 y las 00:30 (estimación preliminar en el lugar)',
   briefing: [
     'A las 08:15 del viernes 20 de noviembre, Rosa Benlloch, asistenta de Tomás Arnau, lo encuentra muerto en el despacho de su piso. Tiene una herida en la sien y el cajón del escritorio está forzado.',
-    'El teléfono de Tomás registra cuatro llamadas esa noche. La última, a las 23:14, sale de su teléfono hacia Rosa y deja en su buzón 41 segundos sin palabras.',
+    'El teléfono de Tomás registra cuatro llamadas esa noche. La última es a las 23:14 y nadie la contesta.',
     'El edificio tiene cámara en el ascensor, pero no en la escalera. Hay un conserje, un vecino que fue socio de Tomás, un sobrino con deudas, una hija en Madrid y una copia de llave hecha hace diez días.',
     'Que alguien parezca vivo en un registro no significa que lo estuviera. Comprueba cada hora contra las demás fuentes.'
   ],
@@ -259,7 +259,7 @@ E0.cases.push({
       reveals: ['F3_ASC_2131', 'F3_ASC_2134', 'F3_ASC_2226', 'F3_ASC_2241', 'F3_ASC_2309', 'F3_ASC_2316', 'F3_ASC_2324', 'F3_ASC_NOSUBE', 'F3_ASC_ROSA'] },
     { id: 'D3_PHONE', name: 'Extracción del teléfono de Tomás', cost: 250, desc: 'Registro de llamadas, mensajería y copias de seguridad.', requires: 'T05',
       reveals: ['F3_LL1', 'F3_LL2', 'F3_LL3', 'F3_LL4', 'F3_WA_BORRADO'] },
-    { id: 'D3_AUDIO', name: 'Análisis del buzón de voz de Rosa', cost: 180, desc: 'Análisis acústico de los 41 s de la cuarta llamada.', requiresDigital: 'D3_PHONE',
+    { id: 'D3_AUDIO', name: 'Análisis del buzón de voz', cost: 180, desc: 'Análisis acústico del mensaje de voz que deja la cuarta llamada.', requiresDigital: 'D3_PHONE',
       reveals: ['F3_AUDIO'] },
     { id: 'D3_PC', name: 'Análisis del ordenador', cost: 250, desc: 'Documentos recientes y fechas de modificación.', requires: 'T06',
       reveals: ['F3_PC_TESTAMENTO', 'F3_PC_DEMANDA', 'F3_PC_PAGARES'] },
@@ -287,7 +287,7 @@ E0.cases.push({
     F3_LUPA_CAJON: { text: 'Lupa: las marcas del abrecartas en el cajón son superficiales y hechas desde arriba; el pestillo está intacto: el cajón no estaba cerrado con llave cuando se "forzó".', source: 'escena', tags: ['cajon', 'robo'] },
     F3_HALLAZGO: { text: 'Rosa encuentra a Tomás muerto en el despacho al llegar a trabajar.', time: '08:15', person: 'rosa', place: 'p7', source: 'informe policial', tags: ['hallazgo'] },
     F3_VENTANA: { text: 'Estimación preliminar en el lugar: muerte entre las 21:30 y las 00:30.', time: '21:30', end: '00:30', person: 'tomas', source: 'informe forense', tags: ['muerte', 'hora'] },
-    F3_CUATRO: { text: 'El teléfono de Tomás registra cuatro llamadas entre las 21:00 y las 23:30. La última sale hacia Rosa a las 23:14.', source: 'informe policial', tags: ['llamada'] },
+    F3_CUATRO: { text: 'El teléfono de Tomás registra cuatro llamadas entre las 21:00 y las 23:30. La última, a las 23:14, nadie la contesta.', source: 'informe policial', tags: ['llamada'] },
 
     F3_HERIDA: { text: 'Herida en la sien izquierda y hematomas recientes en ambos antebrazos.', person: 'tomas', source: 'informe forense', tags: ['muerte', 'golpe'] },
     F3_AUTOPSIA: { text: 'Autopsia: la lesión mortal es compatible con un impacto contra una arista al caer. Los hematomas de los antebrazos son compatibles con un agarre o un empujón.', person: 'tomas', source: 'laboratorio', tags: ['muerte', 'golpe'] },
@@ -367,14 +367,9 @@ E0.cases.push({
   conflicts: [
     { id: 'C01', a: 'S3_SER_NOSUBE', b: 'F3_ASC_2226', type: 'Lugar distinto', severity: 'alta', desc: 'Sergio dice que no subió al 7.º; la cámara del ascensor le registra subiendo del 6.º al 7.º a las 22:26.' },
     { id: 'C02', a: 'S3_SER_SINLLAVE', b: 'S3_ROSA_LLAVE', type: 'Hecho distinto', severity: 'alta', desc: 'Sergio niega tener llave; Rosa afirma que Tomás guardaba una copia para él en un gancho que esa mañana estaba vacío.' },
-    { id: 'C03', a: 'S3_SER_PIJAMA', b: 'F3_ASC_2324', type: 'Hecho distinto', severity: 'alta', desc: 'Sergio dice que estaba en pijama; a las 23:24 la cámara le muestra con sudadera oscura bajando a la portería.' },
-    { id: 'C04', a: 'S3_SER_PIJAMA', b: 'S3_JUL_MONTES', type: 'Hecho distinto', severity: 'media', desc: 'Sergio dice que estaba en pijama; el conserje le vio bajar hacia las 23:25 con una sudadera oscura.' },
     { id: 'C05', a: 'S3_JUL_PORTERIA', b: 'F3_ASC_2241', type: 'Lugar distinto', severity: 'media', desc: 'Julián dice que no se movió de la portería; a las 22:41 la cámara muestra el mostrador vacío.' },
-    { id: 'C06', a: 'F3_LL4', b: 'F3_AUTOPSIA_HORA', type: 'Secuencia incompatible', severity: 'alta', desc: 'La cuarta llamada sale del teléfono de Tomás a las 23:14; la autopsia sitúa la muerte entre las 22:15 y las 22:50.' },
-    { id: 'C07', a: 'F3_WA_BORRADO', b: 'F3_AUTOPSIA_HORA', type: 'Secuencia incompatible', severity: 'alta', desc: 'El chat con Sergio se borra a las 23:15, después de la franja de muerte.' },
     { id: 'C08', a: 'S3_JUL_PORTERIA', b: 'F3_LIBRO', type: 'Hecho distinto', severity: 'baja', desc: 'Julián dice que no se movió; en su libro aparece una ronda de 22:30 a 22:50, tachada.' },
-    { id: 'C09', a: 'S3_MAR_BAR', b: 'F3_BAR', type: 'Hecho omitido', severity: 'media', desc: 'Marcos dice que estuvo en el bar de 22:00 a 23:30; la cámara interior no le muestra entre las 22:20 y las 22:48.' },
-    { id: 'C10', a: 'S3_SER_SUBIO', b: 'F3_ASC_2309', type: 'Pendiente de vincular', severity: 'media', desc: 'Sergio dice que su única subida fue a las 22:26; a las 23:09 alguien con sudadera oscura sube del 6.º al 7.º (la 6.º B está vacía).' }
+    { id: 'C09', a: 'S3_MAR_BAR', b: 'F3_BAR', type: 'Hecho omitido', severity: 'media', desc: 'Marcos dice que estuvo en el bar de 22:00 a 23:30; la cámara interior no le muestra entre las 22:20 y las 22:48.' }
   ],
 
   verdictOptions: {
@@ -416,7 +411,20 @@ E0.cases.push({
     usefulLab: ['T01:autopsia', 'R04:documentos', 'T02:comparativa', 'T03:huellas']
   },
 
-  truth: {
+  trial: {},
+  trialIntro: {},
+
+  /* ================= VERSIONES ================= */
+  variants: {
+    sergio: {
+      conflicts: [
+    { id: 'C03', a: 'S3_SER_PIJAMA', b: 'F3_ASC_2324', type: 'Hecho distinto', severity: 'alta', desc: 'Sergio dice que estaba en pijama; a las 23:24 la cámara le muestra con sudadera oscura bajando a la portería.' },
+    { id: 'C04', a: 'S3_SER_PIJAMA', b: 'S3_JUL_MONTES', type: 'Hecho distinto', severity: 'media', desc: 'Sergio dice que estaba en pijama; el conserje le vio bajar hacia las 23:25 con una sudadera oscura.' },
+    { id: 'C06', a: 'F3_LL4', b: 'F3_AUTOPSIA_HORA', type: 'Secuencia incompatible', severity: 'alta', desc: 'La cuarta llamada sale del teléfono de Tomás a las 23:14; la autopsia sitúa la muerte entre las 22:15 y las 22:50.' },
+    { id: 'C07', a: 'F3_WA_BORRADO', b: 'F3_AUTOPSIA_HORA', type: 'Secuencia incompatible', severity: 'alta', desc: 'El chat con Sergio se borra a las 23:15, después de la franja de muerte.' },
+    { id: 'C10', a: 'S3_SER_SUBIO', b: 'F3_ASC_2309', type: 'Pendiente de vincular', severity: 'media', desc: 'Sergio dice que su única subida fue a las 22:26; a las 23:09 alguien con sudadera oscura sube del 6.º al 7.º (la 6.º B está vacía).' }
+      ],
+      truth: {
     culprit: 'sergio',
     motive: 'm3_deuda',
     method: 'me3_empujon',
@@ -434,8 +442,7 @@ E0.cases.push({
       'Trituró los pagarés y los dejó en el cuarto de basuras de su planta. A las 23:24 bajó a la portería con la misma sudadera para dejarse ver por el conserje. Julián mintió sobre su salida al bar para no perder el empleo. Marcos tenía un móvil fuerte (el nuevo testamento) y una copia de llave reciente, pero era para Rosa, y estaba en la terraza del bar hablando con su pareja.'
     ]
   },
-
-  trial: {
+      trial: {
     sergio: [
       { id: 'O1', text: 'Mi cliente subió un momento y bajó por la escalera con Tomás vivo: a las 23:14 Tomás llamó a Rosa.', accept: ['F3_AUTOPSIA_HORA', 'F3_AUDIO', 'F3_WA_BORRADO'] },
       { id: 'O2', text: 'Cualquiera con llave pudo entrar: el sobrino se hizo una copia hace diez días.', accept: ['F3_ASC_2309', 'F3_ASC_NOSUBE', 'S3_ROSA_LLAVE', 'F3_GANCHO', 'S3_MAR_COPIA', 'F3_ASC_2316'] },
@@ -446,5 +453,120 @@ E0.cases.push({
       { id: 'O2', text: 'La acusación no explica quién subió del 6.º al 7.º a las 23:09 ni quién borró el chat a las 23:15.', accept: [] },
       { id: 'O3', text: 'La acusación no explica la desaparición de los pagarés de Sergio Montes.', accept: [] }
     ]
+  },
+      trialIntro: {}
+    },
+
+    /* ---------- Versión 2: el sobrino ---------- */
+    marcos: {
+      facts: {
+        F3_UV_TEL: { text: 'Luz UV: solo marcas de uso con los dedos sobre la pantalla; ninguna textura de guante.', source: 'laboratorio', tags: ['telefono', 'huella'] },
+        F3_TEL_HUELLAS: { text: 'Huellas en el teléfono: solo de Tomás.', source: 'laboratorio', tags: ['telefono', 'huella'] },
+        F3_TELEFONO_ESCENA: { text: 'El teléfono de Tomás estaba sobre el escritorio, con una notificación de llamada perdida en la pantalla.', source: 'escena', tags: ['telefono', 'llamada'] },
+        F3_POLVO_ESC: { text: 'Polvo revelador: huellas recientes de Marcos Arnau en el pasamanos del tramo entre el 6.º y el 7.º, encima de la capa de polvo. Marcos no vive en el edificio.', person: 'marcos', source: 'laboratorio', tags: ['escalera', 'huella', 'acceso'] },
+        F3_CAJON: { text: 'El cajón del escritorio fue forzado con un abrecartas; queda una funda vacía rotulada «TESTAMENTO 2026». La carpeta con los pagarés originales de S.M. sigue dentro.', place: 'p7', source: 'escena', tags: ['cajon', 'documento', 'testamento', 'pagares'] },
+        F3_PAGARES_TRITURADOS: { text: 'Reconstrucción del papel triturado: folletos de propaganda y extractos bancarios antiguos de Sergio Montes. No hay ningún pagaré.', person: 'sergio', place: 'p6', source: 'laboratorio', tags: ['documento', 'basura'] },
+        F3_ASC_2309: { text: 'Ascensor: Sergio Montes baja del 7.º al 6.º. Rostro visible; camisa clara.', time: '22:31', person: 'sergio', place: 'p6', source: 'cámara', tags: ['camara', 'ascensor'] },
+        F3_ASC_2316: { text: 'Ascensor: ningún movimiento entre las 22:31 y las 23:24.', time: '22:31', end: '23:24', source: 'cámara', tags: ['camara', 'ascensor'] },
+        F3_ASC_2324: { text: 'Ascensor: Sergio Montes baja del 6.º a la planta baja con camisa clara y una bolsa de basura; a las 23:27 vuelve a subir al 6.º.', time: '23:24', end: '23:27', person: 'sergio', place: 'porteria', source: 'cámara', tags: ['camara', 'ascensor', 'ropa'] },
+        F3_LL4: { text: 'Llamada 4: entrante de Marcos Arnau, no contestada; deja un mensaje de voz de 19 s.', time: '23:14', person: 'marcos', source: 'llamada', tags: ['llamada', 'audio'] },
+        F3_WA_BORRADO: { text: 'Mensajería: no se ha borrado ningún chat. Último mensaje de Tomás a Marcos (19/11, 20:45): «Mañana firmo el testamento nuevo. Lo siento, ya está decidido.» Marcos lo lee a las 20:46. En el chat con Sergio, a las 20:10: «Si el lunes no me pagas, presento la demanda.»', time: '20:45', person: 'marcos', source: 'dispositivo', tags: ['mensaje', 'telefono', 'testamento', 'herencia'] },
+        F3_AUDIO: { text: 'Buzón de voz de Tomás (19 s): voz de Marcos: «Tío, perdona lo de antes. Llámame cuando puedas.» De fondo, música y conversaciones de bar.', time: '23:14', person: 'marcos', place: 'ruzafa', source: 'laboratorio', tags: ['audio', 'llamada'] },
+        F3_PC_DEMANDA: { text: '«demanda_montes.docx»: reclamación de 90.000 € contra Sergio Montes, con cita en el despacho del abogado el lunes 23/11. Última modificación: el jueves a las 22:33, con la sesión de Tomás.', time: '22:33', person: 'tomas', place: 'p7', source: 'documento', tags: ['demanda', 'ordenador', 'dinero'] },
+        F3_BAR: { text: 'Bar La Esquina (Ruzafa, 1,6 km): Marcos paga con tarjeta a las 22:58. La cámara interior lo muestra de 22:05 a 22:20 y de 22:48 a 23:30; la terraza no tiene cámara.', time: '22:05', end: '23:30', person: 'marcos', place: 'ruzafa', source: 'cámara', tags: ['camara', 'coartada'] },
+        F3_ANT_MARCOS: { text: 'Teléfono de Marcos: zona de Ruzafa de 22:00 a 22:18; zona de C/ de la Paz de 22:27 a 22:42; de nuevo Ruzafa desde las 22:47. No hay llamadas entre las 21:05 y las 23:14, cuando llama a Tomás.', time: '22:27', end: '22:42', person: 'marcos', place: 'p7', source: 'antena', tags: ['ubicacion', 'telefono'] },
+        S3_SER_PIJAMA: { kind: 'statement', text: 'Sergio declara que llevaba la misma camisa clara toda la noche y que bajó a tirar la basura antes de acostarse.', time: '23:24', end: '23:30', person: 'sergio', place: 'porteria', source: 'declaración', tags: ['ropa'] },
+        S3_SER_SUBIO: { kind: 'statement', text: 'Sergio admite que subió al 7.º a pedir más plazo para pagar, que Tomás estaba vivo y que bajó en el ascensor a las 22:31.', time: '22:26', end: '22:31', person: 'sergio', place: 'p7', source: 'declaración', tags: ['visita'] },
+        S3_JUL_MONTES: { kind: 'statement', text: 'Julián vio bajar a Sergio Montes hacia las 23:25 en camisa, con una bolsa de basura; la tiró al contenedor de la calle y volvió a subir.', time: '23:25', person: 'sergio', place: 'porteria', source: 'testigo', tags: ['testigo', 'ropa'] },
+        S3_ROSA_BUZON: { kind: 'statement', text: 'Rosa declara que esa noche no recibió ninguna llamada de Tomás.', person: 'rosa', source: 'declaración', tags: ['llamada'] },
+        S3_MAR_VUELTA: { kind: 'statement', text: 'Marcos admite que fue al edificio a pedir perdón a su tío, que llamó al portero automático, que nadie contestó y que volvió al bar sin entrar.', time: '22:27', end: '22:42', person: 'marcos', place: 'porteria', source: 'declaración', tags: ['coartada', 'acceso'] },
+        S3_MAR_NOSABIA: { kind: 'statement', text: 'Marcos declara que no sabía que su tío iba a cambiar el testamento.', person: 'marcos', source: 'declaración', tags: ['testamento', 'herencia'] },
+        S3_SER_ABOGADO: { kind: 'statement', text: 'Sergio se niega a hablar de sus deudas sin abogado.', person: 'sergio', source: 'declaración', tags: ['dinero'] },
+        S3_MAR_ABOGADO: { kind: 'statement', text: 'Marcos se niega a seguir declarando sin abogado al ver las huellas de la escalera.', person: 'marcos', source: 'declaración', tags: [] }
+      },
+      evidence: {
+        T03: { detail: 'Forzado con un abrecartas que sigue en el suelo. Carpetas revueltas. Queda una funda de plástico vacía rotulada a mano «TESTAMENTO 2026». La carpeta de pagarés de S.M. sigue dentro.' },
+        T05: { detail: 'Teléfono sin bloqueo de pantalla. En la pantalla, una notificación de llamada perdida.' }
+      },
+      answers: {
+        sergio: {
+          ropa: { a: 'La camisa de por la tarde. Bajé un momento a tirar la basura y me acosté.', type: 'verdad' }
+        },
+        marcos: {
+          noche: { type: 'mentira' },
+          salio: { type: 'mentira' }
+        },
+        rosa: {
+          noche: { a: 'En mi casa, en Benicalap. No supe nada de él hasta que llegué por la mañana.' }
+        },
+        julian: {
+          vio: { a: 'Al señor Montes, que bajó sobre las once y veinticinco en camisa, con una bolsa de basura. La tiró al contenedor y volvió a subir.' }
+        }
+      },
+      confront: {
+        sergio: {
+          F3_ASC_2226: { a: 'Vale, subí un momento a pedirle más tiempo para pagar. Me enseñó la demanda en la pantalla y me dijo que no. Estaba enfadado, pero bien. Bajé en el ascensor a las diez y media.', reveals: ['S3_SER_SUBIO'] },
+          F3_ASC_2309: { a: 'Ahí me tiene, bajando. Cuando me fui, Tomás estaba vivo.', reveals: ['S3_SER_SUBIO'] },
+          S3_JUL_MONTES: { a: 'Bajé la basura. Lo ha visto el conserje.', reveals: [] },
+          F3_PAGARES_TRITURADOS: { a: 'Son papeles míos, extractos viejos. ¿Ahora es delito tirar papeles?', reveals: [] },
+          F3_PC_DEMANDA: { a: 'Me la enseñó esa noche en la pantalla. Por eso me fui.', reveals: [] },
+          F3_FIN_SERGIO: { a: 'Mis cuentas son cosa mía. De eso no hablo sin un abogado.', reveals: ['S3_SER_ABOGADO'] }
+        },
+        marcos: {
+          F3_PC_TESTAMENTO: { a: '¿Me quitaba la imprenta? No sabía nada. Me entero ahora.', reveals: ['S3_MAR_NOSABIA'] },
+          F3_ANT_MARCOS: { a: '...Vale. Fui a verle para pedirle perdón por lo de la llamada. Llamé al portero automático y no contestó nadie. Me volví al bar. No entré.', reveals: ['S3_MAR_VUELTA'] },
+          F3_WA_BORRADO: { a: 'Ese mensaje... No sé. Lo vería tarde.', reveals: [] },
+          F3_POLVO_ESC: { a: '(Se queda callado mucho rato.) Quiero hablar con un abogado.', reveals: ['S3_MAR_ABOGADO'] },
+          F3_LL4: { a: 'Le llamé para hacer las paces. No lo cogió.', reveals: [] },
+          F3_AUDIO: { a: 'Ahí lo tiene: le pedí perdón. ¿Haría eso alguien que...?', reveals: [] },
+          F3_BAR: { a: 'Estaba en la terraza, ya se lo he dicho.', reveals: [] }
+        },
+        clara: {
+          F3_PC_TESTAMENTO: { a: 'Me dijo que lo firmaba el viernes. Y que esa tarde se lo había escrito a Marcos.', reveals: [] }
+        }
+      },
+      conflicts: [
+        { id: 'CM1', a: 'S3_MAR_TERRAZA', b: 'F3_ANT_MARCOS', type: 'Lugar distinto', severity: 'alta', desc: 'Marcos dice que pasó media hora en la terraza del bar hablando con su pareja; su teléfono no hace llamadas y conecta en la zona de C/ de la Paz de 22:27 a 22:42.' },
+        { id: 'CM2', a: 'S3_MAR_NOSABIA', b: 'F3_WA_BORRADO', type: 'Hecho distinto', severity: 'alta', desc: 'Marcos dice que no sabía nada del testamento; a las 20:46 leyó el mensaje de su tío: «Mañana firmo el testamento nuevo».' },
+        { id: 'CM3', a: 'S3_MAR_VUELTA', b: 'F3_POLVO_ESC', type: 'Hecho distinto', severity: 'alta', desc: 'Marcos dice que no entró en el edificio; hay huellas suyas recientes en el pasamanos de la escalera entre el 6.º y el 7.º.' }
+      ],
+      truth: {
+        culprit: 'marcos', motive: 'm3_herencia', method: 'me3_empujon', window: 'w3_2226', accomplices: [],
+        partialMethods: { me3_objeto: 'Identificaste un golpe en la cabeza, pero no la caída tras el empujón ni la simulación de robo.' },
+        decisive: ['F3_ANT_MARCOS', 'F3_BAR', 'F3_POLVO_ESC', 'F3_WA_BORRADO', 'F3_PC_TESTAMENTO', 'F3_CAJON', 'F3_ASC_2309', 'F3_ASC_2316', 'F3_ASC_NOSUBE', 'F3_PC_DEMANDA', 'F3_AUTOPSIA_HORA', 'F3_AUTOPSIA', 'F3_LUPA_CAJON', 'F3_INTACTO', 'F3_ASC_2241', 'F3_ESCALERA', 'S3_MAR_VUELTA'],
+        weak: ['F3_GANCHO', 'S3_ROSA_LLAVE', 'F3_AJEDREZ_HUELLAS', 'F3_PC_PAGARES', 'F3_FIN_SERGIO', 'F3_CERR', 'S3_CLA_JULIAN', 'F3_ASC_2226', 'F3_LL3', 'F3_TRITURADO', 'F3_DEMANDA_ROTA'],
+        keyConflicts: ['CM1', 'CM2', 'CM3', 'C09'],
+        narrative: [
+          'Marcos Arnau era el heredero del testamento vigente y debía 40.000 €. A las 21:05 su tío le negó el préstamo, y a las 20:45 ya le había escrito que al día siguiente firmaba un testamento nuevo que dejaba la imprenta a una fundación.',
+          'Sergio Montes llamó a las 22:24 y subió a las 22:26 a pedir más plazo para pagar. Tomás le enseñó la demanda en la pantalla y le echó. Sergio bajó en el ascensor a las 22:31 y Tomás siguió con la demanda: la guardó a las 22:33. Sergio mintió por miedo, por la deuda y por la discusión.',
+          'Marcos salió del bar a las 22:20 por la terraza, sin cámara, y en pocos minutos llegó a C/ de la Paz. La portería estaba vacía: Julián se había ido al bar de enfrente. Entró con su llave de siempre y subió a pie por la escalera para no salir en la cámara del ascensor.',
+          'Discutieron en el despacho por el testamento. Marcos le agarró de los brazos y le empujó; Tomás cayó hacia atrás y se golpeó la sien contra la esquina del escritorio. Marcos sacó del cajón el testamento nuevo, lo forzó para simular un robo, se limpió las manos en el pomo y bajó por la escalera, apoyándose en el pasamanos. A las 22:48 volvía a estar en el bar.',
+          'A las 22:58 pagó con tarjeta y a las 23:14 llamó a su tío para dejarle un mensaje de perdón que le sirviera de coartada. El gancho «Copia vecino» llevaba años vacío porque la llave la tenía Sergio, y la bolsa que Sergio bajó a las 23:24 era solo basura.'
+        ]
+      },
+      trial: {
+        marcos: [
+          { id: 'O1', text: 'Mi cliente estuvo toda la noche en Ruzafa: hay cámaras y un pago con tarjeta.', accept: ['F3_ANT_MARCOS', 'F3_BAR', 'F3_POLVO_ESC'] },
+          { id: 'O2', text: 'Mi cliente ni siquiera sabía que su tío iba a cambiar el testamento.', accept: ['F3_WA_BORRADO', 'F3_CAJON'] },
+          { id: 'O3', text: 'El vecino subió esa noche, le debía 90.000 € y mintió. El culpable es él.', accept: ['F3_ASC_2309', 'F3_PC_DEMANDA', 'F3_ASC_2316', 'F3_PAGARES_TRITURADOS'] }
+        ],
+        generic: [
+          { id: 'O1', text: 'Ninguna cámara sitúa a la persona señalada en el 7.º durante la franja de la muerte.', accept: [] },
+          { id: 'O2', text: 'La acusación no explica quién se llevó el testamento nuevo del cajón.', accept: [] },
+          { id: 'O3', text: 'La acusación no explica las huellas recientes del pasamanos de la escalera.', accept: [] }
+        ]
+      },
+      evaluation: {
+        judicialRelevant: ['marcos'],
+        spatialBonus: ['F3_ANT_MARCOS', 'F3_POLVO_ESC'],
+        temporalConflicts: ['CM1'],
+        lateral: [
+          { type: 'fact', id: 'S3_MAR_VUELTA', pts: 25, yes: 'Hiciste que Marcos admitiera que estuvo en el edificio.', no: 'No llevaste a Marcos a explicar dónde estuvo de verdad.' },
+          { type: 'conflict', id: 'CM2', pts: 30, yes: 'Viste que Marcos sabía lo del testamento nuevo.', no: 'No contrastaste lo que Marcos sabía del testamento.' },
+          { type: 'conflict', id: 'CM1', pts: 25 },
+          { type: 'chosen', id: 'F3_POLVO_ESC', pts: 20 }
+        ]
+      }
+    }
   }
 });

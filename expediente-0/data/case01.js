@@ -466,21 +466,14 @@ E0.cases.push({
     { id: 'C01', a: 'S_JAV_CASA', b: 'F_PORTAL_JAV_IN', type: 'Lugar distinto', severity: 'alta', desc: 'La declaración sitúa a Javier en Benimaclet desde las 22:30; la cámara lo registra entrando en C/ del Almendro a las 23:18.' },
     { id: 'C02', a: 'S_JAV_CASA', b: 'F_ANT_JAV', type: 'Lugar distinto', severity: 'alta', desc: 'La declaración sitúa a Javier en Benimaclet; su teléfono conecta con la antena de C/ del Almendro entre las 23:10 y las 23:33.' },
     { id: 'C03', a: 'S_JAV_ULTIMO', b: 'F_TEL_2312', type: 'Hecho omitido', severity: 'media', desc: 'La declaración no menciona la llamada de Javier a Daniel a las 23:12.' },
-    { id: 'C04', a: 'S_ELENA_CASA', b: 'F_ANT_ELENA', type: 'Lugar distinto', severity: 'alta', desc: 'La declaración sitúa a Elena en Ruzafa toda la noche; su teléfono conecta con la antena de C/ del Almendro entre las 22:41 y las 00:04.' },
-    { id: 'C05', a: 'S_ELENA_ULTIMO', b: 'F_TEL_2246', type: 'Hecho omitido', severity: 'alta', desc: 'La declaración sitúa el último contacto a las 19:30; el teléfono de Daniel registra una llamada de Elena a las 22:46.' },
-    { id: 'C06', a: 'S_ELENA_ULTIMO', b: 'F_PC_CAL', type: 'Fecha distinta', severity: 'media', desc: 'La declaración fija la revisión de la cartera el lunes; el calendario de Daniel la recoge el sábado 14 a las 22:45.' },
-    { id: 'C07', a: 'S_JAV_DOSCOPAS', b: 'F_UNA_COPA', type: 'Hecho distinto', severity: 'alta', desc: 'Javier describe dos copas servidas a las 23:20; en la inspección de la mañana solo hay una copa en la mesa.' },
     { id: 'C08', a: 'S_MARTA_ULTIMO', b: 'F_TEL_1303', type: 'Hecho omitido', severity: 'baja', desc: 'Marta dice llevar más de una semana sin hablar con Daniel; hay mensajes entre ambos del jueves 12/03.' },
-    { id: 'C09', a: 'S_ANDRES_MISMO', b: 'F_PORTAL_JAV_OUT', type: 'Secuencia incompatible', severity: 'alta', desc: 'El testigo cree que el hombre de la discusión seguía en el piso a las 23:45; la cámara registra la salida de Javier a las 23:31.' },
-    { id: 'C10', a: 'F_GAR_0002', b: 'F_COCHE_DANIEL', type: 'Secuencia incompatible', severity: 'alta', desc: 'A las 00:02 sale un vehículo con la única tarjeta de la vivienda 17, pero el coche de Daniel sigue en su plaza por la mañana.' },
-    { id: 'C11', a: 'S_LUCIA_LLAVE', b: 'F_PUERTA', type: 'Hábito distinto', severity: 'media', desc: 'Lucía afirma que Daniel siempre echaba la llave; la puerta se encontró cerrada sin llave.' },
-    { id: 'C12', a: 'S_ELENA_NUNCA', b: 'F_GAR_2247', type: 'Pendiente de vincular', severity: 'baja', desc: 'Elena niega haber estado en la vivienda; a las 22:47 alguien abre la puerta del garaje desde el interfono de la 17 a un vehículo. El registro no identifica el vehículo.' }
+    { id: 'C11', a: 'S_LUCIA_LLAVE', b: 'F_PUERTA', type: 'Hábito distinto', severity: 'media', desc: 'Lucía afirma que Daniel siempre echaba la llave; la puerta se encontró cerrada sin llave.' }
   ],
 
   /* ---------- VEREDICTO ---------- */
   verdictOptions: {
     motives: [
-      { id: 'm_fraude', label: 'Evitar la denuncia por el desvío de su dinero' },
+      { id: 'm_fraude', label: 'Evitar la denuncia por un desvío de dinero' },
       { id: 'm_seguro_emp', label: 'Cobrar el seguro de persona clave / evitar la disolución de la empresa' },
       { id: 'm_herencia', label: 'Cobrar el seguro de vida personal' },
       { id: 'm_prestamo', label: 'Deuda del préstamo / resentimiento personal' },
@@ -495,8 +488,8 @@ E0.cases.push({
       { id: 'me_desconocido', label: 'No determinable con lo disponible' }
     ],
     windows: [
-      { id: 'w_visita', label: 'Durante la visita de Javier (23:18–23:31)' },
-      { id: 'w_despues', label: 'Tras la salida de Javier y antes de las 00:00' },
+      { id: 'w_visita', label: 'Entre las 23:15 y las 23:35' },
+      { id: 'w_despues', label: 'Entre las 23:35 y las 00:00' },
       { id: 'w_madrugada', label: 'Después de las 00:00' },
       { id: 'w_nd', label: 'No determinable con lo disponible' }
     ]
@@ -517,7 +510,23 @@ E0.cases.push({
     usefulLab: ['E01:autopsia', 'E02:toxicologia', 'E03:huellas', 'E04:huellas', 'E08:comparativa', 'E09:huellas']
   },
 
-  truth: {
+  /* ---------- JUICIO SIMULADO (por versión) ---------- */
+  trial: {},
+  trialIntro: {},
+
+  /* ================= VERSIONES ================= */
+  variants: {
+    elena: {
+      conflicts: [
+    { id: 'C04', a: 'S_ELENA_CASA', b: 'F_ANT_ELENA', type: 'Lugar distinto', severity: 'alta', desc: 'La declaración sitúa a Elena en Ruzafa toda la noche; su teléfono conecta con la antena de C/ del Almendro entre las 22:41 y las 00:04.' },
+    { id: 'C05', a: 'S_ELENA_ULTIMO', b: 'F_TEL_2246', type: 'Hecho omitido', severity: 'alta', desc: 'La declaración sitúa el último contacto a las 19:30; el teléfono de Daniel registra una llamada de Elena a las 22:46.' },
+    { id: 'C06', a: 'S_ELENA_ULTIMO', b: 'F_PC_CAL', type: 'Fecha distinta', severity: 'media', desc: 'La declaración fija la revisión de la cartera el lunes; el calendario de Daniel la recoge el sábado 14 a las 22:45.' },
+    { id: 'C07', a: 'S_JAV_DOSCOPAS', b: 'F_UNA_COPA', type: 'Hecho distinto', severity: 'alta', desc: 'Javier describe dos copas servidas a las 23:20; en la inspección de la mañana solo hay una copa en la mesa.' },
+    { id: 'C09', a: 'S_ANDRES_MISMO', b: 'F_PORTAL_JAV_OUT', type: 'Secuencia incompatible', severity: 'alta', desc: 'El testigo cree que el hombre de la discusión seguía en el piso a las 23:45; la cámara registra la salida de Javier a las 23:31.' },
+    { id: 'C10', a: 'F_GAR_0002', b: 'F_COCHE_DANIEL', type: 'Secuencia incompatible', severity: 'alta', desc: 'A las 00:02 sale un vehículo con la única tarjeta de la vivienda 17, pero el coche de Daniel sigue en su plaza por la mañana.' },
+    { id: 'C12', a: 'S_ELENA_NUNCA', b: 'F_GAR_2247', type: 'Pendiente de vincular', severity: 'baja', desc: 'Elena niega haber estado en la vivienda; a las 22:47 alguien abre la puerta del garaje desde el interfono de la 17 a un vehículo. El registro no identifica el vehículo.' }
+      ],
+      truth: {
     culprit: 'elena',
     motive: 'm_fraude',
     method: 'me_sed_golpe',
@@ -536,9 +545,7 @@ E0.cases.push({
       'Javier mintió sobre su visita por miedo, no por culpa: a las 23:49 pagaba en una gasolinera a 5,8 km. Marta mintió por vergüenza sobre una discusión. Lucía creía, sin mala fe, que "quien llevaba el dinero" era Javier.'
     ]
   },
-
-  /* ---------- JUICIO SIMULADO ---------- */
-  trial: {
+      trial: {
     elena: [
       { id: 'O1', text: 'Ningún testigo ni cámara del portal sitúa a mi clienta en el edificio esa noche.', accept: ['F_ANT_ELENA', 'F_TEL_2246', 'F_GAR_2247', 'F_CALLE_2246', 'S_JAV_DOSCOPAS', 'S_RAMON_MUJER'] },
       { id: 'O2', text: 'El último visitante conocido fue Javier Molina: discutió con la víctima, mintió sobre su visita y su huella está en la puerta.', accept: ['F_PORTAL_JAV_OUT', 'F_TICKET_JAV', 'F_PC_2352', 'F_GAR_0002', 'S_ANDRES_DUDA', 'F_ANT_JAV'] },
@@ -554,5 +561,121 @@ E0.cases.push({
       { id: 'O2', text: 'La acusación no explica la actividad del portátil a las 23:52 ni la salida del garaje a las 00:02.', accept: [] },
       { id: 'O3', text: 'El móvil atribuido no está respaldado por ninguna prueba directa.', accept: [] }
     ]
+  },
+      trialIntro: {}
+    },
+
+    /* ---------- Versión 2: el socio ---------- */
+    javier: {
+      facts: {
+        F_ANILLA_VACIA: { text: 'El llavero de Daniel tiene la llave del portal, la de la vivienda y la tarjeta del garaje.', source: 'escena', tags: ['acceso', 'llave', 'garaje'] },
+        F_LUPA_ANILLA: { text: 'Lupa: la anilla del llavero sujeta la tarjeta del garaje; no hay marcas anómalas.', source: 'escena', tags: ['llave', 'garaje', 'acceso'] },
+        F_AUTOPSIA_TOX: { text: 'Autopsia: alcohol en sangre de 0,6 g/L. No se detectan otras sustancias.', source: 'laboratorio', person: 'daniel', tags: ['tox', 'muerte'] },
+        F_COPA_ZOLPIDEM: { text: 'Los restos de vino de la copa del salón no contienen sustancias ajenas.', source: 'laboratorio', tags: ['copa', 'tox', 'vino'] },
+        F_BOTELLA_SIN_HUELLAS: { text: 'En la botella hay huellas de Daniel y de Elena Vidal.', source: 'laboratorio', tags: ['vino', 'huella', 'botella'] },
+        F_PORTAL_JAV_OUT: { text: 'Cámara del portal: sale Javier Molina con una bolsa de deporte, con paso rápido.', time: '23:58', person: 'javier', place: 'almendro', source: 'cámara', tags: ['camara', 'portal'] },
+        F_PORTAL_NADA: { text: 'Cámara del portal: entre las 23:58 y las 08:36 nadie entra ni sale por el portal.', time: '23:58', end: '08:36', place: 'almendro', source: 'cámara', tags: ['camara', 'portal'] },
+        F_CALLE_2334: { text: 'Cámara de calle: un turismo compacto oscuro sale de un aparcamiento en la calzada, a 30 m del portal. Matrícula parcial: 2?9? H??.', time: '00:01', place: 'almendro', source: 'cámara', tags: ['camara', 'vehiculo', 'matricula'] },
+        F_CALLE_0002: { text: 'Cámara de calle: un turismo compacto oscuro sale por la rampa del garaje. Matrícula parcial: 4?17 K??.', time: '23:06', place: 'almendro', source: 'cámara', tags: ['camara', 'vehiculo', 'garaje', 'matricula'] },
+        F_GAR_0002: { text: 'Garaje: apertura de la puerta vehicular desde el interfono de la vivienda 17 para una salida.', time: '23:06', place: 'almendro', source: 'registro', tags: ['garaje', 'acceso', 'vehiculo'] },
+        F_PC_2012: { text: 'Portátil: última modificación de «auditoria_empresa.xlsx» por el usuario.', time: '20:12', person: 'daniel', source: 'dispositivo', tags: ['portatil', 'archivo', 'dinero'] },
+        F_PC_EXCEL: { text: 'Contenido recuperado de «auditoria_empresa.xlsx»: 23 pagos de la consultora entre 2024 y 2026, por 141.000 €, a «JM Servicios Técnicos SL», con la nota «la sociedad es de Javier: no hay ningún servicio».', person: 'javier', source: 'dispositivo', tags: ['portatil', 'archivo', 'dinero'] },
+        F_PC_BORRADOR: { text: 'Borrador de correo (no enviado) a un despacho de abogados: «El lunes quiero presentar la denuncia. Tengo pruebas de que mi socio ha desviado dinero de la empresa.»', time: '20:30', person: 'daniel', source: 'documento', tags: ['portatil', 'dinero', 'correo'] },
+        F_PC_2352: { text: 'Registro del sistema del portátil: se elimina «auditoria_empresa.xlsx» y se vacía el historial del navegador. La sesión estaba abierta, sin contraseña. El reloj del sistema está sincronizado.', time: '23:52', place: 'almendro', source: 'dispositivo', tags: ['portatil', 'archivo'] },
+        F_FIN_EV: { text: 'Cuentas de Daniel: 182.000 € invertidos en 2025 a través de «EV Gestión Patrimonial SL», la sociedad de Elena Vidal. Los extractos del fondo cuadran con las aportaciones.', person: 'elena', source: 'documento', tags: ['dinero', 'transferencia'] },
+        F_FIN_EMPRESA: { text: 'La consultora debe 96.000 € y tiene dos nóminas pendientes. Daniel había pedido una auditoría externa y la disolución, tras detectar pagos a «JM Servicios Técnicos SL», administrada por Javier Molina.', person: 'javier', source: 'documento', tags: ['dinero', 'empresa'] },
+        F_ANT_JAV: { text: 'Antenas del teléfono de Javier: zona de C/ del Almendro de 23:10 a 00:00; Av. del Puerto a las 00:17; Benimaclet a las 00:40.', time: '23:10', end: '00:00', person: 'javier', place: 'almendro', source: 'antena', tags: ['ubicacion', 'telefono'] },
+        F_ANT_ELENA: { text: 'Antenas del teléfono de Elena: zona de C/ del Almendro de 22:41 a 23:09; Ruzafa desde las 23:24.', time: '22:41', end: '23:09', person: 'elena', place: 'almendro', source: 'antena', tags: ['ubicacion', 'telefono'] },
+        F_TICKET_JAV: { text: 'Ticket de la gasolinera de la Av. del Puerto (5,8 km de C/ del Almendro): pago con la tarjeta de Javier Molina.', time: '00:19', person: 'javier', place: 'puerto', source: 'documento', tags: ['ticket', 'ubicacion'] },
+        S_JAV_DOSCOPAS: { kind: 'statement', text: 'Javier declara que, durante su visita, Daniel estaba solo, con una copa de vino.', time: '23:20', person: 'javier', place: 'almendro', source: 'declaración', tags: ['copa', 'vino', 'visita'] },
+        S_ELENA_CASA: { kind: 'statement', text: 'Elena declara que estuvo en casa de Daniel de 22:45 a 23:05 revisando su cartera y que después volvió a Ruzafa.', time: '22:45', end: '23:05', person: 'elena', place: 'almendro', source: 'declaración', tags: ['coartada', 'ubicacion'] },
+        S_ELENA_ULTIMO: { kind: 'statement', text: 'Elena declara que se despidió de Daniel a las 23:05 y que estaba bien, aunque preocupado por la empresa.', time: '23:05', person: 'elena', source: 'declaración', tags: ['contacto', 'cita'] },
+        S_ELENA_NUNCA: { kind: 'statement', text: 'Elena declara que esa noche estuvo en la vivienda: Daniel le abrió el garaje desde el interfono.', person: 'elena', source: 'declaración', tags: ['acceso', 'garaje'] },
+        S_ELENA_2246: { kind: 'statement', text: 'Elena confirma la llamada de las 22:46: avisaba de que estaba ante la rampa del garaje.', time: '22:46', person: 'elena', source: 'declaración', tags: ['llamada'] },
+        S_ANDRES_DISCUSION: { kind: 'statement', text: 'Andrés oyó una discusión fuerte de dos hombres en el piso 17.', time: '23:20', end: '23:40', person: 'andres', place: 'almendro', source: 'testigo', tags: ['testigo', 'discusion'] },
+        S_ANDRES_GARAJE: { kind: 'statement', text: 'Andrés oyó un portazo en la puerta del piso 17 poco antes de las doce.', time: '23:57', person: 'andres', place: 'almendro', source: 'testigo', tags: ['testigo', 'puerta'] },
+        S_ANDRES_DUDA: { kind: 'statement', text: 'Andrés dice que una salida a las 23:58 cuadra con el portazo que oyó.', person: 'andres', source: 'testigo', tags: ['testigo'] }
+      },
+      evidence: {
+        E07: { detail: 'El llavero tiene la llave del portal, la llave de la vivienda y una tarjeta de garaje.' }
+      },
+      answers: {
+        javier: {
+          vio: { a: 'Daniel estaba solo, con una copa de vino. Nada raro. Estaba muy alterado con lo de la auditoría.', type: 'verdad' },
+          despues: { type: 'mentira' }
+        },
+        elena: {
+          noche: { a: 'Estuve con Daniel de once menos cuarto a once y cinco revisando la cartera, en su casa. Luego volví a Ruzafa.', type: 'verdad' },
+          ultimo: { a: 'Me fui de su casa a las once y cinco. Estaba bien, aunque muy preocupado por su empresa.', type: 'verdad' },
+          acceso: { a: 'Esa noche estuve allí, sí. Él me abrió el garaje desde el interfono, como otras veces.', type: 'verdad' },
+          problemas: { type: 'verdad' }
+        },
+        andres: {
+          oyo: { a: 'Una discusión fuerte de dos hombres, desde las once y veinte hasta pasadas las once y media. Luego un golpe seco, como algo pesado que cae: eso fue cuando terminaba la película, a las doce menos cuarto. Y poco antes de las doce, un portazo en la puerta del 17.' },
+          quien: { type: 'verdad' }
+        },
+        lucia: { problemas: { type: 'verdad' } }
+      },
+      confront: {
+        javier: {
+          F_PORTAL_JAV_IN: { a: '(Silencio largo.) Vale. Fui. Le llamé desde abajo, subí, discutimos por la disolución y me fui sobre las once y media. Cuando me fui estaba perfectamente.', reveals: ['S_JAV_VISITA'] },
+          F_PORTAL_JAV_OUT: { a: 'Esa hora estará mal. Yo me fui sobre las once y media.', reveals: ['S_JAV_VISITA'] },
+          F_TICKET_JAV: { a: 'Daría vueltas con el coche antes de repostar. No me acuerdo.', reveals: [] },
+          F_PC_EXCEL: { a: 'Esos pagos son servicios reales. Daniel no entendía cómo funcionaba la empresa.', reveals: [] },
+          F_PC_BORRADOR: { a: 'Daniel siempre amenazaba con abogados.', reveals: [] }
+        },
+        elena: {
+          F_TEL_2246: { a: 'Le avisé de que estaba abajo, ante la rampa. Ya le he dicho que fui.', reveals: ['S_ELENA_2246'] },
+          F_ANT_ELENA: { a: 'Ahí lo tiene: llegué antes de las once y me fui a las once y cinco.', reveals: [] },
+          F_FIN_EV: { a: 'Son aportaciones a un fondo y cuadran con los extractos. Puede comprobarlo.', reveals: [] },
+          S_JAV_DOSCOPAS: { a: 'Cuando yo me fui, Daniel estaba solo. Lo que pasara después, no lo sé.', reveals: [] }
+        },
+        andres: {
+          F_PORTAL_JAV_OUT: { a: '¿Salió a las doce menos dos? Pues eso cuadra con el portazo que oí.', reveals: ['S_ANDRES_DUDA'] }
+        }
+      },
+      conflicts: [
+        { id: 'CJ1', a: 'S_JAV_VISITA', b: 'F_PORTAL_JAV_OUT', type: 'Hora distinta', severity: 'alta', desc: 'Javier dice que se fue sobre las 23:30; la cámara del portal registra su salida a las 23:58.' },
+        { id: 'CJ2', a: 'S_JAV_DESPUES', b: 'F_TICKET_JAV', type: 'Hora distinta', severity: 'alta', desc: 'Javier dice que repostó nada más salir, hacia las 23:35; el ticket de la gasolinera es de las 00:19.' },
+        { id: 'CJ3', a: 'S_JAV_VISITA', b: 'F_ANT_JAV', type: 'Hora distinta', severity: 'media', desc: 'Javier dice que se fue sobre las 23:30; su teléfono sigue en la zona de C/ del Almendro hasta las 00:00.' }
+      ],
+      truth: {
+        culprit: 'javier', motive: 'm_fraude', method: 'me_golpe', window: 'w_despues', accomplices: [],
+        partialMethods: { me_sed_golpe: 'Identificaste el golpe, pero no hubo sedación.' },
+        decisive: ['F_PORTAL_JAV_OUT', 'F_TICKET_JAV', 'F_ANT_JAV', 'F_PC_EXCEL', 'F_PC_BORRADOR', 'F_FIN_EMPRESA', 'F_PC_2352', 'F_GAR_0002', 'F_ANT_ELENA', 'F_LUMINOL_PUERTA', 'S_ANDRES_GARAJE', 'F_CALLE_2334', 'F_AUTOPSIA_HORA', 'F_HERIDA_COMPATIBLE'],
+        weak: ['F_FIBRAS_COMUN', 'F_CABELLO_SIN_RAIZ', 'S_MARTA_ZOLPIDEM', 'F_FIN_SEGURO_VIDA', 'F_TEL_1303', 'F_FIN_EV', 'F_UV_COPA', 'F_BOTELLA_SIN_HUELLAS', 'F_TEL_2246'],
+        keyConflicts: ['CJ1', 'CJ2', 'C01'],
+        narrative: [
+          'Javier Molina mató a su socio. Desde 2024 había desviado 141.000 € de la consultora a «JM Servicios Técnicos SL», una sociedad suya sin actividad. Daniel lo descubrió, lo documentó en una hoja de cálculo (20:12) y preparó una denuncia para el lunes. Lucía tenía razón sin saberlo: «quien lleva el dinero» era Javier.',
+          'Esa noche Daniel recibió a su asesora, Elena Vidal, para revisar su cartera. Llegó por el garaje (22:47) y se fue a las 23:06, también por el garaje, abierto desde el interfono. Sus inversiones eran legítimas.',
+          'A las 23:12 Javier llamó desde la calle y subió. La discusión que oyó Andrés fue entre los dos. Hacia las 23:41 Javier golpeó a Daniel con el sujetalibros de bronce; no hubo sedación. Borró la hoja de cálculo y el historial (23:52), metió el sujetalibros en su bolsa de deporte y salió dando un portazo a las 23:58.',
+          'Arrancó el coche a las 00:01 y repostó en la Av. del Puerto a las 00:19, no "nada más salir". Al ser confrontado con la cámara del portal, admitió la visita pero adelantó su salida a las 23:30: la cámara, sus antenas y el ticket lo desmienten.',
+          'Elena no mintió esta vez. Marta ocultó la discusión del jueves por vergüenza, y su medicación para dormir no tuvo nada que ver.'
+        ]
+      },
+      trial: {
+        javier: [
+          { id: 'O1', text: 'Mi cliente se marchó sobre las 23:30, antes de la hora del golpe.', accept: ['F_PORTAL_JAV_OUT', 'F_ANT_JAV', 'F_TICKET_JAV', 'S_ANDRES_GARAJE'] },
+          { id: 'O2', text: 'La asesora estuvo esa noche en el piso y nadie la vio salir.', accept: ['F_GAR_0002', 'F_ANT_ELENA', 'F_CALLE_0002'] },
+          { id: 'O3', text: 'No hay móvil: las cuentas de la empresa estaban mal por la crisis.', accept: ['F_PC_EXCEL', 'F_PC_BORRADOR', 'F_FIN_EMPRESA'] }
+        ],
+        generic: [
+          { id: 'O1', text: 'Ningún registro sitúa a la persona acusada en el piso a la hora del golpe.', accept: [] },
+          { id: 'O2', text: 'La acusación no explica quién salió del portal a las 23:58 con una bolsa de deporte.', accept: [] },
+          { id: 'O3', text: 'La acusación no explica a quién señalaba la hoja de cálculo borrada a las 23:52.', accept: [] }
+        ]
+      },
+      evaluation: {
+        judicialRelevant: ['javier', 'elena'],
+        spatialBonus: ['F_TICKET_JAV', 'F_CALLE_2334'],
+        temporalConflicts: ['CJ1', 'CJ2'],
+        lateral: [
+          { type: 'fact', id: 'S_LUCIA_DINERO', pts: 20, yes: 'Escuchaste a la hermana sobre "quien lleva el dinero".', no: 'No exploraste qué sabía la familia del dinero.' },
+          { type: 'conflict', id: 'CJ1', pts: 30, yes: 'Contrastaste la hora de salida declarada con la cámara.', no: 'No contrastaste la hora de salida declarada con la cámara.' },
+          { type: 'conflict', id: 'CJ2', pts: 25 },
+          { type: 'chosen', id: 'F_TICKET_JAV', pts: 25 }
+        ]
+      }
+    }
   }
 });
