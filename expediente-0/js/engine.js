@@ -62,6 +62,16 @@
     return c.people.map(p => ({ id: p.id, name: p.name })).concat(c.judicial.targets || []);
   }
 
+  /* Ventajas de especialidad: costes y solicitudes judiciales. */
+  function costOf(kind, base) {
+    const sp = E0.store.state.player.specialty;
+    if ((kind === 'lab' && sp === 'criminalistica') || (kind === 'digital' && sp === 'digital')) return Math.round(base * 0.8);
+    return base;
+  }
+  function judicialMax(c) {
+    return c.judicial.max + (E0.store.state.player.specialty === 'juridica' ? 1 : 0);
+  }
+
   /* ---------- Mapa ---------- */
   function placeDistance(c, a, b) {
     const pa = c.places[a], pb = c.places[b];
@@ -377,5 +387,5 @@
     return { res, rebutted, total: set.length, verdict };
   }
 
-  E0.engine = { NOT_FOUND, getCase, minutes, fmt, known, discover, knownFacts, personName, judicialTargets, placeDistance, knownPlaces, log, query, findConflict, timelineCompare, hypStatus, custody, evaluate, trialSet, trialResolve, norm };
+  E0.engine = { NOT_FOUND, getCase, costOf, judicialMax, minutes, fmt, known, discover, knownFacts, personName, judicialTargets, placeDistance, knownPlaces, log, query, findConflict, timelineCompare, hypStatus, custody, evaluate, trialSet, trialResolve, norm };
 })();

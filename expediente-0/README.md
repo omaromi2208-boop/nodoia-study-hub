@@ -1,6 +1,6 @@
 # EXPEDIENTE 0 — Investigación
 
-Simulador de investigación criminal para dos investigadores (Omi y La Rebe). Aquí no se gana adivinando: se gana reconstruyendo.
+Simulador de investigación criminal con escenarios en 3D. Creas a tu investigador/a, eliges su especialidad y haces carrera resolviendo expedientes. Aquí no se gana adivinando: se gana reconstruyendo.
 
 ## Cómo jugar
 
@@ -8,6 +8,7 @@ Abre `index.html` en el navegador (doble clic). No necesita instalación ni serv
 
 ## Contenido
 
+- **Creación de personaje**: nombre propio y especialidad (Criminalística, Investigación digital, Jurídica o Análisis de conducta), cada una con ventajas reales en la partida.
 - **Centro de investigación**: perfil, 7 rangos, XP, reputación, dinero, energía y jornadas semanales con salario.
 - **Academia**: 12 módulos evaluables y una biblioteca jurídica que separa el contenido educativo interno, las fuentes oficiales (BOE) y la simulación del juego.
 - **Carrera** con historial de intentos, **Cuaderno** con notas de cada investigador, **Perfil** con 12 habilidades y **Ajustes** (6 temas, animaciones, tamaño, sonido, exportar, importar y borrar).
@@ -20,10 +21,10 @@ Abre `index.html` en el navegador (doble clic). No necesita instalación ni serv
 
 | Herramienta | Qué hace |
 |---|---|
-| Escena | Planos con varias zonas. Cada elemento se puede examinar, fotografiar, enviar al laboratorio, añadir al muro o convertir en pregunta. |
+| Escena | Vista 3D (girar, acercar, pulsar objetos e inspeccionarlos de cerca) o plano 2D, con varias zonas. Cada elemento se puede examinar, fotografiar, enviar al laboratorio, añadir al muro o convertir en pregunta. |
 | Laboratorio | Análisis con coste. Los resultados respetan los límites de cada técnica. |
 | Digital | Cámaras, registros, dispositivos, finanzas y vehículos. Las solicitudes judiciales de antenas son limitadas. |
-| Personas | Interrogatorio con memoria y confrontación con pruebas. Las respuestas pueden ser verdad, medias verdades, mentiras o creencias erróneas. |
+| Personas | Retrato de cada persona e interrogatorio con memoria y confrontación con pruebas. Las respuestas pueden ser verdad, medias verdades, mentiras o creencias erróneas. |
 | Comparador | Señala solo diferencias objetivas entre fuentes. Nunca dice quién miente. |
 | Cronología | Línea temporal visual con detección de solapamientos. |
 | Mapa | Lugares descubiertos, conexiones trazadas por el jugador y distancias aproximadas. |
@@ -46,10 +47,14 @@ data/case01.js     EXP-001 · única fuente de verdad del caso
 data/case02.js     EXP-002
 data/case03.js     EXP-003
 js/state.js        estado, guardado, exportar/importar con validación
+js/scene3d.js      escena 3D generada a partir de los planos del caso
 js/engine.js       motor genérico: consulta, comparador, cronología, mapa, custodia, evaluación
 js/ui.js           render de pantallas
 js/app.js          acciones del jugador, muro (arrastre) y arranque
+vendor/three.min.js  Three.js r128 (licencia MIT, ver vendor/THREE-LICENSE.txt)
 ```
+
+El 3D se construye solo a partir de `scene.plans`: suelos, paredes, mobiliario según el nombre de cada estancia y un modelo por evidencia (se deduce del nombre o se fija con el campo `model`). Si el navegador no admite WebGL, el juego muestra el plano 2D.
 
 ## Añadir un caso
 

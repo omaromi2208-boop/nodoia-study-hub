@@ -52,5 +52,12 @@ E0.config = {
 
   sources: ['declaración', 'cámara', 'llamada', 'mensaje', 'antena', 'vehículo', 'testigo', 'informe forense', 'dispositivo', 'registro', 'escena', 'laboratorio', 'documento'],
 
+  specialties: [
+    { id: 'criminalistica', name: 'Criminalística', desc: 'Formación en inspección ocular y laboratorio.', perk: 'Análisis de laboratorio un 20 % más baratos.', skills: { atencion: 8, deduccion: 4 } },
+    { id: 'digital', name: 'Investigación digital', desc: 'Experiencia en dispositivos, cámaras y registros.', perk: 'Solicitudes digitales un 20 % más baratas.', skills: { espacial: 8, temporal: 4 } },
+    { id: 'juridica', name: 'Jurídica', desc: 'Conoce el procedimiento y cómo argumentar ante un juez.', perk: 'Una solicitud judicial de antenas extra en cada expediente.', skills: { incertidumbre: 8, logica: 4 } },
+    { id: 'conducta', name: 'Análisis de conducta', desc: 'Especialista en entrevistas y declaraciones.', perk: 'Doble de XP al practicar interrogatorios en la jornada.', skills: { verbal: 8, memoria: 6 } }
+  ],
+
   noteCategories: ['Nota', 'Pregunta', 'Teoría', 'Sospecha', 'Contradicción', 'Conclusión']
 };

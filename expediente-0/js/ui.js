@@ -19,6 +19,38 @@
   };
   const icon = k => '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[k] + '</svg>';
 
+  /* Retrato procedural: rasgos derivados del identificador de la persona (estable entre partidas). */
+  function portrait(p, size) {
+    let h = 0; for (const ch of p.id + p.name) h = (h * 33 + ch.charCodeAt(0)) >>> 0;
+    const pick = (arr, k) => arr[(h >>> k) % arr.length];
+    const skin = pick(['#f1d3b8', '#e2b896', '#c99470', '#a8734f', '#7d5236', '#5b3a26'], 1);
+    const old = p.age >= 55;
+    const hair = old ? pick(['#b9b5ad', '#d6d2ca', '#8f8a82'], 3) : pick(['#1d1612', '#3b2617', '#6b4423', '#a8783f', '#2b2b2b', '#5a2e1c'], 3);
+    const cloth = pick(['#2f3a4a', '#4a2f2f', '#2f4a3c', '#3c3c46', '#4a432f', '#1f2833'], 5);
+    const style = (h >>> 7) % 4;
+    const glasses = (h >>> 9) % 3 === 0;
+    const beard = (h >>> 11) % 5 === 0;
+    const hairSvg = [
+      '<path d="M30 44c0-14 9-22 20-22s20 8 20 22c-3-6-9-10-20-10s-17 4-20 10z" fill="' + hair + '"/>',
+      '<path d="M28 50c-2-18 8-28 22-28s24 10 22 28c-1 10-2 22-4 30h-6c2-10 3-20 2-30-6-6-22-6-28 0-1 10 0 20 2 30h-6c-2-8-3-20-4-30z" fill="' + hair + '"/>',
+      '<path d="M31 42c1-12 9-19 19-19 11 0 19 7 19 19-5-5-12-7-19-7s-14 2-19 7z" fill="' + hair + '"/><path d="M31 42c-1 4-1 8 0 11M69 42c1 4 1 8 0 11" stroke="' + hair + '" stroke-width="3"/>',
+      '<path d="M33 40c3-10 10-15 17-15 9 0 15 5 17 15-4-3-10-4-17-4s-13 1-17 4z" fill="' + hair + '" opacity=".85"/>'
+    ][style];
+    return '<svg class="portrait" width="' + size + '" height="' + size + '" viewBox="0 0 100 100" role="img" aria-label="Retrato de ' + esc(p.name) + '">' +
+      '<circle cx="50" cy="50" r="50" fill="var(--panel-2)"/>' +
+      '<path d="M16 100c2-18 16-26 34-26s32 8 34 26z" fill="' + cloth + '"/>' +
+      '<rect x="44" y="62" width="12" height="12" rx="4" fill="' + skin + '"/>' +
+      '<ellipse cx="50" cy="48" rx="18" ry="21" fill="' + skin + '"/>' +
+      (beard ? '<path d="M34 52c2 14 8 19 16 19s14-5 16-19c-4 6-10 8-16 8s-12-2-16-8z" fill="' + hair + '" opacity=".9"/>' : '') +
+      hairSvg +
+      '<ellipse cx="43" cy="48" rx="2.2" ry="2.6" fill="#1a1a1a"/><ellipse cx="57" cy="48" rx="2.2" ry="2.6" fill="#1a1a1a"/>' +
+      '<path d="M39 42.5h8M53 42.5h8" stroke="' + (old ? '#8f8a82' : hair) + '" stroke-width="2" stroke-linecap="round"/>' +
+      '<path d="M44 59c4 2 8 2 12 0" stroke="#5b2f2a" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
+      (glasses ? '<g fill="none" stroke="#1a1d22" stroke-width="1.6"><circle cx="43" cy="48" r="6"/><circle cx="57" cy="48" r="6"/><path d="M49 48h2"/></g>' : '') +
+      (old ? '<path d="M38 54c2 1 4 1 6 0M56 54c2 1 4 1 6 0" stroke="#00000033" stroke-width="1"/>' : '') +
+      '</svg>';
+  }
+
   function rankIndex(xp) {
     let i = 0;
     C.ranks.forEach((r, k) => { if (xp >= r.xp) i = k; });
@@ -30,7 +62,10 @@
     const pct = next ? Math.round((xp - cur.xp) / (next.xp - cur.xp) * 100) : 100;
     return { i, cur, next, pct };
   }
-  const invName = id => S().investigators[id] || id;
+  const playerName = () => S().player.name || 'Investigador/a';
+  const invName = () => playerName();
+  const initials = n => String(n || '?').trim().split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+  const specialty = () => C.specialties.find(x => x.id === S().player.specialty) || null;
   const money = n => n.toLocaleString('es-ES') + ' €';
 
   /* ---------- Shell ---------- */
@@ -43,9 +78,8 @@
       '<span class="chip opt" title="Rango">' + esc(r.cur.name) + '</span>' +
       '<span class="chip" title="Dinero"><em>€</em>' + s.money.toLocaleString('es-ES') + '</span>' +
       '<span class="chip opt" title="Energía"><em>EN</em>' + s.energy + '</span>' +
-      '<div class="turn" role="group" aria-label="Investigador activo">' +
-      ['omi', 'rebe'].map(id => '<button data-act="set-active" data-id="' + id + '" aria-pressed="' + (s.active === id) + '">' + esc(invName(id)) + '</button>').join('') +
-      '</div></div>';
+      '<button class="player-chip" data-act="go" data-screen="profile" title="Perfil"><span class="avatar sm acc">' + esc(initials(playerName())) + '</span><span class="pc-name">' + esc(playerName()) + '</span></button>' +
+      '</div>';
   }
 
   function sidebar() {
@@ -109,8 +143,8 @@
     const p = caseProgress(c, cs);
     const pendingMods = E0.academy.filter(m => !s.academy[m.id]).slice(0, 4);
     return '<section class="screen stack-lg">' +
-      '<div class="screen-head"><div><div class="eyebrow">Centro de investigación · Semana ' + s.week + '</div><h1>Unidad ' + esc(invName('omi')) + ' &amp; ' + esc(invName('rebe')) + '</h1></div>' +
-      '<div class="team">' + ['omi', 'rebe'].map(id => '<div class="team-member"><div class="avatar ' + (s.active === id ? 'acc' : '') + '">' + esc(invName(id).replace(/^La\s+/i, '').slice(0, 2).toUpperCase()) + '</div><div><b>' + esc(invName(id)) + '</b><div class="faint mono" style="font-size:.72rem">' + (s.active === id ? 'TURNO ACTIVO' : 'EN EQUIPO') + '</div></div></div>').join('') + '</div></div>' +
+      '<div class="screen-head"><div><div class="eyebrow">Centro de investigación · Semana ' + s.week + '</div><h1>' + esc(playerName()) + '</h1></div>' +
+      '<div class="team"><div class="team-member"><div class="avatar lg acc">' + esc(initials(playerName())) + '</div><div><b>' + esc(rankInfo(s.xp).cur.name) + '</b><div class="faint mono" style="font-size:.72rem">' + esc(specialty() ? specialty().name.toUpperCase() : 'SIN ESPECIALIDAD') + '</div></div></div></div></div>' +
       '<div class="hero">' +
       '<article class="panel dossier hero-case stack"><span class="stamp badge ' + (status === 'Activo' ? 'acc' : status === 'Cerrado' ? 'ok' : '') + '">' + status + '</span>' +
       '<div><div class="case-code">' + c.id + ' · EXPEDIENTE DESTACADO</div><div class="case-title">' + esc(c.title) + '</div>' +
@@ -209,16 +243,15 @@
   /* ---------- Cuaderno ---------- */
   function screenNotebook() {
     const s = S();
-    const filter = s.view.noteFilter || 'all';
-    const notes = s.notes.filter(n => filter === 'all' || n.author === filter).slice().reverse();
+    const notes = s.notes.slice().reverse();
     return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Libreta de la unidad</div><h1>Cuaderno</h1></div></div>' +
-      '<div class="grid"><form class="panel stack" data-form="note"><h3>Nueva entrada de ' + esc(invName(s.active)) + '</h3>' +
+      '<div class="grid"><form class="panel stack" data-form="note"><h3>Nueva entrada</h3>' +
       '<div class="row" style="flex-wrap:nowrap"><label class="field" style="flex:1">Categoría<select id="note-cat" name="cat">' + C.noteCategories.map(c => '<option>' + c + '</option>').join('') + '</select></label>' +
       '<label class="field" style="flex:1">Expediente<select id="note-case" name="caseId"><option value="">General</option>' + E0.cases.map(c => '<option value="' + c.id + '"' + (s.view.caseId === c.id ? ' selected' : '') + '>' + c.id + '</option>').join('') + '</select></label></div>' +
       '<label class="field">Texto<textarea id="note-text" name="text" required placeholder="Escribe libremente: dudas, horas, ideas por comprobar…"></textarea></label>' +
-      '<div class="row"><button class="btn primary" type="submit">Guardar nota</button><span class="faint" style="font-size:.8rem">El autor es el investigador activo (cámbialo arriba).</span></div></form>' +
-      '<div class="stack"><div class="row" role="group" aria-label="Filtrar notas">' + [['all', 'Todas'], ['omi', invName('omi')], ['rebe', invName('rebe')]].map(([id, l]) => '<button class="btn small ' + (filter === id ? 'primary' : 'ghost') + '" data-act="note-filter" data-id="' + id + '">' + esc(l) + '</button>').join('') + '</div>' +
-      (notes.length ? notes.map(n => '<div class="note"><div class="spread"><span class="row"><span class="badge acc">' + esc(n.cat) + '</span><span class="badge">' + esc(invName(n.author)) + '</span>' + (n.caseId ? '<span class="badge">' + esc(n.caseId) + '</span>' : '') + '</span><button class="linkish" data-act="note-del" data-id="' + n.id + '">Eliminar</button></div><p>' + esc(n.text) + '</p><span class="faint mono" style="font-size:.7rem">' + new Date(n.t).toLocaleString('es-ES') + '</span></div>').join('') : '<p class="muted">No hay notas' + (filter !== 'all' ? ' de ' + esc(invName(filter)) : '') + '.</p>') +
+      '<div class="row"><button class="btn primary" type="submit">Guardar nota</button></div></form>' +
+      '<div class="stack">' +
+      (notes.length ? notes.map(n => '<div class="note"><div class="spread"><span class="row"><span class="badge acc">' + esc(n.cat) + '</span>' + (n.caseId ? '<span class="badge">' + esc(n.caseId) + '</span>' : '') + '</span><button class="linkish" data-act="note-del" data-id="' + n.id + '">Eliminar</button></div><p>' + esc(n.text) + '</p><span class="faint mono" style="font-size:.7rem">' + new Date(n.t).toLocaleString('es-ES') + '</span></div>').join('') : '<p class="muted">Aún no hay notas.</p>') +
       '</div></div></section>';
   }
 
@@ -227,8 +260,8 @@
     const s = S();
     const r = rankInfo(s.xp);
     const last = s.history.length ? s.history[s.history.length - 1] : null;
-    return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Ficha del investigador</div><h1>' + esc(invName('omi')) + '</h1></div></div>' +
-      '<div class="grid"><article class="panel stack"><dl class="kv"><dt>Nombre</dt><dd>' + esc(invName('omi')) + '</dd><dt>Compañera</dt><dd>' + esc(invName('rebe')) + '</dd><dt>Rango</dt><dd>' + esc(r.cur.name) + '</dd><dt>XP</dt><dd>' + s.xp + '</dd><dt>Reputación</dt><dd>' + s.reputation + '/100</dd><dt>Casos</dt><dd>' + s.history.length + ' cerrados / ' + E0.cases.length + ' disponibles</dd></dl>' +
+    return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Ficha del investigador</div><h1>' + esc(playerName()) + '</h1></div><div class="avatar lg acc">' + esc(initials(playerName())) + '</div></div>' +
+      '<div class="grid"><article class="panel stack"><dl class="kv"><dt>Nombre</dt><dd>' + esc(playerName()) + '</dd><dt>Especialidad</dt><dd>' + (specialty() ? esc(specialty().name) + ' — ' + esc(specialty().perk) : 'Sin especialidad') + '</dd><dt>Rango</dt><dd>' + esc(r.cur.name) + '</dd><dt>XP</dt><dd>' + s.xp + '</dd><dt>Reputación</dt><dd>' + s.reputation + '/100</dd><dt>Casos</dt><dd>' + s.history.length + ' cerrados / ' + E0.cases.length + ' disponibles</dd></dl>' +
       '<h3>Perfil de razonamiento acumulado</h3>' + (last ? '<div class="stack" style="gap:6px">' + last.lines.map(l => '<p style="font-size:.9rem">' + esc(l) + '</p>').join('') + '</div>' : '<p class="muted">Aparecerá al cerrar el primer expediente. Se basa en tus acciones reales durante la investigación.</p>') +
       '</article><article class="panel stack"><h3>Habilidades</h3>' + C.skills.map(k => '<div class="skill-row"><span>' + k.name + '</span><div class="bar"><i style="width:' + s.skills[k.id] + '%"></i></div><span class="mono">' + s.skills[k.id] + '</span></div>').join('') +
       '<p class="faint" style="font-size:.78rem">Las habilidades se actualizan con la evaluación de cada caso y con la academia. No son un test psicológico ni una medida de inteligencia.</p></article></div></section>';
@@ -240,10 +273,10 @@
     const st = s.settings;
     const inFrame = window.self !== window.top;
     return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Configuración</div><h1>Ajustes</h1></div></div>' +
-      '<div class="grid"><form class="panel stack" data-form="names"><h3>Investigadores</h3>' +
-      '<label class="field">Investigador 1<input type="text" id="name-omi" name="omi" maxlength="24" value="' + esc(s.investigators.omi) + '"></label>' +
-      '<label class="field">Investigador 2<input type="text" id="name-rebe" name="rebe" maxlength="24" value="' + esc(s.investigators.rebe) + '"></label>' +
-      '<div class="row"><button class="btn primary" type="submit">Guardar nombres</button></div></form>' +
+      '<div class="grid"><form class="panel stack" data-form="player"><h3>Tu investigador/a</h3>' +
+      '<label class="field">Nombre<input type="text" id="player-name" name="name" maxlength="24" required value="' + esc(s.player.name) + '"></label>' +
+      '<label class="field">Especialidad<select id="player-spec" name="specialty"><option value="">Sin especialidad</option>' + C.specialties.map(x => '<option value="' + x.id + '"' + (s.player.specialty === x.id ? ' selected' : '') + '>' + esc(x.name) + ' — ' + esc(x.perk) + '</option>').join('') + '</select></label>' +
+      '<div class="row"><button class="btn primary" type="submit">Guardar</button></div></form>' +
       '<article class="panel stack"><h3>Tema visual</h3><div class="swatches">' + C.themes.map(t => '<button class="swatch" data-act="theme" data-id="' + t.id + '" aria-pressed="' + (st.theme === t.id) + '"><i class="sw-' + t.id + '"></i>' + esc(t.name) + '</button>').join('') + '</div>' +
       '<h3>Interfaz</h3><label class="check"><input type="checkbox" id="set-anim" data-act="toggle-setting" data-key="anim"' + (st.anim ? ' checked' : '') + '>Animaciones activadas</label>' +
       '<label class="check"><input type="checkbox" id="set-sound" data-act="toggle-setting" data-key="sound"' + (st.sound ? ' checked' : '') + '>Sonido de interfaz discreto</label>' +
@@ -308,7 +341,7 @@
       '<div class="case-head"><div class="min0"><div class="crumbs"><button data-act="go" data-screen="cases">Expedientes</button> / ' + c.id + ' / ' + esc(TABS.find(t => t[0] === tab)[1]) + '</div>' +
       '<div class="case-code">' + c.id + '</div><h1>' + esc(c.title) + '</h1>' +
       '<div class="row" style="margin-top:8px"><span class="badge">' + esc(c.victimLabel || 'Víctima') + ': ' + esc(c.victim.name) + '</span><span class="badge ' + (closed ? 'ok' : 'acc') + '">' + (closed ? 'Cerrado' : 'Activo') + '</span><span class="badge warn">Dificultad ' + esc(c.difficulty) + '</span></div></div>' +
-      '<div class="stack" style="gap:4px;align-items:flex-end"><span class="eyebrow">Objetivo</span><span style="font-size:.9rem">Reconstrucción del caso</span><span class="faint mono" style="font-size:.72rem">Turno: ' + esc(invName(s.active)) + '</span></div></div>' +
+      '<div class="stack" style="gap:4px;align-items:flex-end"><span class="eyebrow">Objetivo</span><span style="font-size:.9rem">Reconstrucción del caso</span><span class="faint mono" style="font-size:.72rem">Investiga: ' + esc(playerName()) + '</span></div></div>' +
       '<nav class="tabs" role="tablist" aria-label="Herramientas del expediente">' + TABS.map(([id, l]) => '<button class="tab" role="tab" data-act="tab" data-tab="' + id + '" aria-selected="' + (tab === id) + '">' + l + (counts[id] ? '<sup>' + counts[id] + '</sup>' : '') + '</button>').join('') + '</nav>' +
       '<div id="tab-body">' + R[tab](c, cs) + '</div>' +
       '<div class="case-bar" aria-label="Estado de la investigación"><span>Evidencias <b>' + p.ev + '/' + c.evidence.length + '</b></span><span>Entrevistas <b>' + p.int + '/' + c.people.length + '</b></span><span>Hipótesis <b>' + p.hyp + '</b></span><span>Lab <b>' + p.lab + '</b></span><span>Digital <b>' + p.dig + '</b></span><span>Contradicciones <b>' + p.con + '</b></span></div>' +
@@ -323,18 +356,29 @@
       '<dl class="kv"><dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>' + esc(c.victimLabel || 'Víctima') + '</dt><dd>' + esc(c.victim.name) + ', ' + c.victim.age + ' años. ' + esc(c.victim.job) + '</dd><dt>Ventana</dt><dd>' + esc(c.deathWindow) + '</dd></dl></article>' +
       '<article class="panel stack"><div class="panel-head"><h3>Últimas incorporaciones</h3><span class="badge">' + facts.length + ' hechos</span></div>' +
       recent.map(f => factRow(c, f)).join('') +
-      '<div class="sub">Personas del expediente</div><div class="stack" style="gap:6px">' + c.people.map(p => '<div class="row" style="flex-wrap:nowrap"><div class="avatar" style="width:32px;height:32px;font-size:.75rem">' + p.initials + '</div><div class="min0"><b style="font-size:.9rem">' + esc(p.name) + '</b> <span class="muted" style="font-size:.82rem">· ' + esc(p.role) + '</span></div></div>').join('') + '</div></article></div>';
+      '<div class="sub">Personas del expediente</div><div class="stack" style="gap:6px">' + c.people.map(p => '<div class="row" style="flex-wrap:nowrap">' + portrait(p, 34) + '<div class="min0"><b style="font-size:.9rem">' + esc(p.name) + '</b> <span class="muted" style="font-size:.82rem">· ' + esc(p.role) + '</span></div></div>').join('') + '</div></article></div>';
   }
+
+  function scenePlanId(c, cs) {
+    const sel = cs.lastView.sceneSel || null;
+    const plans = c.scene.plans;
+    let planId = cs.lastView.plan || plans[0].id;
+    if (!plans.find(pl => pl.id === planId)) planId = plans[0].id;
+    if (sel && !plans.find(pl => pl.id === planId).hotspots.some(h => h.ev === sel)) {
+      const owner = plans.find(pl => pl.hotspots.some(h => h.ev === sel));
+      if (owner) planId = owner.id;
+    }
+    return planId;
+  }
+  const use3d = () => S().settings.view3d !== false && !!E0.scene3d && E0.scene3d.available();
 
   function tabEscena(c, cs) {
     const sel = cs.lastView.sceneSel || null;
     const evById = id => c.evidence.find(e => e.id === id);
     const plans = c.scene.plans;
-    let planId = cs.lastView.plan || plans[0].id;
-    if (sel && !plans.find(pl => pl.id === planId).hotspots.some(h => h.ev === sel)) {
-      const owner = plans.find(pl => pl.hotspots.some(h => h.ev === sel));
-      if (owner) planId = owner.id;
-    }
+    const planId = scenePlanId(c, cs);
+    const can3d = !!E0.scene3d && E0.scene3d.available();
+    const in3d = use3d();
     const P = plans.find(pl => pl.id === planId);
     const planTabs = plans.length > 1 ? '<div class="row" role="group" aria-label="Zonas de la escena" style="margin-bottom:10px">' + plans.map(pl => {
       const n = pl.hotspots.filter(h => cs.examined[h.ev]).length;
@@ -348,7 +392,7 @@
       }).join('') + '</div>';
     let side;
     if (!sel) {
-      side = '<article class="panel stack"><h3>Inspección ocular</h3><p class="muted">Selecciona un punto del plano para ver el elemento y decidir qué hacer con él. Los puntos con anillo animado no se han examinado todavía.</p>' +
+      side = '<article class="panel stack"><h3>Inspección ocular</h3><p class="muted">' + (in3d ? 'Pulsa un objeto de la escena (los que tienen un rombo encima no se han examinado) o elígelo en la lista.' : 'Selecciona un punto del plano para ver el elemento. Los puntos con anillo animado no se han examinado todavía.') + '</p>' +
         '<div class="sub">Elementos de esta zona</div><div class="stack" style="gap:4px">' + P.hotspots.map(h => evById(h.ev)).map(e => '<button class="linkish" style="text-align:left;text-decoration:none;color:' + (cs.examined[e.id] ? 'var(--muted)' : 'var(--text)') + '" data-act="scene-sel" data-id="' + e.id + '"><span class="mono" style="color:var(--accent)">' + e.id + '</span> ' + esc(e.name) + (cs.examined[e.id] ? ' ✓' : '') + '</button>').join('') + '</div></article>';
     } else {
       const e = evById(sel);
@@ -363,9 +407,14 @@
         (done && e.unlocks ? '<button class="btn" data-act="tab" data-tab="digital">Solicitar análisis digital</button>' : '') +
         (done ? '<button class="btn" data-act="wall-add-ev" data-id="' + e.id + '"' + (onWall ? ' disabled' : '') + '>' + (onWall ? 'En el muro ✓' : 'Añadir al muro') + '</button>' : '') +
         (done ? '<button class="btn" data-act="gen-question" data-id="' + e.id + '">Generar pregunta</button>' : '') +
+        (in3d ? '<button class="btn" data-act="s3-inspect">' + (cs.lastView.inspect ? 'Dejar de inspeccionar' : 'Inspeccionar de cerca') + '</button>' : '') +
         '<button class="btn ghost" data-act="scene-sel" data-id="">Cerrar</button></div></article>';
     }
-    return '<div class="scene-wrap"><div class="min0">' + planTabs + plan +
+    const viewTabs = '<div class="row" role="group" aria-label="Tipo de vista" style="margin-bottom:10px">' +
+      (can3d ? '<button class="btn small ' + (in3d ? 'primary' : 'ghost') + '" data-act="view3d" data-on="1">Vista 3D</button><button class="btn small ' + (in3d ? 'ghost' : 'primary') + '" data-act="view3d" data-on="0">Plano</button>' : '<span class="faint" style="font-size:.8rem">Tu navegador no permite 3D: se muestra el plano.</span>') + '</div>';
+    const view3d = '<div class="scene3d" id="scene3d" aria-label="Escena en 3D: ' + esc(P.name) + '"><div class="s3-tip" hidden></div><div class="s3-hint">Arrastra para girar · rueda o pellizca para acercar · toca un objeto</div>' +
+      '<div class="s3-tools"><button class="btn small" data-act="s3-reset">Vista general</button></div></div>';
+    return '<div class="scene-wrap"><div class="min0">' + viewTabs + planTabs + (in3d ? view3d : plan) +
       '<div class="legend"><span>◯ sin examinar</span><span>● examinado</span><span>' + esc(P.legend) + '</span></div></div>' + side + '</div>';
   }
 
@@ -404,7 +453,7 @@
           const key = e.id + ':' + k;
           const done = cs.lab[key];
           const label = a.label || c.labKinds[k];
-          return '<div class="lab-row"><span>' + esc(label) + '</span>' + (done ? '<span class="badge ok">Completado</span>' : '<button class="btn small" data-act="lab" data-id="' + e.id + '" data-kind="' + k + '"' + (s.money < a.cost ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + a.cost + ' €</span></button>') + '</div>' +
+          return '<div class="lab-row"><span>' + esc(label) + '</span>' + (done ? '<span class="badge ok">Completado</span>' : '<button class="btn small" data-act="lab" data-id="' + e.id + '" data-kind="' + k + '"' + (s.money < EN.costOf('lab', a.cost) ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + EN.costOf('lab', a.cost) + ' €</span></button>') + '</div>' +
             (done ? a.reveals.map(id => '<div class="result">' + esc(c.facts[id].text) + '</div>').join('') : '');
         }).join('') + '</article>').join('') + '</div>' : '<div class="panel"><p class="muted">Todavía no has examinado ningún elemento que admita análisis. Empieza por la escena.</p></div>') +
       (pending ? '<p class="faint" style="font-size:.82rem">Hay elementos de la escena sin examinar que podrían admitir análisis.</p>' : '') +
@@ -414,18 +463,19 @@
   function tabDigital(c, cs) {
     const s = S();
     const jud = c.judicial;
-    const left = jud.max - cs.judicial.length;
+    const jmax = EN.judicialMax(c);
+    const left = jmax - cs.judicial.length;
     return '<div class="stack-lg"><div class="spread"><p class="muted" style="max-width:62ch">Solicita registros digitales y compáralos después con las declaraciones y la cronología.</p><span class="chip keep"><em>Fondos</em>' + money(s.money) + '</span></div>' +
       '<div class="grid">' + c.digital.map(d => {
         const done = cs.digital[d.id];
         const reqOk = (!d.requires || cs.examined[d.requires]) && (!d.requiresDigital || cs.digital[d.requiresDigital]);
         const reqName = d.requires && !cs.examined[d.requires] ? 'examinar ' + c.evidence.find(e => e.id === d.requires).name : d.requiresDigital ? 'obtener «' + c.digital.find(x => x.id === d.requiresDigital).name + '»' : '';
         const facts = done ? d.reveals.map(id => c.facts[id]) : [];
-        return '<article class="panel stack"><div class="spread"><h3>' + esc(d.name) + '</h3>' + (done ? '<span class="badge ok">Recibido</span>' : '<span class="badge">' + d.cost + ' €</span>') + '</div><p class="muted" style="font-size:.88rem">' + esc(d.desc) + '</p>' +
+        return '<article class="panel stack"><div class="spread"><h3>' + esc(d.name) + '</h3>' + (done ? '<span class="badge ok">Recibido</span>' : '<span class="badge">' + EN.costOf('digital', d.cost) + ' €</span>') + '</div><p class="muted" style="font-size:.88rem">' + esc(d.desc) + '</p>' +
           (done ? '<div>' + facts.map(f => factRow(c, f)).join('') + '</div>' :
-            (reqOk ? '<div class="row"><button class="btn" data-act="digital" data-id="' + d.id + '"' + (s.money < d.cost ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + d.cost + ' €</span></button></div>' : '<p class="faint" style="font-size:.84rem">Requiere antes: ' + esc(reqName) + '.</p>')) + '</article>';
+            (reqOk ? '<div class="row"><button class="btn" data-act="digital" data-id="' + d.id + '"' + (s.money < EN.costOf('digital', d.cost) ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + EN.costOf('digital', d.cost) + ' €</span></button></div>' : '<p class="faint" style="font-size:.84rem">Requiere antes: ' + esc(reqName) + '.</p>')) + '</article>';
       }).join('') + '</div>' +
-      '<article class="panel stack"><div class="spread"><h3>Solicitud judicial de antenas</h3><span class="badge ' + (left ? 'acc' : '') + '">' + left + '/' + jud.max + ' disponibles</span></div><p class="muted" style="font-size:.88rem">' + esc(jud.desc) + '</p>' +
+      '<article class="panel stack"><div class="spread"><h3>Solicitud judicial de antenas</h3><span class="badge ' + (left ? 'acc' : '') + '">' + left + '/' + jmax + ' disponibles</span></div><p class="muted" style="font-size:.88rem">' + esc(jud.desc) + '</p>' +
       (left ? '<div class="row" style="flex-wrap:nowrap"><select id="jud-person" aria-label="Persona">' + EN.judicialTargets(c).filter(p => !cs.judicial.includes(p.id)).map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('') + '</select><button class="btn" data-act="judicial">Solicitar</button></div>' : '') +
       cs.judicial.map(pid => jud.results[pid].map(id => factRow(c, c.facts[id])).join('')).join('') + '</article></div>';
   }
@@ -434,7 +484,7 @@
     const sel = cs.lastView.person || null;
     const grid = '<div class="people">' + c.people.map(p => {
       const n = cs.asked[p.id] ? Object.keys(cs.asked[p.id]).length : 0;
-      return '<button class="person" data-act="person" data-id="' + p.id + '" aria-pressed="' + (sel === p.id) + '"><div class="avatar">' + p.initials + '</div><div class="min0"><b>' + esc(p.name) + '</b><small>' + esc(p.role) + '</small><div class="faint mono" style="font-size:.7rem">' + (n ? n + ' pregunta(s)' : 'Sin entrevistar') + '</div></div></button>';
+      return '<button class="person" data-act="person" data-id="' + p.id + '" aria-pressed="' + (sel === p.id) + '">' + portrait(p, 52) + '<div class="min0"><b>' + esc(p.name) + '</b><small>' + esc(p.role) + '</small><div class="faint mono" style="font-size:.7rem">' + (n ? n + ' pregunta(s)' : 'Sin entrevistar') + '</div></div></button>';
     }).join('') + '</div>';
     if (!sel) return '<div class="stack">' + grid + '<p class="muted">Elige a quién interrogar. Las personas pueden decir la verdad, medias verdades, mentir, no saber o estar equivocadas. Ninguna lo anunciará.</p></div>';
     const p = c.people.find(x => x.id === sel);
@@ -442,7 +492,7 @@
     const avail = p.questions.filter(q => !asked[q.id] && (!q.requires || q.requires.some(id => EN.known(cs, id))));
     const tr = cs.transcripts[p.id] || [];
     return '<div class="stack-lg">' + grid +
-      '<div class="interview"><article class="panel stack"><div class="row" style="flex-wrap:nowrap"><div class="avatar lg acc">' + p.initials + '</div><div class="min0"><h3>' + esc(p.name) + ', ' + p.age + ' años</h3><div class="muted" style="font-size:.88rem">' + esc(p.role) + ' · ' + esc(p.relation) + '</div></div></div>' +
+      '<div class="interview"><article class="panel stack"><div class="row" style="flex-wrap:nowrap">' + portrait(p, 84) + '<div class="min0"><h3>' + esc(p.name) + ', ' + p.age + ' años</h3><div class="muted" style="font-size:.88rem">' + esc(p.role) + ' · ' + esc(p.relation) + '</div></div></div>' +
       '<div class="spread"><span class="eyebrow">Estado de la entrevista</span><span class="badge">' + Object.keys(asked).length + ' preguntas · ' + (cs.confronted[p.id] ? Object.keys(cs.confronted[p.id]).length : 0) + ' confrontaciones</span></div>' +
       '<div class="sub">Nueva pregunta</div>' + (avail.length ? '<div class="q-list">' + avail.map(q => '<button class="q-btn" data-act="ask" data-person="' + p.id + '" data-q="' + q.id + '">' + esc(q.q) + '</button>').join('') + '</div>' : '<p class="muted" style="font-size:.88rem">No quedan preguntas nuevas con la información actual. Confrontarle con datos puede abrir otras líneas.</p>') +
       '<div class="sub">Confrontar con información del expediente</div><select id="confront-fact" aria-label="Hecho para confrontar">' + factOptions(c, cs) + '</select>' +
@@ -511,17 +561,9 @@
   function tabHipotesis(c, cs) {
     const s = S();
     const actives = cs.hypotheses.filter(h => h.status !== 'descartada');
-    const theory = who => {
-      const mine = actives.filter(h => h.author === who);
-      if (!mine.length) return '<p class="muted" style="font-size:.88rem">Sin hipótesis activas.</p>';
-      return mine.map(h => '<div style="font-size:.9rem;margin-top:4px">• ' + esc(h.suspect && h.suspect !== 'nd' ? EN.personName(c, h.suspect) : 'Sin persona determinada') + ' <span class="mono faint">(' + h.conf + ' %)</span></div>').join('');
-    };
-    const sus = who => new Set(actives.filter(h => h.author === who && h.suspect && h.suspect !== 'nd').map(h => h.suspect));
-    const a = sus('omi'), b = sus('rebe');
-    const conflict = a.size && b.size && ![...a].some(x => b.has(x));
-    return '<div class="stack-lg"><div class="theories"><div class="theory"><div class="eyebrow">Teoría de ' + esc(invName('omi')) + '</div>' + theory('omi') + '</div><div class="theory"><div class="eyebrow">Teoría de ' + esc(invName('rebe')) + '</div>' + theory('rebe') + '</div>' +
-      (conflict ? '<div class="conflict-note">Teorías en conflicto: ' + esc(invName('omi')) + ' apunta a ' + esc([...a].map(x => EN.personName(c, x)).join(', ')) + ' y ' + esc(invName('rebe')) + ' a ' + esc([...b].map(x => EN.personName(c, x)).join(', ')) + '. El sistema no decide quién tiene razón hasta el cierre.</div>' : '') + '</div>' +
-      '<form class="panel stack" data-form="hyp"><h3>Nueva hipótesis de ' + esc(invName(s.active)) + '</h3>' +
+    const sus = [...new Set(actives.map(h => h.suspect).filter(x => x && x !== 'nd'))];
+      return '<div class="stack-lg"><div class="theory"><div class="eyebrow">Tu teoría ahora mismo</div>' + (actives.length ? '<p style="font-size:.92rem">' + actives.length + ' hipótesis activa(s)' + (sus.length ? ' · personas de interés: ' + esc(sus.map(x => EN.personName(c, x)).join(', ')) : '') + '.</p>' + (sus.length > 1 ? '<p class="faint" style="font-size:.84rem">Mantienes varias líneas abiertas. El sistema no dirá cuál es la buena hasta el cierre.</p>' : '') : '<p class="muted" style="font-size:.88rem">Sin hipótesis activas. Una buena práctica es mantener al menos dos alternativas.</p>') + '</div>' +
+      '<form class="panel stack" data-form="hyp"><h3>Nueva hipótesis</h3>' +
       '<label class="field">Enunciado<textarea id="hyp-text" name="text" required maxlength="400" placeholder="Ej.: Creo que X entró por el garaje y salió en un vehículo antes de las 00:05."></textarea></label>' +
       '<div class="row" style="flex-wrap:nowrap;align-items:flex-end"><label class="field" style="flex:1">Persona de interés<select id="hyp-suspect" name="suspect"><option value="nd">Sin determinar</option>' + c.people.map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('') + '</select></label>' +
       '<label class="field" style="flex:1">Confianza inicial: <span id="hyp-conf-out">50</span> %<input type="range" id="hyp-conf" name="conf" min="0" max="100" step="5" value="50" data-act="range-out" data-out="hyp-conf-out"></label></div>' +
@@ -529,7 +571,7 @@
       (cs.hypotheses.length ? cs.hypotheses.slice().reverse().map(h => {
         const st = EN.hypStatus(h);
         const lst = arr => arr.length ? '<ul>' + arr.map(id => '<li>' + esc(c.facts[id].text) + ' <button class="linkish" data-act="hyp-unlink" data-id="' + h.id + '" data-fact="' + id + '">quitar</button></li>').join('') + '</ul>' : '<p class="faint" style="font-size:.82rem">Ninguno.</p>';
-        return '<article class="panel hyp ' + (h.status === 'descartada' ? 'off' : '') + '"><div class="spread"><span class="row"><span class="badge acc">' + esc(invName(h.author)) + '</span><span class="badge">' + esc(h.suspect && h.suspect !== 'nd' ? EN.personName(c, h.suspect) : 'Sin persona') + '</span></span><span class="badge ' + st.key + '">' + st.label + '</span></div>' +
+        return '<article class="panel hyp ' + (h.status === 'descartada' ? 'off' : '') + '"><div class="spread"><span class="row"><span class="badge">' + esc(h.suspect && h.suspect !== 'nd' ? EN.personName(c, h.suspect) : 'Sin persona') + '</span></span><span class="badge ' + st.key + '">' + st.label + '</span></div>' +
           '<p class="hyp-text">' + esc(h.text) + '</p>' +
           '<div class="links"><div><div class="sub">Hechos a favor</div>' + lst(h.supports) + '</div><div><div class="sub">Hechos en contra</div>' + lst(h.against) + '</div></div>' +
           (h.status !== 'descartada' ? '<div class="row" style="flex-wrap:nowrap"><select id="hyp-link-' + h.id + '" aria-label="Hecho a vincular">' + factOptions(c, cs, { placeholder: 'Vincular un hecho…' }) + '</select></div><div class="row"><button class="btn small" data-act="hyp-link" data-id="' + h.id + '" data-side="supports">A favor</button><button class="btn small" data-act="hyp-link" data-id="' + h.id + '" data-side="against">En contra</button></div>' +
@@ -556,14 +598,14 @@
     const sec = (n, t, body) => '<section class="stack" style="gap:6px"><h3>' + n + '. ' + t + '</h3>' + body + '</section>';
     return '<div class="stack-lg"><div class="spread no-print"><p class="muted" style="max-width:62ch">El informe se compone con tu propio material: cronología, contradicciones registradas, hipótesis y lo que escribas aquí.</p><div class="row"><button class="btn" data-act="copy-report">Copiar texto</button>' + (inFrame ? '' : '<button class="btn ghost" data-act="print">Imprimir</button>') + '</div></div>' +
       '<article class="panel stack-lg" id="report">' +
-      sec(1, 'Identificación del expediente', '<p>' + c.id + ' · ' + esc(c.title) + ' · ' + esc(c.type) + ' · ' + esc(c.date) + '. Equipo: ' + esc(invName('omi')) + ' y ' + esc(invName('rebe')) + '.</p>') +
+      sec(1, 'Identificación del expediente', '<p>' + c.id + ' · ' + esc(c.title) + ' · ' + esc(c.type) + ' · ' + esc(c.date) + '. Investigador/a: ' + esc(playerName()) + '.</p>') +
       sec(2, esc(c.victimLabel || 'Víctima'), '<p>' + esc(c.victim.name) + ', ' + c.victim.age + ' años. ' + esc(c.victim.job) + '.</p>') +
       sec(3, 'Escena', '<p>' + esc(c.location) + '. ' + esc(c.sceneSummary) + '</p>') +
       sec(4, 'Cronología', tl.length ? tl.map(e => '<div class="fact"><time>' + esc(e.time + (e.end ? '–' + e.end : '')) + '</time><div><span class="src">' + esc(e.source) + '</span>' + esc(e.text) + (e.note ? ' <i class="muted">— ' + esc(e.note) + '</i>' : '') + '</div></div>').join('') : '<p class="muted">Sin cronología elaborada.</p>') +
       sec(5, 'Personas', '<ul style="margin:0;padding-left:18px">' + c.people.map(p => '<li>' + esc(p.name) + ' — ' + esc(p.role) + (cs.asked[p.id] ? ' (entrevistada)' : ' (no entrevistada)') + '</li>').join('') + '</ul>') +
       sec(6, 'Evidencias examinadas', ex.length ? '<ul style="margin:0;padding-left:18px">' + ex.map(e => '<li>' + e.id + ' ' + esc(e.name) + (EN.custody(c, cs, e).complete ? '' : ' (cadena de custodia incompleta)') + '</li>').join('') + '</ul><p class="faint" style="font-size:.84rem">Cadena de custodia completa en ' + custodyOk + ' de ' + ex.length + ' indicios.</p>' : '<p class="muted">Ninguna.</p>') +
       sec(7, 'Contradicciones', conf.length ? conf.map(k => '<p>• ' + esc(k.type) + ': ' + esc(k.desc) + '</p>').join('') : '<p class="muted">Ninguna registrada.</p>') +
-      sec(8, 'Hipótesis', cs.hypotheses.length ? cs.hypotheses.map(h => '<p>• [' + esc(invName(h.author)) + ', ' + EN.hypStatus(h).label + ', ' + h.conf + ' %] ' + esc(h.text) + '</p>').join('') : '<p class="muted">Ninguna.</p>') +
+      sec(8, 'Hipótesis', cs.hypotheses.length ? cs.hypotheses.map(h => '<p>• [' + EN.hypStatus(h).label + ', ' + h.conf + ' %] ' + esc(h.text) + '</p>').join('') : '<p class="muted">Ninguna.</p>') +
       sec(9, 'Análisis', '<p class="muted">' + facts.length + ' hechos en el expediente · ' + Object.keys(cs.lab).length + ' análisis de laboratorio · ' + (Object.keys(cs.digital).length + cs.judicial.length) + ' registros digitales · ' + cs.wall.links.length + ' conexiones en el muro · ' + cs.mapLinks.length + ' en el mapa.</p>') +
       '<label class="field">10–12. Reconstrucción, conclusión y pruebas principales<textarea id="rep-rec" data-act="report-field" data-key="reconstruccion" rows="6" placeholder="Qué ocurrió, en qué orden y por qué lo sostienes.">' + esc(cs.report.reconstruccion) + '</textarea></label>' +
       '<label class="field">13. Incertidumbres pendientes<textarea id="rep-unc" data-act="report-field" data-key="incertidumbres" rows="4" placeholder="Qué no está acreditado o podría explicarse de otra forma.">' + esc(cs.report.incertidumbres) + '</textarea></label>' +
@@ -617,7 +659,7 @@
     if (k.kind === 'fact' || k.kind === 'statement') { const f = c.facts[k.ref]; return (f.time ? f.time + ' · ' : '') + cut(f.text, 120); }
     if (k.kind === 'place') return c.places[k.ref].name;
     if (k.kind === 'conflict') { const x = c.conflicts.find(y => y.id === k.ref); return x.type + ': ' + cut(x.desc, 110); }
-    if (k.kind === 'hyp') { const h = cs.hypotheses.find(y => y.id === k.ref); return h ? invName(h.author) + ': ' + cut(h.text, 110) : 'Hipótesis eliminada'; }
+    if (k.kind === 'hyp') { const h = cs.hypotheses.find(y => y.id === k.ref); return h ? cut(h.text, 120) : 'Hipótesis eliminada'; }
     return k.text || '';
   }
   function wallOptions(c, cs) {
@@ -632,7 +674,7 @@
       grp('Declaraciones', facts.filter(f => f.kind === 'statement').map(f => opt('statement:' + f.id, factLabel(c, f.id))).join('')) +
       grp('Lugares', EN.knownPlaces(c, cs).map(k => opt('place:' + k, c.places[k].name)).join('')) +
       grp('Contradicciones', Object.keys(cs.conflicts).map(id => { const x = c.conflicts.find(y => y.id === id); return opt('conflict:' + id, x.type + ' · ' + x.desc.slice(0, 70)); }).join('')) +
-      grp('Hipótesis', cs.hypotheses.map(h => opt('hyp:' + h.id, invName(h.author) + ': ' + h.text.slice(0, 70))).join(''));
+      grp('Hipótesis', cs.hypotheses.map(h => opt('hyp:' + h.id, h.text.slice(0, 80))).join(''));
   }
 
   function tabMuro(c, cs) {
@@ -716,7 +758,7 @@
     ['Escena', 'Abre la pestaña Escena y pulsa los puntos del plano. «Examinar» incorpora lo que observas al expediente; nada te dirá si es importante.'],
     ['Personas y comparador', 'Interroga, vuelve sobre respuestas y confronta con datos. El comparador señala diferencias objetivas entre fuentes, nunca quién miente.'],
     ['Cronología e hipótesis', 'Construye tu línea temporal y compara intervalos. Formula hipótesis, vincula hechos a favor y en contra, y ajusta tu confianza.'],
-    ['Cuaderno y turnos', 'Cambia entre ' + 'Omi y La Rebe arriba a la derecha: cada uno tiene sus notas e hipótesis. Todo se guarda solo en este navegador.']
+    ['Mapa, muro y cuaderno', 'Conecta lugares en el mapa y tarjetas en el muro, y apunta lo que quieras en el cuaderno. Todo se guarda solo en este navegador.']
   ];
 
   function modal() {
@@ -726,8 +768,14 @@
     if (m === 'intro') {
       return '<div class="modal-back" role="dialog" aria-modal="true" aria-labelledby="intro-t"><div class="modal"><div class="eyebrow">Unidad de investigación · Valencia</div><div class="intro-title" id="intro-t">EXPEDIENTE <span>0</span></div>' +
         '<p class="intro-quote">Bienvenido a EXPEDIENTE 0.<br>Aquí no ganas por adivinar.<br>Ganas por reconstruir.</p>' +
-        '<p class="muted">Investigáis en equipo: ' + esc(invName('omi')) + ' y ' + esc(invName('rebe')) + '. Empezáis como aspirantes, con un expediente abierto y una academia inicial.</p>' +
-        '<div class="row"><button class="btn primary" data-act="tutorial-start">Ver tutorial rápido</button><button class="btn ghost" data-act="modal-close">Saltar e ir al centro</button></div></div></div>';
+        '<p class="muted">Empiezas como aspirante en una unidad de investigación, con un expediente abierto y una academia inicial.</p>' +
+        '<div class="row"><button class="btn primary" data-act="modal-create">Crear mi investigador/a</button></div></div></div>';
+    }
+    if (m === 'create') {
+      return '<div class="modal-back" role="dialog" aria-modal="true" aria-labelledby="cr-t"><form class="modal" data-form="create"><div class="eyebrow">Ficha de ingreso</div><h2 id="cr-t">¿Quién investiga?</h2>' +
+        '<label class="field">Nombre de tu investigador/a<input type="text" id="cr-name" name="name" required minlength="2" maxlength="24" autocomplete="off" placeholder="Escribe un nombre" value="' + esc(s.player.name) + '"></label>' +
+        '<div class="sub">Especialidad</div><div class="spec-grid">' + C.specialties.map((x, i) => '<label class="spec"><input type="radio" name="specialty" value="' + x.id + '"' + ((s.player.specialty ? s.player.specialty === x.id : i === 0) ? ' checked' : '') + '><span><b>' + esc(x.name) + '</b><small>' + esc(x.desc) + '</small><em>' + esc(x.perk) + '</em></span></label>').join('') + '</div>' +
+        '<div class="row"><button class="btn primary" type="submit">Empezar la carrera</button></div></form></div>';
     }
     if (m.startsWith('tut')) {
       const i = Number(m.slice(3));
@@ -740,7 +788,7 @@
   }
 
   E0.ui = {
-    esc, rankInfo, topbar, sidebar, modal, factLabel, unlocked,
+    esc, rankInfo, topbar, sidebar, modal, factLabel, unlocked, scenePlanId,
     screens: { home: screenHome, cases: screenCases, academy: screenAcademy, career: screenCareer, notebook: screenNotebook, profile: screenProfile, settings: screenSettings, case: screenCase }
   };
 })();

@@ -13,8 +13,7 @@
       v: C.saveVersion,
       created: Date.now(),
       introSeen: false,
-      investigators: { omi: 'Omi', rebe: 'La Rebe' },
-      active: 'omi',
+      player: { name: '', specialty: '' },
       xp: 0,
       money: C.startMoney,
       energy: C.startEnergy,
@@ -69,7 +68,9 @@
     if (s.v !== C.saveVersion) return 'Versión de partida no compatible (se esperaba v' + C.saveVersion + ').';
     const nums = ['xp', 'money', 'energy', 'reputation', 'jornada', 'week'];
     for (const k of nums) if (typeof s[k] !== 'number' || !isFinite(s[k])) return 'Campo numérico inválido: ' + k + '.';
-    if (!s.investigators || typeof s.investigators.omi !== 'string' || typeof s.investigators.rebe !== 'string') return 'Faltan los nombres de los investigadores.';
+    const hasPlayer = s.player && typeof s.player.name === 'string';
+    const legacy = s.investigators && typeof s.investigators.omi === 'string';
+    if (!hasPlayer && !legacy) return 'Falta el nombre del investigador.';
     if (!s.skills || typeof s.skills !== 'object') return 'Faltan las habilidades.';
     if (!Array.isArray(s.notes) || !Array.isArray(s.history)) return 'Notas o historial con formato incorrecto.';
     if (!s.cases || typeof s.cases !== 'object') return 'Falta el progreso de los casos.';
@@ -84,8 +85,12 @@
 
   /* Rellena campos que falten sin pisar los existentes. */
   function normalize(s) {
+    // Migración desde la versión de dos investigadores: el primero pasa a ser el jugador.
+    if (!s.player || typeof s.player.name !== 'string') s.player = { name: (s.investigators && s.investigators.omi) || '', specialty: '' };
     const base = newGame();
     for (const k of Object.keys(base)) if (s[k] === undefined) s[k] = base[k];
+    delete s.investigators;
+    delete s.active;
     s.settings = Object.assign({}, base.settings, s.settings);
     s.skills = Object.assign(defaultSkills(), s.skills);
     s.view = Object.assign({}, base.view, s.view);

@@ -421,3 +421,29 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
   .jornada-item { flex-wrap: wrap; }
   .jornada-item > .row { width: 100%; justify-content: space-between; }
 }
+
+/* Ficha del jugador */
+.player-chip { display: inline-flex; align-items: center; gap: 8px; padding: 3px 10px 3px 3px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg-2); color: var(--text); font: 600 0.8rem/1 var(--f-body); max-width: 180px; }
+.player-chip:hover { border-color: var(--accent); }
+.pc-name { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.avatar.sm { width: 28px; height: 28px; font-size: 0.72rem; }
+.spec-grid { display: grid; gap: 8px; grid-template-columns: repeat(auto-fit, minmax(min(100%, 220px), 1fr)); }
+.spec { position: relative; display: block; cursor: pointer; }
+.spec input { position: absolute; opacity: 0; }
+.spec span { display: flex; flex-direction: column; gap: 4px; padding: 12px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-2); height: 100%; }
+.spec small { color: var(--muted); font-size: 0.8rem; }
+.spec em { font-style: normal; font: 500 0.74rem/1.4 var(--f-mono); color: var(--accent); }
+.spec input:checked + span { border-color: var(--accent); box-shadow: inset 0 0 0 1px var(--accent); background: var(--accent-soft); }
+.spec input:focus-visible + span { outline: 2px solid var(--accent); outline-offset: 2px; }
+@media (max-width: 560px) { .pc-name { display: none; } .player-chip { padding: 3px; } }
+
+/* Escena 3D */
+.scene3d { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 10; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: var(--bg-2); touch-action: none; }
+.scene3d-canvas { display: block; width: 100% !important; height: 100% !important; cursor: grab; }
+.scene3d-canvas:active { cursor: grabbing; }
+.s3-hint { position: absolute; left: 10px; bottom: 8px; font: 500 0.68rem/1.3 var(--f-mono); color: var(--muted); background: color-mix(in srgb, var(--bg) 70%, transparent); padding: 3px 7px; border-radius: 4px; pointer-events: none; }
+.s3-tools { position: absolute; right: 8px; top: 8px; display: flex; gap: 6px; }
+.s3-tip { position: absolute; z-index: 2; pointer-events: none; font: 600 0.74rem/1.3 var(--f-mono); background: var(--panel-2); color: var(--text); border: 1px solid var(--accent); padding: 4px 8px; border-radius: 4px; white-space: nowrap; }
+@media (max-width: 560px) { .s3-hint { font-size: 0.6rem; right: 8px; } }
+.portrait { flex: none; border-radius: 50%; border: 1px solid var(--line); background: var(--panel-2); }
+.person[aria-pressed="true"] .portrait { border-color: var(--accent); }

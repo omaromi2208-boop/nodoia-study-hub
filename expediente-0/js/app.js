@@ -82,7 +82,19 @@
     const tr = document.getElementById('transcript');
     if (tr) tr.scrollTop = tr.scrollHeight;
     drawWall();
+    mount3d();
     store.save();
+  }
+
+  function mount3d() {
+    const el = document.getElementById('scene3d');
+    if (!el || !E0.scene3d) return;
+    const { c, cs } = curCase();
+    const okMount = E0.scene3d.mount(el, {
+      c, cs, planId: UI.scenePlanId(c, cs), sel: cs.lastView.sceneSel || null, inspect: !!cs.lastView.inspect,
+      onPick: id => { cs.lastView.sceneSel = id; cs.lastView.inspect = false; render(); }
+    });
+    if (!okMount) { S().settings.view3d = false; render(); }
   }
 
   /* ---------- Muro: líneas y arrastre ---------- */
@@ -183,7 +195,7 @@
     if (j.energy < 0 && s.energy + j.energy < 0) { toast('Energía insuficiente. Descansa antes.', 'warn'); return; }
     s.energy = clamp(s.energy + j.energy, 0, 100);
     s.money += j.money;
-    addXP(j.xp);
+    addXP(j.xp * (id === 'practicar' && s.player.specialty === 'conducta' ? 2 : 1));
     if (id === 'practicar') s.skills.verbal = clamp(s.skills.verbal + 1, 0, 100);
     if (id === 'antiguos') s.skills.memoria = clamp(s.skills.memoria + 1, 0, 100);
     if (id === 'estudiar') s.skills.logica = clamp(s.skills.logica + 1, 0, 100);
@@ -262,7 +274,7 @@
     const a = e.lab[kind];
     const key = id + ':' + kind;
     if (cs.lab[key] || !cs.examined[id]) return;
-    if (!spend(cs, a.cost)) return;
+    if (!spend(cs, EN.costOf('lab', a.cost))) return;
     cs.lab[key] = true;
     const fresh = EN.discover(cs, a.reveals);
     EN.log(cs, 'lab', { ev: id, kind });
@@ -275,7 +287,7 @@
     if (!guardOpen(cs)) return;
     const d = c.digital.find(x => x.id === id);
     if (cs.digital[id] || (d.requires && !cs.examined[d.requires])) return;
-    if (!spend(cs, d.cost)) return;
+    if (!spend(cs, EN.costOf('digital', d.cost))) return;
     cs.digital[id] = true;
     const fresh = EN.discover(cs, d.reveals);
     EN.log(cs, 'digital', { id });
@@ -287,7 +299,7 @@
     if (!guardOpen(cs)) return;
     const sel = document.getElementById('jud-person');
     const pid = sel && sel.value;
-    if (!pid || cs.judicial.includes(pid) || cs.judicial.length >= c.judicial.max) return;
+    if (!pid || cs.judicial.includes(pid) || cs.judicial.length >= EN.judicialMax(c)) return;
     cs.judicial.push(pid);
     const fresh = EN.discover(cs, c.judicial.results[pid]);
     EN.log(cs, 'judicial', { person: pid });
@@ -440,7 +452,6 @@
     'nav-toggle': () => { document.body.classList.toggle('nav-open'); return false; },
     'scrim': () => { document.body.classList.remove('nav-open'); return false; },
     go: el => { S().view.screen = el.dataset.screen; S().view.confirmReset = false; S().view.confirmRestart = null; },
-    'set-active': el => { S().active = el.dataset.id; toast('Turno de ' + S().investigators[el.dataset.id] + '.'); },
     'open-case': el => openCase(el.dataset.id),
     tab: el => { S().view.tab = el.dataset.tab; },
     jornada: el => doJornada(el.dataset.id),
@@ -479,7 +490,10 @@
     'ask-reset': () => { S().view.confirmReset = true; },
     'cancel-reset': () => { S().view.confirmReset = false; },
     'reset-game': () => { store.reset(); applySettings(); toast('Partida borrada. Empezáis de nuevo.'); },
-    'scene-sel': el => { const { cs } = curCase(); cs.lastView.sceneSel = el.dataset.id || null; },
+    'scene-sel': el => { const { cs } = curCase(); cs.lastView.sceneSel = el.dataset.id || null; cs.lastView.inspect = false; },
+    view3d: el => { S().settings.view3d = el.dataset.on === '1'; },
+    's3-inspect': () => { const { cs } = curCase(); cs.lastView.inspect = !cs.lastView.inspect; },
+    's3-reset': () => { const { cs } = curCase(); cs.lastView.sceneSel = null; cs.lastView.inspect = false; if (E0.scene3d) E0.scene3d.resetView(); },
     'scene-plan': el => { const { cs } = curCase(); cs.lastView.plan = el.dataset.id; cs.lastView.sceneSel = null; },
     photo: el => {
       const { cs } = curCase();
@@ -492,8 +506,8 @@
     'gen-question': el => {
       const { c } = curCase();
       const e = c.evidence.find(x => x.id === el.dataset.id);
-      S().notes.push({ id: uid(), author: S().active, cat: 'Pregunta', caseId: c.id, text: '¿Qué explica lo observado en ' + e.id + ' (' + e.name + ')? ' + e.detail, t: Date.now() });
-      toast('Pregunta añadida al cuaderno de ' + S().investigators[S().active] + '.');
+      S().notes.push({ id: uid(), author: 'yo', cat: 'Pregunta', caseId: c.id, text: '¿Qué explica lo observado en ' + e.id + ' (' + e.name + ')? ' + e.detail, t: Date.now() });
+      toast('Pregunta añadida al cuaderno.');
       return false;
     },
     'map-sel': el => { const { cs } = curCase(); cs.lastView.mapSel = cs.lastView.mapSel === el.dataset.id ? null : el.dataset.id; },
@@ -561,7 +575,8 @@
     'hyp-restore': el => { const { cs } = curCase(); const h = cs.hypotheses.find(x => x.id === el.dataset.id); h.status = 'activa'; EN.log(cs, 'hyp_restore', { hyp: h.id }); },
     'copy-report': () => { const r = document.getElementById('report'); copyText(r ? r.innerText : ''); return false; },
     print: () => { window.print(); return false; },
-    'modal-close': () => { S().introSeen = true; S().view.modal = null; },
+    'modal-close': () => { S().introSeen = true; S().view.modal = S().player.name ? null : 'create'; },
+    'modal-create': () => { S().view.modal = 'create'; },
     'tutorial-start': () => { S().view.modal = 'tut0'; },
     'tutorial-next': el => { S().view.modal = 'tut' + el.dataset.i; }
   };
@@ -572,17 +587,34 @@
       const fd = new FormData(f);
       const text = String(fd.get('text') || '').trim();
       if (!text) return;
-      S().notes.push({ id: uid(), author: S().active, cat: fd.get('cat'), caseId: fd.get('caseId') || '', text, t: Date.now() });
+      S().notes.push({ id: uid(), author: 'yo', cat: fd.get('cat'), caseId: fd.get('caseId') || '', text, t: Date.now() });
       const { cs } = curCase();
       if (cs && fd.get('caseId') === S().view.caseId) EN.log(cs, 'note');
       toast('Nota guardada.');
     },
-    names: f => {
+    player: f => {
       const fd = new FormData(f);
-      const a = String(fd.get('omi') || '').trim(), b = String(fd.get('rebe') || '').trim();
-      if (!a || !b) { toast('Los nombres no pueden quedar vacíos.', 'warn'); return; }
-      S().investigators = { omi: a.slice(0, 24), rebe: b.slice(0, 24) };
-      toast('Nombres actualizados.');
+      const name = String(fd.get('name') || '').trim();
+      if (name.length < 2) { toast('El nombre debe tener al menos 2 caracteres.', 'warn'); return; }
+      S().player.name = name.slice(0, 24);
+      S().player.specialty = fd.get('specialty') || '';
+      toast('Ficha actualizada.');
+    },
+    create: f => {
+      const s = S();
+      const fd = new FormData(f);
+      const name = String(fd.get('name') || '').trim();
+      if (name.length < 2) { toast('Escribe un nombre de al menos 2 caracteres.', 'warn'); return; }
+      s.player.name = name.slice(0, 24);
+      s.player.specialty = fd.get('specialty') || '';
+      const sp = C.specialties.find(x => x.id === s.player.specialty);
+      if (sp && !s.player.bonusGiven) {
+        Object.keys(sp.skills).forEach(k => { s.skills[k] = clamp(s.skills[k] + sp.skills[k], 0, 100); });
+        s.player.bonusGiven = true;
+      }
+      s.introSeen = true;
+      s.view.modal = 'tut0';
+      toast('Bienvenido/a, ' + s.player.name + '.');
     },
     import: f => {
       const text = String(new FormData(f).get('json') || '').trim();
@@ -608,10 +640,10 @@
       const text = String(fd.get('text') || '').trim();
       if (!text) return;
       const conf = Number(fd.get('conf'));
-      const h = { id: uid(), author: S().active, text, suspect: fd.get('suspect'), conf, confHistory: [conf], supports: [], against: [], status: 'activa', created: cs.seq };
+      const h = { id: uid(), author: 'yo', text, suspect: fd.get('suspect'), conf, confHistory: [conf], supports: [], against: [], status: 'activa', created: cs.seq };
       cs.hypotheses.push(h);
       EN.log(cs, 'hyp_create', { hyp: h.id, suspect: h.suspect, conf });
-      toast('Hipótesis registrada para ' + S().investigators[S().active] + '.');
+      toast('Hipótesis registrada.');
     },
     query: f => {
       const { c, cs } = curCase();
@@ -722,6 +754,7 @@
     store.load();
     const s = S();
     if (!s.introSeen) s.view.modal = 'intro';
+    else if (!s.player.name) s.view.modal = 'create';
     applySettings();
     bind();
     bindWall();
