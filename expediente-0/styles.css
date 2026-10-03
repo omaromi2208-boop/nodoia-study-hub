@@ -302,6 +302,62 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 .sw-rojo { background: linear-gradient(90deg, #1d1115 60%, #e9a3a8 60%); }
 .sw-cian { background: linear-gradient(90deg, #0a2126 60%, #3fe4ee 60%); }
 
+
+/* Mapa */
+.map-wrap { min-width: 0; }
+.map { position: relative; width: 100%; max-width: 100%; aspect-ratio: 16 / 10; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden;
+  background: radial-gradient(ellipse at 30% 40%, var(--panel-2), var(--bg-2) 70%); }
+.map-grid { position: absolute; inset: 0; background:
+  linear-gradient(var(--line-soft) 1px, transparent 1px) 0 0 / 10% 10%,
+  linear-gradient(90deg, var(--line-soft) 1px, transparent 1px) 0 0 / 10% 10%; opacity: 0.7; }
+.map-lines { position: absolute; inset: 0; width: 100%; height: 100%; }
+.map-lines line { stroke: var(--accent); stroke-width: 2; stroke-dasharray: 6 4; vector-effect: non-scaling-stroke; fill: none; }
+.map-pin { position: absolute; transform: translate(-7px, -7px); background: none; border: 0; padding: 0; display: flex; align-items: center; gap: 6px; color: var(--text); max-width: 46%; }
+.map-pin i { width: 14px; height: 14px; flex: none; border-radius: 50%; background: var(--panel); border: 2px solid var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+.map-pin.k-escena i { background: var(--red); border-color: var(--red); box-shadow: 0 0 0 3px color-mix(in srgb, var(--red) 22%, transparent); }
+.map-pin span { font: 500 0.68rem/1.25 var(--f-mono); background: color-mix(in srgb, var(--bg) 82%, transparent); padding: 2px 5px; border-radius: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.map-pin.sel span { background: var(--accent); color: var(--accent-ink); }
+.map-pin:hover span { color: var(--accent); }
+.map-pin.sel:hover span { color: var(--accent-ink); }
+.map-link-label { position: absolute; transform: translate(-50%, -50%); font: 600 0.62rem/1.2 var(--f-mono); color: var(--accent); background: var(--bg); border: 1px solid var(--line); border-radius: 3px; padding: 1px 5px; white-space: nowrap; pointer-events: none; }
+
+/* Muro */
+.wall-tools { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; }
+.wall-scroll { overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: var(--radius); -webkit-overflow-scrolling: touch; }
+.wall-board { position: relative; width: 1500px; height: 1000px; background:
+  radial-gradient(circle, var(--line-soft) 1px, transparent 1.5px) 0 0 / 22px 22px, var(--bg-2); }
+.wall-board[data-connect] .wall-card { cursor: crosshair; }
+.wall-lines { position: absolute; inset: 0; width: 1500px; height: 1000px; pointer-events: none; }
+.wall-lines line { stroke: var(--accent); stroke-width: 2; opacity: 0.75; }
+.wall-lines text { fill: var(--accent); font: 600 11px var(--f-mono); stroke: var(--bg-2); stroke-width: 4px; paint-order: stroke; }
+.wall-card { position: absolute; width: 210px; background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--muted); border-radius: var(--radius);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3); touch-action: none; cursor: grab; user-select: none; transition: box-shadow 0.15s; }
+.wall-card.dragging { cursor: grabbing; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45); z-index: 2; }
+.wall-card.from { outline: 2px solid var(--accent); outline-offset: 2px; }
+.wc-head { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px 0 10px; font: 600 0.62rem/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
+.wc-x { background: none; border: 0; color: var(--faint); font-size: 0.8rem; padding: 2px 4px; cursor: pointer; }
+.wc-x:hover { color: var(--red); }
+.wc-text { padding: 4px 10px 10px; font-size: 0.8rem; line-height: 1.4; }
+.wall-card.k-person { border-left-color: var(--accent); }
+.wall-card.k-evidence { border-left-color: var(--green); }
+.wall-card.k-statement { border-left-color: var(--amber); }
+.wall-card.k-conflict { border-left-color: var(--red); }
+.wall-card.k-place { border-left-color: #8fa8ff; }
+.wall-card.k-hyp { border-left-color: #c79bff; }
+.wall-card.k-question { border-left-style: dashed; }
+.wall-empty { position: absolute; left: 24px; top: 24px; max-width: 420px; color: var(--muted); font-size: 0.9rem; }
+
+/* Cadena de custodia */
+.custody { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; counter-reset: step; }
+.custody li { display: grid; grid-template-columns: 22px 120px minmax(0, 1fr); gap: 8px; font-size: 0.84rem; align-items: start; }
+.custody li::before { counter-increment: step; content: counter(step); width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font: 600 0.66rem var(--f-mono); border: 1px solid var(--line); color: var(--muted); }
+.custody li.ok::before { content: '✓'; border-color: var(--green); color: var(--green); }
+.custody li.pend::before { border-color: var(--amber); color: var(--amber); }
+.custody li b { font: 600 0.72rem/1.6 var(--f-mono); text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+.custody li.na { opacity: 0.55; }
+a.ext { color: var(--accent); font-weight: 600; text-decoration: none; }
+a.ext:hover { text-decoration: underline; }
+
 /* Toasts y modal */
 #toasts { position: fixed; right: 16px; bottom: calc(64px + env(safe-area-inset-bottom, 0px)); z-index: 60; display: flex; flex-direction: column; gap: 8px; align-items: flex-end; pointer-events: none; max-width: calc(100% - 32px); }
 .toast { padding: 10px 14px; border-radius: var(--radius); background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--accent); font: 500 0.82rem/1.4 var(--f-mono); box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35); animation: toast-in 0.25s ease-out; }
@@ -347,6 +403,9 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
   .skill-row { grid-template-columns: minmax(0, 1fr) 70px 34px; }
   .tl-list .fact { grid-template-columns: 70px minmax(0, 1fr); }
   .tl-list .fact > :last-child { grid-column: 1 / -1; }
+  .custody li { grid-template-columns: 22px minmax(0, 1fr); }
+  .custody li span { grid-column: 2; }
+  .map-pin span { font-size: 0.6rem; max-width: 120px; }
   .case-bar { gap: 4px 10px; font-size: 0.66rem; }
   .modal { padding: 20px; }
 }

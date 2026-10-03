@@ -81,7 +81,87 @@
     lastKey = key;
     const tr = document.getElementById('transcript');
     if (tr) tr.scrollTop = tr.scrollHeight;
+    drawWall();
     store.save();
+  }
+
+  /* ---------- Muro: líneas y arrastre ---------- */
+  function drawWall() {
+    const board = document.getElementById('wall-board');
+    const svg = document.getElementById('wall-lines');
+    if (!board || !svg) return;
+    const { cs } = curCase();
+    const center = id => {
+      const el = board.querySelector('[data-card="' + id + '"]');
+      return el ? { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2 } : null;
+    };
+    svg.innerHTML = cs.wall.links.map(l => {
+      const a = center(l.a), b = center(l.b);
+      if (!a || !b) return '';
+      return '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '"/><text x="' + (a.x + b.x) / 2 + '" y="' + ((a.y + b.y) / 2 - 4) + '" text-anchor="middle">' + UI.esc(l.label) + '</text>';
+    }).join('');
+  }
+
+  const WALL_ORDER = ['person', 'evidence', 'place', 'fact', 'statement', 'conflict', 'hyp', 'question'];
+  function wallSlot(cs) {
+    const n = cs.wall.cards.length;
+    return { x: 20 + (n % 6) * 240, y: 20 + Math.floor(n / 6) * 150 };
+  }
+  function wallAdd(cs, kind, ref, text) {
+    if (cs.wall.cards.some(k => k.kind === kind && k.ref === ref)) return false;
+    const pos = wallSlot(cs);
+    cs.wall.cards.push({ id: uid(), kind, ref, text: text || '', x: pos.x, y: Math.min(pos.y, 860) });
+    EN.log(cs, 'wall_add', { kind });
+    return true;
+  }
+  function wallCardClick(id) {
+    const { cs } = curCase();
+    const con = cs.lastView.wallConnect;
+    if (!con || !con.on) return;
+    if (!con.from) { con.from = id; render(); return; }
+    if (con.from === id) { con.from = null; render(); return; }
+    const dup = cs.wall.links.some(l => (l.a === con.from && l.b === id) || (l.a === id && l.b === con.from));
+    if (!dup) {
+      cs.wall.links.push({ id: uid(), a: con.from, b: id, label: con.label || 'relación' });
+      EN.log(cs, 'wall_link', { label: con.label });
+      toast('Conexión guardada en el muro.');
+    }
+    cs.lastView.wallConnect = { on: false, from: null, label: con.label };
+    render();
+  }
+
+  let drag = null;
+  function bindWall() {
+    document.addEventListener('pointerdown', e => {
+      const card = e.target.closest && e.target.closest('.wall-card');
+      if (!card || e.target.closest('button')) return;
+      drag = { id: card.dataset.card, el: card, sx: e.clientX, sy: e.clientY, ox: card.offsetLeft, oy: card.offsetTop, moved: false };
+      try { card.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ }
+    });
+    document.addEventListener('pointermove', e => {
+      if (!drag) return;
+      const dx = e.clientX - drag.sx, dy = e.clientY - drag.sy;
+      if (!drag.moved && Math.abs(dx) + Math.abs(dy) < 4) return;
+      drag.moved = true;
+      const board = drag.el.parentElement;
+      drag.el.style.left = clamp(drag.ox + dx, 0, board.clientWidth - drag.el.offsetWidth) + 'px';
+      drag.el.style.top = clamp(drag.oy + dy, 0, board.clientHeight - drag.el.offsetHeight) + 'px';
+      drag.el.classList.add('dragging');
+      drawWall();
+    });
+    const end = () => {
+      if (!drag) return;
+      const d = drag;
+      drag = null;
+      d.el.classList.remove('dragging');
+      if (d.moved) {
+        const { cs } = curCase();
+        const k = cs.wall.cards.find(x => x.id === d.id);
+        if (k) { k.x = d.el.offsetLeft; k.y = d.el.offsetTop; EN.log(cs, 'wall_move'); store.save(); }
+      } else wallCardClick(d.id);
+    };
+    document.addEventListener('pointerup', end);
+    document.addEventListener('pointercancel', end);
   }
 
   /* ---------- Carrera ---------- */
@@ -122,12 +202,19 @@
     const s = S();
     const c = EN.getCase(id);
     let cs = s.cases[id];
+    if (!cs && !UI.unlocked(c)) { toast('Este expediente se desbloquea al ascender de rango.', 'warn'); return; }
     if (!cs) {
       cs = store.startCase(c);
       EN.discover(cs, c.initialFacts);
       EN.log(cs, 'open_case');
       s.view.tab = 'resumen';
       toast(c.id + ' abierto. Expediente activo.');
+      s.budgets = s.budgets || {};
+      if (c.budget && !s.budgets[c.id]) {
+        s.budgets[c.id] = true;
+        s.money += c.budget;
+        toast('Presupuesto operativo asignado al expediente: +' + c.budget + ' €.');
+      }
     } else if (s.view.caseId !== id) {
       s.view.tab = cs.status === 'cerrado' ? 'veredicto' : 'resumen';
     }
@@ -241,7 +328,7 @@
     const def = p.confront[fid];
     let a, fresh = [];
     if (def) {
-      a = def.afterVisit && EN.known(cs, 'S_JAV_VISITA') ? def.afterVisit : def.a;
+      a = def.afterVisit && def.afterFact && EN.known(cs, def.afterFact) ? def.afterVisit : def.a;
       fresh = EN.discover(cs, def.reveals);
     } else a = p.confrontDefault;
     cs.confronted[pid][fid] = a;
@@ -393,6 +480,62 @@
     'cancel-reset': () => { S().view.confirmReset = false; },
     'reset-game': () => { store.reset(); applySettings(); toast('Partida borrada. Empezáis de nuevo.'); },
     'scene-sel': el => { const { cs } = curCase(); cs.lastView.sceneSel = el.dataset.id || null; },
+    'scene-plan': el => { const { cs } = curCase(); cs.lastView.plan = el.dataset.id; cs.lastView.sceneSel = null; },
+    photo: el => {
+      const { cs } = curCase();
+      if (!guardOpen(cs) || !cs.examined[el.dataset.id] || cs.photos[el.dataset.id]) return;
+      cs.photos[el.dataset.id] = true;
+      EN.log(cs, 'photo', { ev: el.dataset.id });
+      toast('Reportaje fotográfico registrado en la cadena de custodia.');
+    },
+    'wall-add-ev': el => { const { cs } = curCase(); if (wallAdd(cs, 'evidence', el.dataset.id)) toast('Tarjeta añadida al muro.'); },
+    'gen-question': el => {
+      const { c } = curCase();
+      const e = c.evidence.find(x => x.id === el.dataset.id);
+      S().notes.push({ id: uid(), author: S().active, cat: 'Pregunta', caseId: c.id, text: '¿Qué explica lo observado en ' + e.id + ' (' + e.name + ')? ' + e.detail, t: Date.now() });
+      toast('Pregunta añadida al cuaderno de ' + S().investigators[S().active] + '.');
+      return false;
+    },
+    'map-sel': el => { const { cs } = curCase(); cs.lastView.mapSel = cs.lastView.mapSel === el.dataset.id ? null : el.dataset.id; },
+    'map-link': () => {
+      const { c, cs } = curCase();
+      const a = document.getElementById('map-a').value, b = document.getElementById('map-b').value;
+      const label = document.getElementById('map-label').value;
+      if (!a || !b || a === b) { toast('Elige dos lugares distintos.', 'warn'); return false; }
+      if (cs.mapLinks.some(l => (l.a === a && l.b === b) || (l.a === b && l.b === a))) { toast('Esos lugares ya están conectados.', 'warn'); return false; }
+      cs.mapLinks.push({ id: uid(), a, b, label });
+      EN.log(cs, 'map_link', { a, b });
+      const d = EN.placeDistance(c, a, b);
+      toast('Línea trazada' + (d !== null ? ': ≈' + d.toFixed(1) + ' km en línea recta.' : '.'));
+    },
+    'map-unlink': el => { const { cs } = curCase(); cs.mapLinks = cs.mapLinks.filter(l => l.id !== el.dataset.id); },
+    'wall-add': () => {
+      const { cs } = curCase();
+      const v = document.getElementById('wall-add').value;
+      if (!v) { toast('Elige qué añadir al muro.', 'warn'); return false; }
+      const i = v.indexOf(':');
+      wallAdd(cs, v.slice(0, i), v.slice(i + 1));
+    },
+    'wall-remove': el => {
+      const { cs } = curCase();
+      cs.wall.cards = cs.wall.cards.filter(k => k.id !== el.dataset.id);
+      cs.wall.links = cs.wall.links.filter(l => l.a !== el.dataset.id && l.b !== el.dataset.id);
+      toast('Tarjeta retirada del muro. El hecho sigue en el expediente.');
+    },
+    'wall-connect': () => {
+      const { cs } = curCase();
+      if (cs.wall.cards.length < 2) { toast('Necesitas al menos dos tarjetas en el muro.', 'warn'); return false; }
+      cs.lastView.wallConnect = { on: true, from: null, label: document.getElementById('wall-label').value };
+    },
+    'wall-connect-cancel': () => { const { cs } = curCase(); cs.lastView.wallConnect = { on: false, from: null }; },
+    'wall-unlink': el => { const { cs } = curCase(); cs.wall.links = cs.wall.links.filter(l => l.id !== el.dataset.id); },
+    'wall-sort': () => {
+      const { cs } = curCase();
+      const cols = WALL_ORDER.filter(k => cs.wall.cards.some(x => x.kind === k));
+      cols.forEach((kind, ci) => {
+        cs.wall.cards.filter(x => x.kind === kind).forEach((x, ri) => { x.x = 20 + (ci % 6) * 240; x.y = Math.min(860, 20 + ri * 130 + Math.floor(ci / 6) * 420); });
+      });
+    },
     examine: el => examine(el.dataset.id),
     'to-lab': el => { const { cs } = curCase(); cs.lastView.labFocus = el.dataset.id; S().view.tab = 'laboratorio'; },
     'ev-filter': el => { curCase().cs.lastView.evFilter = el.dataset.id; },
@@ -479,6 +622,23 @@
       if (cs.queries.length > 40) cs.queries.shift();
       EN.log(cs, 'query', { found: r.results.length });
     },
+    'wall-question': f => {
+      const { cs } = curCase();
+      const q = String(new FormData(f).get('q') || '').trim();
+      if (!q) return;
+      wallAdd(cs, 'question', uid(), q);
+    },
+    'custody-note': f => {
+      const { cs } = curCase();
+      const fd = new FormData(f);
+      const note = String(fd.get('note') || '').trim();
+      if (!note) return;
+      const ev = fd.get('ev');
+      cs.custodyNotes[ev] = cs.custodyNotes[ev] || [];
+      cs.custodyNotes[ev].push(note);
+      EN.log(cs, 'custody_note', { ev });
+      toast('Nota de custodia registrada.');
+    },
     verdict: f => emitVerdict(f),
     trial: f => submitTrial(f)
   };
@@ -564,10 +724,11 @@
     if (!s.introSeen) s.view.modal = 'intro';
     applySettings();
     bind();
+    bindWall();
     render();
   }
 
-  E0.app = { render, boot };
+  E0.app = { render, boot, drawWall };
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
   else boot();
 })();

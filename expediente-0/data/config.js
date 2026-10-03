@@ -4,7 +4,7 @@ window.E0 = window.E0 || {};
 E0.config = {
   saveVersion: 1,
   storageKey: 'expediente0.save.v1',
-  startMoney: 1500,
+  startMoney: 600,
   startEnergy: 100,
   jornadasPorSemana: 5,
 

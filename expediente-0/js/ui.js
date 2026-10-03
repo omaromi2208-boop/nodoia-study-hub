@@ -78,8 +78,21 @@
     };
   }
 
+  const unlocked = c => rankInfo(S().xp).i >= (c.minRank || 0);
+  function featuredCase() {
+    const s = S();
+    return E0.cases.find(c => s.cases[c.id] && s.cases[c.id].status === 'activo') ||
+      E0.cases.find(c => unlocked(c) && !s.cases[c.id]) ||
+      E0.cases.find(c => !unlocked(c)) || E0.cases[E0.cases.length - 1];
+  }
+  function lockText(c) {
+    const need = C.ranks[c.minRank || 0];
+    return 'Requiere rango «' + need.name + '» (faltan ' + Math.max(0, need.xp - S().xp) + ' XP)';
+  }
+
   function caseButton(c) {
     const cs = S().cases[c.id];
+    if (!cs && !unlocked(c)) return '<button class="btn" disabled>' + esc(lockText(c)) + '</button>';
     if (!cs) return '<button class="btn primary" data-act="open-case" data-id="' + c.id + '">Abrir expediente</button>';
     if (cs.status === 'cerrado') return '<button class="btn" data-act="open-case" data-id="' + c.id + '">Revisar expediente</button>';
     return '<button class="btn primary" data-act="open-case" data-id="' + c.id + '">Continuar investigación</button>';
@@ -88,12 +101,13 @@
   function screenHome() {
     const s = S();
     const r = rankInfo(s.xp);
-    const c = E0.cases[0];
+    const c = featuredCase();
     const cs = s.cases[c.id];
     const solved = s.history.length;
     const doneMods = E0.academy.filter(m => s.academy[m.id]).length;
-    const status = !cs ? 'Sin abrir' : cs.status === 'cerrado' ? 'Cerrado' : 'Activo';
+    const status = !cs ? (unlocked(c) ? 'Sin abrir' : 'Bloqueado') : cs.status === 'cerrado' ? 'Cerrado' : 'Activo';
     const p = caseProgress(c, cs);
+    const pendingMods = E0.academy.filter(m => !s.academy[m.id]).slice(0, 4);
     return '<section class="screen stack-lg">' +
       '<div class="screen-head"><div><div class="eyebrow">Centro de investigación · Semana ' + s.week + '</div><h1>Unidad ' + esc(invName('omi')) + ' &amp; ' + esc(invName('rebe')) + '</h1></div>' +
       '<div class="team">' + ['omi', 'rebe'].map(id => '<div class="team-member"><div class="avatar ' + (s.active === id ? 'acc' : '') + '">' + esc(invName(id).replace(/^La\s+/i, '').slice(0, 2).toUpperCase()) + '</div><div><b>' + esc(invName(id)) + '</b><div class="faint mono" style="font-size:.72rem">' + (s.active === id ? 'TURNO ACTIVO' : 'EN EQUIPO') + '</div></div></div>').join('') + '</div></div>' +
@@ -121,7 +135,8 @@
         return '<div class="jornada-item"><div class="min0"><b>' + esc(j.name) + '</b><p>' + esc(j.desc) + '</p></div><div class="row" style="flex-wrap:nowrap"><span class="fx">' + fx + '</span><button class="btn small" data-act="jornada" data-id="' + j.id + '"' + (can ? '' : ' disabled title="Energía insuficiente"') + '>Hacer</button></div></div>';
       }).join('') + '</div><p class="faint" style="font-size:.8rem">Al completar ' + C.jornadasPorSemana + ' jornadas se cobra el salario semanal de tu rango (' + money(r.cur.salary) + ').</p></article>' +
       '<article class="panel stack"><div class="panel-head"><h3>Academia</h3><button class="btn small ghost" data-act="go" data-screen="academy">Abrir</button></div>' +
-      E0.academy.map(m => '<div class="spread" style="padding:6px 0;border-bottom:1px dashed var(--line-soft)"><div class="min0"><div class="eyebrow">' + esc(m.area) + '</div><div>' + esc(m.title) + '</div></div>' + (s.academy[m.id] ? '<span class="badge ok">Completado</span>' : '<span class="badge">+' + m.xp + ' XP</span>') + '</div>').join('') +
+      '<p class="muted" style="font-size:.86rem">' + doneMods + ' de ' + E0.academy.length + ' módulos completados.' + (pendingMods.length ? ' Pendientes:' : ' Formación inicial completa.') + '</p>' +
+      pendingMods.map(m => '<div class="spread" style="padding:6px 0;border-bottom:1px dashed var(--line-soft)"><div class="min0"><div class="eyebrow">' + esc(m.area) + '</div><div>' + esc(m.title) + '</div></div><span class="badge">+' + m.xp + ' XP</span></div>').join('') +
       '</article></div></section>';
   }
 
@@ -132,9 +147,10 @@
       E0.cases.map(c => {
         const cs = s.cases[c.id];
         const p = caseProgress(c, cs);
-        const status = !cs ? 'Disponible' : cs.status === 'cerrado' ? 'Cerrado' : 'Activo';
-        return '<article class="panel dossier stack"><div class="spread"><div><div class="case-code">' + c.id + '</div><h2 style="font-size:1.8rem;text-transform:uppercase">' + esc(c.title) + '</h2></div><span class="badge ' + (status === 'Activo' ? 'acc' : status === 'Cerrado' ? 'ok' : '') + '">' + status + '</span></div>' +
-          '<dl class="kv"><dt>Tipo</dt><dd>' + esc(c.type) + '</dd><dt>Dificultad</dt><dd>' + esc(c.difficulty) + '</dd><dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>Víctima</dt><dd>' + esc(c.victim.name) + ', ' + c.victim.age + ' años</dd></dl>' +
+        const status = !cs ? (unlocked(c) ? 'Disponible' : 'Bloqueado') : cs.status === 'cerrado' ? 'Cerrado' : 'Activo';
+        return '<article class="panel dossier stack' + (status === 'Bloqueado' ? ' locked' : '') + '"><div class="spread"><div><div class="case-code">' + c.id + '</div><h2 style="font-size:1.8rem;text-transform:uppercase">' + esc(c.title) + '</h2></div><span class="badge ' + (status === 'Activo' ? 'acc' : status === 'Cerrado' ? 'ok' : '') + '">' + status + '</span></div>' +
+          '<dl class="kv"><dt>Tipo</dt><dd>' + esc(c.type) + '</dd><dt>Dificultad</dt><dd>' + esc(c.difficulty) + '</dd>' + (c.budget ? '<dt>Presupuesto</dt><dd>' + money(c.budget) + (s.budgets && s.budgets[c.id] ? ' (asignado)' : ' (se asigna al abrirlo)') + '</dd>' : '') + '<dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>' + esc(c.victimLabel || 'Víctima') + '</dt><dd>' + esc(c.victim.name) + ', ' + c.victim.age + ' años</dd></dl>' +
+          (status === 'Bloqueado' ? '<p class="faint" style="font-size:.86rem">Se desbloquea al ascender. Gana XP cerrando expedientes, en la academia o con jornadas de estudio.</p>' : '') +
           (cs ? '<div class="row mono faint" style="font-size:.76rem">EVIDENCIAS ' + p.ev + '/' + c.evidence.length + ' · ENTREVISTAS ' + p.int + '/' + c.people.length + ' · LAB ' + p.lab + ' · DIGITAL ' + p.dig + ' · CONTRADICCIONES ' + p.con + '</div>' : '') +
           (cs && cs.evaluation ? '<div class="result">Resultado: <b>' + cs.evaluation.total + '/100</b>' + (cs.trial ? ' · Juicio: ' + cs.trial.rebutted + '/' + cs.trial.total + ' objeciones respondidas' : '') + '</div>' : '') +
           '<div class="row">' + caseButton(c) +
@@ -164,7 +180,18 @@
         }
         return '<article class="panel module"><div class="spread"><div class="eyebrow">' + esc(m.area) + '</div>' + (st ? '<span class="badge ok">Completado</span>' : '<span class="badge">+' + m.xp + ' XP</span>') + '</div><h3>' + esc(m.title) + '</h3>' + body +
           '<div class="row"><button class="btn small ' + (isOpen ? 'ghost' : '') + '" data-act="academy-open" data-id="' + m.id + '">' + (isOpen ? 'Cerrar' : (st ? 'Repasar' : 'Empezar módulo')) + '</button></div></article>';
-      }).join('') + '</div></section>';
+      }).join('') + '</div>' + legalLibrary() + '</section>';
+  }
+
+  function legalLibrary() {
+    const L = E0.legal;
+    return '<article class="panel stack" id="biblioteca"><div class="panel-head"><h2>Biblioteca jurídica</h2><span class="badge warn">Comprueba la vigencia</span></div>' +
+      '<p class="muted" style="font-size:.9rem">' + esc(L.disclaimer) + '</p>' +
+      '<div class="grid"><div class="stack"><div class="sub">Fuentes oficiales (BOE)</div>' +
+      L.official.map(o => '<div class="note"><a class="ext" href="' + esc(o.url) + '" target="_blank" rel="noopener">' + esc(o.name) + ' ↗</a><p class="muted" style="font-size:.85rem">' + esc(o.note) + '</p></div>').join('') + '</div>' +
+      '<div class="stack"><div class="sub">Contenido educativo interno</div>' +
+      L.internal.map(o => '<div class="note"><b>' + esc(o.title) + '</b><p style="font-size:.88rem">' + esc(o.text) + '</p></div>').join('') + '</div></div>' +
+      '<div class="result neutral"><div class="sub">Simulación del juego</div>' + esc(L.simulation) + '</div></article>';
   }
 
   /* ---------- Carrera ---------- */
@@ -237,8 +264,8 @@
   /* ---------- Caso ---------- */
   const TABS = [
     ['resumen', 'Resumen'], ['escena', 'Escena'], ['evidencias', 'Evidencias'], ['laboratorio', 'Laboratorio'], ['digital', 'Digital'],
-    ['personas', 'Personas'], ['comparador', 'Comparador'], ['cronologia', 'Cronología'], ['hipotesis', 'Hipótesis'], ['consulta', 'Consulta'],
-    ['informe', 'Informe'], ['veredicto', 'Veredicto']
+    ['personas', 'Personas'], ['comparador', 'Comparador'], ['cronologia', 'Cronología'], ['mapa', 'Mapa'], ['muro', 'Muro'],
+    ['hipotesis', 'Hipótesis'], ['consulta', 'Consulta'], ['informe', 'Informe'], ['custodia', 'Custodia'], ['veredicto', 'Veredicto']
   ];
 
   function factRow(c, f, extra) {
@@ -271,15 +298,16 @@
     const tab = s.view.tab || 'resumen';
     const p = caseProgress(c, cs);
     const closed = cs.status === 'cerrado';
-    const counts = { evidencias: p.ev, personas: p.int, hipotesis: p.hyp, laboratorio: p.lab, digital: p.dig, comparador: p.con };
+    const counts = { evidencias: p.ev, personas: p.int, hipotesis: p.hyp, laboratorio: p.lab, digital: p.dig, comparador: p.con, muro: cs.wall.cards.length, mapa: cs.mapLinks.length };
     const R = {
       resumen: tabResumen, escena: tabEscena, evidencias: tabEvidencias, laboratorio: tabLab, digital: tabDigital, personas: tabPersonas,
-      comparador: tabComparador, cronologia: tabCronologia, hipotesis: tabHipotesis, consulta: tabConsulta, informe: tabInforme, veredicto: tabVeredicto
+      comparador: tabComparador, cronologia: tabCronologia, mapa: tabMapa, muro: tabMuro, hipotesis: tabHipotesis, consulta: tabConsulta,
+      informe: tabInforme, custodia: tabCustodia, veredicto: tabVeredicto
     };
     return '<section class="screen">' +
       '<div class="case-head"><div class="min0"><div class="crumbs"><button data-act="go" data-screen="cases">Expedientes</button> / ' + c.id + ' / ' + esc(TABS.find(t => t[0] === tab)[1]) + '</div>' +
       '<div class="case-code">' + c.id + '</div><h1>' + esc(c.title) + '</h1>' +
-      '<div class="row" style="margin-top:8px"><span class="badge">Víctima: ' + esc(c.victim.name) + '</span><span class="badge ' + (closed ? 'ok' : 'acc') + '">' + (closed ? 'Cerrado' : 'Activo') + '</span><span class="badge warn">Dificultad ' + esc(c.difficulty) + '</span></div></div>' +
+      '<div class="row" style="margin-top:8px"><span class="badge">' + esc(c.victimLabel || 'Víctima') + ': ' + esc(c.victim.name) + '</span><span class="badge ' + (closed ? 'ok' : 'acc') + '">' + (closed ? 'Cerrado' : 'Activo') + '</span><span class="badge warn">Dificultad ' + esc(c.difficulty) + '</span></div></div>' +
       '<div class="stack" style="gap:4px;align-items:flex-end"><span class="eyebrow">Objetivo</span><span style="font-size:.9rem">Reconstrucción del caso</span><span class="faint mono" style="font-size:.72rem">Turno: ' + esc(invName(s.active)) + '</span></div></div>' +
       '<nav class="tabs" role="tablist" aria-label="Herramientas del expediente">' + TABS.map(([id, l]) => '<button class="tab" role="tab" data-act="tab" data-tab="' + id + '" aria-selected="' + (tab === id) + '">' + l + (counts[id] ? '<sup>' + counts[id] + '</sup>' : '') + '</button>').join('') + '</nav>' +
       '<div id="tab-body">' + R[tab](c, cs) + '</div>' +
@@ -292,7 +320,7 @@
     const recent = facts.slice(-6).reverse();
     return '<div class="grid grid-2">' +
       '<article class="panel dossier stack"><div class="eyebrow">Informe inicial</div>' + c.briefing.map(b => '<p>' + esc(b) + '</p>').join('') +
-      '<dl class="kv"><dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>Víctima</dt><dd>' + esc(c.victim.name) + ', ' + c.victim.age + ' años. ' + esc(c.victim.job) + '</dd><dt>Ventana</dt><dd>' + esc(c.deathWindow) + '</dd></dl></article>' +
+      '<dl class="kv"><dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>' + esc(c.victimLabel || 'Víctima') + '</dt><dd>' + esc(c.victim.name) + ', ' + c.victim.age + ' años. ' + esc(c.victim.job) + '</dd><dt>Ventana</dt><dd>' + esc(c.deathWindow) + '</dd></dl></article>' +
       '<article class="panel stack"><div class="panel-head"><h3>Últimas incorporaciones</h3><span class="badge">' + facts.length + ' hechos</span></div>' +
       recent.map(f => factRow(c, f)).join('') +
       '<div class="sub">Personas del expediente</div><div class="stack" style="gap:6px">' + c.people.map(p => '<div class="row" style="flex-wrap:nowrap"><div class="avatar" style="width:32px;height:32px;font-size:.75rem">' + p.initials + '</div><div class="min0"><b style="font-size:.9rem">' + esc(p.name) + '</b> <span class="muted" style="font-size:.82rem">· ' + esc(p.role) + '</span></div></div>').join('') + '</div></article></div>';
@@ -301,31 +329,44 @@
   function tabEscena(c, cs) {
     const sel = cs.lastView.sceneSel || null;
     const evById = id => c.evidence.find(e => e.id === id);
-    const plan = '<div class="plan" role="group" aria-label="Plano de la vivienda">' +
-      c.scene.rooms.map(r => '<div class="room" style="left:' + r.x + '%;top:' + r.y + '%;width:' + r.w + '%;height:' + r.h + '%"><span>' + r.name + '</span></div>').join('') +
-      c.scene.hotspots.map(hs => {
+    const plans = c.scene.plans;
+    let planId = cs.lastView.plan || plans[0].id;
+    if (sel && !plans.find(pl => pl.id === planId).hotspots.some(h => h.ev === sel)) {
+      const owner = plans.find(pl => pl.hotspots.some(h => h.ev === sel));
+      if (owner) planId = owner.id;
+    }
+    const P = plans.find(pl => pl.id === planId);
+    const planTabs = plans.length > 1 ? '<div class="row" role="group" aria-label="Zonas de la escena" style="margin-bottom:10px">' + plans.map(pl => {
+      const n = pl.hotspots.filter(h => cs.examined[h.ev]).length;
+      return '<button class="btn small ' + (pl.id === planId ? 'primary' : 'ghost') + '" data-act="scene-plan" data-id="' + pl.id + '">' + esc(pl.name) + ' <span class="cost">' + n + '/' + pl.hotspots.length + '</span></button>';
+    }).join('') + '</div>' : '';
+    const plan = '<div class="plan" role="group" aria-label="Plano: ' + esc(P.name) + '">' +
+      P.rooms.map(r => '<div class="room" style="left:' + r.x + '%;top:' + r.y + '%;width:' + r.w + '%;height:' + r.h + '%"><span>' + esc(r.name) + '</span></div>').join('') +
+      P.hotspots.map(hs => {
         const e = evById(hs.ev);
-        return '<button class="hotspot ' + (cs.examined[e.id] ? 'done ' : '') + (sel === e.id ? 'sel' : '') + '" style="left:' + hs.x + '%;top:' + hs.y + '%" data-act="scene-sel" data-id="' + e.id + '" title="' + esc(e.name) + '" aria-label="' + esc(e.name) + '">' + e.id.slice(1) + '</button>';
+        return '<button class="hotspot ' + (cs.examined[e.id] ? 'done ' : '') + (sel === e.id ? 'sel' : '') + '" style="left:' + hs.x + '%;top:' + hs.y + '%" data-act="scene-sel" data-id="' + e.id + '" title="' + esc(e.name) + '" aria-label="' + esc(e.name) + '">' + e.id.replace(/^[A-Z]+/, '') + '</button>';
       }).join('') + '</div>';
-    const g = evById(c.scene.garage.ev);
     let side;
     if (!sel) {
       side = '<article class="panel stack"><h3>Inspección ocular</h3><p class="muted">Selecciona un punto del plano para ver el elemento y decidir qué hacer con él. Los puntos con anillo animado no se han examinado todavía.</p>' +
-        '<div class="sub">Elementos</div><div class="stack" style="gap:4px">' + c.evidence.map(e => '<button class="linkish" style="text-align:left;text-decoration:none;color:' + (cs.examined[e.id] ? 'var(--muted)' : 'var(--text)') + '" data-act="scene-sel" data-id="' + e.id + '"><span class="mono" style="color:var(--accent)">' + e.id + '</span> ' + esc(e.name) + (cs.examined[e.id] ? ' ✓' : '') + '</button>').join('') + '</div></article>';
+        '<div class="sub">Elementos de esta zona</div><div class="stack" style="gap:4px">' + P.hotspots.map(h => evById(h.ev)).map(e => '<button class="linkish" style="text-align:left;text-decoration:none;color:' + (cs.examined[e.id] ? 'var(--muted)' : 'var(--text)') + '" data-act="scene-sel" data-id="' + e.id + '"><span class="mono" style="color:var(--accent)">' + e.id + '</span> ' + esc(e.name) + (cs.examined[e.id] ? ' ✓' : '') + '</button>').join('') + '</div></article>';
     } else {
       const e = evById(sel);
       const done = cs.examined[e.id];
+      const onWall = cs.wall.cards.some(k => k.kind === 'evidence' && k.ref === e.id);
       side = '<article class="panel stack ev-card"><header><div><div class="ev-id">' + e.id + ' · ' + esc(e.room) + '</div><h3>' + esc(e.name) + '</h3></div><span class="badge">' + esc(e.type) + '</span></header>' +
         '<p>' + esc(done ? e.detail : e.public) + '</p>' +
         (done ? '<dl class="kv"><dt>Valor posible</dt><dd>' + esc(e.value) + '</dd><dt>Limitaciones</dt><dd>' + esc(e.limits) + '</dd></dl>' : '') +
         '<div class="row">' + (done ? '<button class="btn" data-act="examine" data-id="' + e.id + '">Volver a examinar</button>' : '<button class="btn primary" data-act="examine" data-id="' + e.id + '">Examinar</button>') +
+        (done ? '<button class="btn" data-act="photo" data-id="' + e.id + '"' + (cs.photos[e.id] ? ' disabled' : '') + '>' + (cs.photos[e.id] ? 'Fotografiado ✓' : 'Fotografiar') + '</button>' : '') +
         (done && e.lab ? '<button class="btn" data-act="to-lab" data-id="' + e.id + '">Enviar a laboratorio</button>' : '') +
         (done && e.unlocks ? '<button class="btn" data-act="tab" data-tab="digital">Solicitar análisis digital</button>' : '') +
+        (done ? '<button class="btn" data-act="wall-add-ev" data-id="' + e.id + '"' + (onWall ? ' disabled' : '') + '>' + (onWall ? 'En el muro ✓' : 'Añadir al muro') + '</button>' : '') +
+        (done ? '<button class="btn" data-act="gen-question" data-id="' + e.id + '">Generar pregunta</button>' : '') +
         '<button class="btn ghost" data-act="scene-sel" data-id="">Cerrar</button></div></article>';
     }
-    return '<div class="scene-wrap"><div class="min0">' + plan +
-      '<button class="btn garage-btn ' + (sel === g.id ? 'primary' : '') + '" data-act="scene-sel" data-id="' + g.id + '"><span><span class="mono">' + g.id + '</span> ' + esc(c.scene.garage.label) + '</span><span>' + (cs.examined[g.id] ? '✓' : '→') + '</span></button>' +
-      '<div class="legend"><span>◯ sin examinar</span><span>● examinado</span><span>Planta 3.ª · vivienda 17 · 78 m²</span></div></div>' + side + '</div>';
+    return '<div class="scene-wrap"><div class="min0">' + planTabs + plan +
+      '<div class="legend"><span>◯ sin examinar</span><span>● examinado</span><span>' + esc(P.legend) + '</span></div></div>' + side + '</div>';
   }
 
   function evFacts(c, cs, e) {
@@ -377,15 +418,15 @@
     return '<div class="stack-lg"><div class="spread"><p class="muted" style="max-width:62ch">Solicita registros digitales y compáralos después con las declaraciones y la cronología.</p><span class="chip keep"><em>Fondos</em>' + money(s.money) + '</span></div>' +
       '<div class="grid">' + c.digital.map(d => {
         const done = cs.digital[d.id];
-        const reqOk = !d.requires || cs.examined[d.requires];
-        const reqName = d.requires ? c.evidence.find(e => e.id === d.requires).name : '';
+        const reqOk = (!d.requires || cs.examined[d.requires]) && (!d.requiresDigital || cs.digital[d.requiresDigital]);
+        const reqName = d.requires && !cs.examined[d.requires] ? 'examinar ' + c.evidence.find(e => e.id === d.requires).name : d.requiresDigital ? 'obtener «' + c.digital.find(x => x.id === d.requiresDigital).name + '»' : '';
         const facts = done ? d.reveals.map(id => c.facts[id]) : [];
         return '<article class="panel stack"><div class="spread"><h3>' + esc(d.name) + '</h3>' + (done ? '<span class="badge ok">Recibido</span>' : '<span class="badge">' + d.cost + ' €</span>') + '</div><p class="muted" style="font-size:.88rem">' + esc(d.desc) + '</p>' +
           (done ? '<div>' + facts.map(f => factRow(c, f)).join('') + '</div>' :
-            (reqOk ? '<div class="row"><button class="btn" data-act="digital" data-id="' + d.id + '"' + (s.money < d.cost ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + d.cost + ' €</span></button></div>' : '<p class="faint" style="font-size:.84rem">Requiere examinar antes: ' + esc(reqName) + '.</p>')) + '</article>';
+            (reqOk ? '<div class="row"><button class="btn" data-act="digital" data-id="' + d.id + '"' + (s.money < d.cost ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + d.cost + ' €</span></button></div>' : '<p class="faint" style="font-size:.84rem">Requiere antes: ' + esc(reqName) + '.</p>')) + '</article>';
       }).join('') + '</div>' +
       '<article class="panel stack"><div class="spread"><h3>Solicitud judicial de antenas</h3><span class="badge ' + (left ? 'acc' : '') + '">' + left + '/' + jud.max + ' disponibles</span></div><p class="muted" style="font-size:.88rem">' + esc(jud.desc) + '</p>' +
-      (left ? '<div class="row" style="flex-wrap:nowrap"><select id="jud-person" aria-label="Persona">' + c.people.filter(p => !cs.judicial.includes(p.id)).map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('') + '</select><button class="btn" data-act="judicial">Solicitar</button></div>' : '') +
+      (left ? '<div class="row" style="flex-wrap:nowrap"><select id="jud-person" aria-label="Persona">' + EN.judicialTargets(c).filter(p => !cs.judicial.includes(p.id)).map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('') + '</select><button class="btn" data-act="judicial">Solicitar</button></div>' : '') +
       cs.judicial.map(pid => jud.results[pid].map(id => factRow(c, c.facts[id])).join('')).join('') + '</article></div>';
   }
 
@@ -511,21 +552,104 @@
     const tl = cs.timeline.slice().sort((a, b) => EN.minutes(a.time) - EN.minutes(b.time));
     const conf = Object.keys(cs.conflicts).map(id => c.conflicts.find(k => k.id === id));
     const ex = c.evidence.filter(e => cs.examined[e.id]);
+    const custodyOk = ex.filter(e => EN.custody(c, cs, e).complete).length;
     const sec = (n, t, body) => '<section class="stack" style="gap:6px"><h3>' + n + '. ' + t + '</h3>' + body + '</section>';
     return '<div class="stack-lg"><div class="spread no-print"><p class="muted" style="max-width:62ch">El informe se compone con tu propio material: cronología, contradicciones registradas, hipótesis y lo que escribas aquí.</p><div class="row"><button class="btn" data-act="copy-report">Copiar texto</button>' + (inFrame ? '' : '<button class="btn ghost" data-act="print">Imprimir</button>') + '</div></div>' +
       '<article class="panel stack-lg" id="report">' +
       sec(1, 'Identificación del expediente', '<p>' + c.id + ' · ' + esc(c.title) + ' · ' + esc(c.type) + ' · ' + esc(c.date) + '. Equipo: ' + esc(invName('omi')) + ' y ' + esc(invName('rebe')) + '.</p>') +
-      sec(2, 'Víctima', '<p>' + esc(c.victim.name) + ', ' + c.victim.age + ' años. ' + esc(c.victim.job) + '.</p>') +
-      sec(3, 'Escena', '<p>' + esc(c.location) + '. ' + esc(c.facts.F_PUERTA.text) + '</p>') +
+      sec(2, esc(c.victimLabel || 'Víctima'), '<p>' + esc(c.victim.name) + ', ' + c.victim.age + ' años. ' + esc(c.victim.job) + '.</p>') +
+      sec(3, 'Escena', '<p>' + esc(c.location) + '. ' + esc(c.sceneSummary) + '</p>') +
       sec(4, 'Cronología', tl.length ? tl.map(e => '<div class="fact"><time>' + esc(e.time + (e.end ? '–' + e.end : '')) + '</time><div><span class="src">' + esc(e.source) + '</span>' + esc(e.text) + (e.note ? ' <i class="muted">— ' + esc(e.note) + '</i>' : '') + '</div></div>').join('') : '<p class="muted">Sin cronología elaborada.</p>') +
       sec(5, 'Personas', '<ul style="margin:0;padding-left:18px">' + c.people.map(p => '<li>' + esc(p.name) + ' — ' + esc(p.role) + (cs.asked[p.id] ? ' (entrevistada)' : ' (no entrevistada)') + '</li>').join('') + '</ul>') +
-      sec(6, 'Evidencias examinadas', ex.length ? '<ul style="margin:0;padding-left:18px">' + ex.map(e => '<li>' + e.id + ' ' + esc(e.name) + '</li>').join('') + '</ul>' : '<p class="muted">Ninguna.</p>') +
+      sec(6, 'Evidencias examinadas', ex.length ? '<ul style="margin:0;padding-left:18px">' + ex.map(e => '<li>' + e.id + ' ' + esc(e.name) + (EN.custody(c, cs, e).complete ? '' : ' (cadena de custodia incompleta)') + '</li>').join('') + '</ul><p class="faint" style="font-size:.84rem">Cadena de custodia completa en ' + custodyOk + ' de ' + ex.length + ' indicios.</p>' : '<p class="muted">Ninguna.</p>') +
       sec(7, 'Contradicciones', conf.length ? conf.map(k => '<p>• ' + esc(k.type) + ': ' + esc(k.desc) + '</p>').join('') : '<p class="muted">Ninguna registrada.</p>') +
       sec(8, 'Hipótesis', cs.hypotheses.length ? cs.hypotheses.map(h => '<p>• [' + esc(invName(h.author)) + ', ' + EN.hypStatus(h).label + ', ' + h.conf + ' %] ' + esc(h.text) + '</p>').join('') : '<p class="muted">Ninguna.</p>') +
-      sec(9, 'Hechos incorporados', '<p class="muted">' + facts.length + ' hechos en el expediente.</p>') +
-      '<label class="field no-print-label">10–11. Reconstrucción y conclusión<textarea id="rep-rec" data-act="report-field" data-key="reconstruccion" rows="6" placeholder="Qué ocurrió, en qué orden y por qué lo sostienes.">' + esc(cs.report.reconstruccion) + '</textarea></label>' +
+      sec(9, 'Análisis', '<p class="muted">' + facts.length + ' hechos en el expediente · ' + Object.keys(cs.lab).length + ' análisis de laboratorio · ' + (Object.keys(cs.digital).length + cs.judicial.length) + ' registros digitales · ' + cs.wall.links.length + ' conexiones en el muro · ' + cs.mapLinks.length + ' en el mapa.</p>') +
+      '<label class="field">10–12. Reconstrucción, conclusión y pruebas principales<textarea id="rep-rec" data-act="report-field" data-key="reconstruccion" rows="6" placeholder="Qué ocurrió, en qué orden y por qué lo sostienes.">' + esc(cs.report.reconstruccion) + '</textarea></label>' +
       '<label class="field">13. Incertidumbres pendientes<textarea id="rep-unc" data-act="report-field" data-key="incertidumbres" rows="4" placeholder="Qué no está acreditado o podría explicarse de otra forma.">' + esc(cs.report.incertidumbres) + '</textarea></label>' +
       '</article></div>';
+  }
+
+  function tabCustodia(c, cs) {
+    const ex = c.evidence.filter(e => cs.examined[e.id]);
+    if (!ex.length) return '<div class="panel stack"><h3>Cadena de custodia</h3><p class="muted">La trazabilidad empieza al identificar un indicio en la inspección ocular. Examina elementos de la escena para abrir su registro.</p></div>';
+    const ok = ex.filter(e => EN.custody(c, cs, e).complete).length;
+    return '<div class="stack-lg"><div class="spread"><p class="muted" style="max-width:66ch">Cada indicio debe poder seguirse desde que se identifica hasta que se analiza: quién lo recoge, dónde se guarda, a quién se remite y qué resultado da. Una laguna debilita su valor en juicio.</p><span class="badge ' + (ok === ex.length ? 'ok' : 'warn') + '">' + ok + '/' + ex.length + ' completas</span></div>' +
+      '<div class="grid">' + ex.map(e => {
+        const k = EN.custody(c, cs, e);
+        return '<article class="panel stack"><div class="spread"><div><div class="ev-id">' + e.id + ' · ' + k.seal + '</div><h3>' + esc(e.name) + '</h3></div><span class="badge ' + (k.complete ? 'ok' : 'warn') + '">' + (k.complete ? 'Trazabilidad completa' : 'Incompleta') + '</span></div>' +
+          '<ol class="custody">' + k.steps.map(st => '<li class="' + (st.ok ? 'ok' : st.na ? 'na' : 'pend') + '"><b>' + st.k + '</b><span>' + esc(st.text) + '</span></li>').join('') + '</ol>' +
+          '<form class="row" data-form="custody-note" style="flex-wrap:nowrap"><input type="hidden" name="ev" value="' + e.id + '"><input type="text" id="cn-' + e.id + '" name="note" maxlength="120" placeholder="Añadir nota de custodia…" aria-label="Nota de custodia"><button class="btn small" type="submit">Anotar</button></form>' +
+          (k.photo ? '' : '<div class="row"><button class="btn small" data-act="photo" data-id="' + e.id + '">Fotografiar</button></div>') + '</article>';
+      }).join('') + '</div></div>';
+  }
+
+  function tabMapa(c, cs) {
+    const places = EN.knownPlaces(c, cs);
+    const onMap = places.filter(k => !c.places[k].offmap);
+    const off = places.filter(k => c.places[k].offmap);
+    const sel = cs.lastView.mapSel || null;
+    const links = cs.mapLinks.filter(l => onMap.includes(l.a) && onMap.includes(l.b));
+    const pt = k => c.places[k];
+    const svg = '<svg class="map-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">' +
+      links.map(l => '<line x1="' + pt(l.a).x + '" y1="' + pt(l.a).y + '" x2="' + pt(l.b).x + '" y2="' + pt(l.b).y + '"/>').join('') + '</svg>';
+    const labels = links.map(l => {
+      const d = EN.placeDistance(c, l.a, l.b);
+      return '<span class="map-link-label" style="left:' + ((pt(l.a).x + pt(l.b).x) / 2) + '%;top:' + ((pt(l.a).y + pt(l.b).y) / 2) + '%">' + esc(l.label) + (d !== null ? ' · ≈' + d.toFixed(1) + ' km' : '') + '</span>';
+    }).join('');
+    const pins = onMap.map(k => '<button class="map-pin k-' + esc(pt(k).kind) + (sel === k ? ' sel' : '') + '" style="left:' + pt(k).x + '%;top:' + pt(k).y + '%" data-act="map-sel" data-id="' + k + '" title="' + esc(pt(k).name) + '"><i></i><span>' + esc(pt(k).name) + '</span></button>').join('');
+    const placeOpts = (id, val) => '<select id="' + id + '"><option value="">Elige un lugar…</option>' + onMap.map(k => '<option value="' + k + '"' + (val === k ? ' selected' : '') + '>' + esc(pt(k).name) + '</option>').join('') + '</select>';
+    const selFacts = sel ? EN.knownFacts(c, cs, f => f.place === sel).sort((a, b) => (EN.minutes(a.time) || 0) - (EN.minutes(b.time) || 0)) : [];
+    return '<div class="stack-lg"><div class="map-wrap"><div class="map" role="group" aria-label="Mapa de investigación"><div class="map-grid"></div>' + svg + labels + pins + '</div>' +
+      '<div class="legend"><span>Solo aparecen los lugares que constan en el expediente.</span><span>Distancias en línea recta, aproximadas.</span>' + (off.length ? '<span>Fuera del mapa: ' + off.map(k => esc(pt(k).name) + ' (' + esc(pt(k).offmap) + ')').join(', ') + '</span>' : '') + '</div></div>' +
+      '<div class="grid"><article class="panel stack"><h3>Conectar lugares</h3><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))"><label class="field">Desde' + placeOpts('map-a', sel) + '</label><label class="field">Hasta' + placeOpts('map-b') + '</label></div>' +
+      '<label class="field">Tipo de conexión<select id="map-label">' + ['Ruta conocida', 'Desplazamiento posible', 'Llamada', 'Cámara', 'Vehículo', 'Relación', 'Otro'].map(x => '<option>' + x + '</option>').join('') + '</select></label>' +
+      '<div class="row"><button class="btn primary" data-act="map-link">Trazar línea</button></div>' +
+      (cs.mapLinks.length ? '<div class="sub">Conexiones</div>' + cs.mapLinks.map(l => { const d = EN.placeDistance(c, l.a, l.b); return '<div class="spread" style="font-size:.86rem;border-bottom:1px dashed var(--line-soft);padding:4px 0"><span>' + esc(pt(l.a).name) + ' → ' + esc(pt(l.b).name) + ' · ' + esc(l.label) + (d !== null ? ' · ≈' + d.toFixed(1) + ' km' : '') + '</span><button class="linkish" data-act="map-unlink" data-id="' + l.id + '">Quitar</button></div>'; }).join('') : '') + '</article>' +
+      '<article class="panel stack"><h3>' + (sel ? esc(pt(sel).name) : 'Hechos por lugar') + '</h3>' + (sel ? (selFacts.length ? selFacts.map(f => factRow(c, f)).join('') : '<p class="muted">No consta información situada en este lugar.</p>') : '<p class="muted">Pulsa un punto del mapa para ver lo que consta en ese lugar.</p>') + '</article></div></div>';
+  }
+
+  const WALL_KINDS = { person: 'Persona', evidence: 'Evidencia', fact: 'Registro', statement: 'Declaración', place: 'Lugar', conflict: 'Contradicción', hyp: 'Hipótesis', question: 'Pregunta abierta' };
+  function wallText(c, cs, k) {
+    const cut = (t, n) => t.length > n ? t.slice(0, n - 1) + '…' : t;
+    if (k.kind === 'person') { const p = c.people.find(x => x.id === k.ref); return p ? p.name + ' · ' + p.role : c.victim.name + ' · ' + (c.victimLabel || 'Víctima'); }
+    if (k.kind === 'evidence') { const e = c.evidence.find(x => x.id === k.ref); return e.id + ' · ' + e.name; }
+    if (k.kind === 'fact' || k.kind === 'statement') { const f = c.facts[k.ref]; return (f.time ? f.time + ' · ' : '') + cut(f.text, 120); }
+    if (k.kind === 'place') return c.places[k.ref].name;
+    if (k.kind === 'conflict') { const x = c.conflicts.find(y => y.id === k.ref); return x.type + ': ' + cut(x.desc, 110); }
+    if (k.kind === 'hyp') { const h = cs.hypotheses.find(y => y.id === k.ref); return h ? invName(h.author) + ': ' + cut(h.text, 110) : 'Hipótesis eliminada'; }
+    return k.text || '';
+  }
+  function wallOptions(c, cs) {
+    const on = new Set(cs.wall.cards.map(k => k.kind + ':' + k.ref));
+    const opt = (v, l) => on.has(v) ? '' : '<option value="' + esc(v) + '">' + esc(l) + '</option>';
+    const grp = (label, html) => html ? '<optgroup label="' + label + '">' + html + '</optgroup>' : '';
+    const facts = EN.knownFacts(c, cs);
+    return '<option value="">Elige qué añadir…</option>' +
+      grp('Personas', opt('person:' + c.victim.id, c.victim.name + ' (' + (c.victimLabel || 'víctima').toLowerCase() + ')') + c.people.map(p => opt('person:' + p.id, p.name)).join('')) +
+      grp('Evidencias examinadas', c.evidence.filter(e => cs.examined[e.id]).map(e => opt('evidence:' + e.id, e.id + ' ' + e.name)).join('')) +
+      grp('Registros', facts.filter(f => f.kind !== 'statement').map(f => opt('fact:' + f.id, factLabel(c, f.id))).join('')) +
+      grp('Declaraciones', facts.filter(f => f.kind === 'statement').map(f => opt('statement:' + f.id, factLabel(c, f.id))).join('')) +
+      grp('Lugares', EN.knownPlaces(c, cs).map(k => opt('place:' + k, c.places[k].name)).join('')) +
+      grp('Contradicciones', Object.keys(cs.conflicts).map(id => { const x = c.conflicts.find(y => y.id === id); return opt('conflict:' + id, x.type + ' · ' + x.desc.slice(0, 70)); }).join('')) +
+      grp('Hipótesis', cs.hypotheses.map(h => opt('hyp:' + h.id, invName(h.author) + ': ' + h.text.slice(0, 70))).join(''));
+  }
+
+  function tabMuro(c, cs) {
+    const W = cs.wall;
+    const con = cs.lastView.wallConnect || {};
+    const cardHtml = W.cards.map(k => '<div class="wall-card k-' + k.kind + (con.from === k.id ? ' from' : '') + '" data-card="' + k.id + '" style="left:' + k.x + 'px;top:' + k.y + 'px"><div class="wc-head"><span>' + WALL_KINDS[k.kind] + '</span><button class="wc-x" data-act="wall-remove" data-id="' + k.id + '" aria-label="Quitar del muro">✕</button></div><div class="wc-text">' + esc(wallText(c, cs, k)) + '</div></div>').join('');
+    return '<div class="stack-lg"><article class="panel stack"><div class="wall-tools">' +
+      '<div class="row" style="flex-wrap:nowrap;flex:2;min-width:min(100%,320px)"><select id="wall-add" aria-label="Elemento a añadir">' + wallOptions(c, cs) + '</select><button class="btn" data-act="wall-add">Añadir</button></div>' +
+      '<form class="row" data-form="wall-question" style="flex-wrap:nowrap;flex:2;min-width:min(100%,320px)"><input type="text" id="wall-q" name="q" maxlength="140" placeholder="Pregunta abierta…" aria-label="Pregunta abierta"><button class="btn" type="submit">Añadir pregunta</button></form></div>' +
+      '<div class="wall-tools"><div class="row"><select id="wall-label" aria-label="Tipo de conexión">' + ['relación', 'llamada', 'ubicación', 'cámara', 'vehículo', 'tiempo', 'dinero', 'contradicción', 'acceso', 'otro'].map(x => '<option' + (con.label === x ? ' selected' : '') + '>' + x + '</option>').join('') + '</select>' +
+      '<button class="btn ' + (con.on ? 'primary' : '') + '" data-act="wall-connect">' + (con.on ? (con.from ? 'Elige la segunda tarjeta…' : 'Elige la primera tarjeta…') : 'Conectar tarjetas') + '</button>' +
+      (con.on ? '<button class="btn ghost" data-act="wall-connect-cancel">Cancelar</button>' : '') + '</div>' +
+      '<div class="row"><button class="btn ghost" data-act="wall-sort">Ordenar por tipo</button><span class="badge">' + W.cards.length + ' tarjetas · ' + W.links.length + ' conexiones</span></div></div>' +
+      '<p class="faint" style="font-size:.8rem">Arrastra las tarjetas por su cabecera. Quitar una tarjeta solo la retira del muro: el hecho sigue en el expediente.</p></article>' +
+      '<div class="wall-scroll"><div class="wall-board" id="wall-board' + (con.on ? '" data-connect="1' : '') + '"><svg class="wall-lines" id="wall-lines" aria-hidden="true"></svg>' + cardHtml +
+      (W.cards.length ? '' : '<div class="wall-empty"><b>Muro vacío.</b> Añade a la víctima, a las personas, evidencias, lugares, declaraciones o preguntas abiertas y conéctalos.</div>') + '</div></div>' +
+      (W.links.length ? '<article class="panel stack"><h3>Conexiones</h3>' + W.links.map(l => { const a = W.cards.find(k => k.id === l.a), b = W.cards.find(k => k.id === l.b); return '<div class="spread" style="font-size:.86rem;border-bottom:1px dashed var(--line-soft);padding:4px 0"><span>' + esc(wallText(c, cs, a).slice(0, 50)) + ' <b class="mono" style="color:var(--accent)">— ' + esc(l.label) + ' →</b> ' + esc(wallText(c, cs, b).slice(0, 50)) + '</span><button class="linkish" data-act="wall-unlink" data-id="' + l.id + '">Quitar</button></div>'; }).join('') + '</article>' : '') + '</div>';
   }
 
   function tabVeredicto(c, cs) {
@@ -533,15 +657,20 @@
     return verdictResult(c, cs);
   }
 
+  function culpritOptions(c) {
+    const vo = c.verdictOptions;
+    return vo.culprits || c.people.map(p => ({ id: p.id, label: p.name })).concat([{ id: 'insuficiente', label: 'Evidencia insuficiente para una atribución concluyente' }]);
+  }
+
   function verdictForm(c, cs) {
     const facts = EN.knownFacts(c, cs);
     const vo = c.verdictOptions;
     const sel = (id, name, opts) => '<select id="' + id + '" name="' + name + '" required><option value="">Elige…</option>' + opts.map(o => '<option value="' + o.id + '">' + esc(o.label) + '</option>').join('') + '</select>';
-    return '<form class="stack-lg" data-form="verdict"><article class="panel dossier stack"><h3>Emitir veredicto</h3><p class="muted" style="font-size:.9rem">El veredicto se compara con la verdad interna del caso. Se evalúan identidad, móvil, método, cronología, pruebas, contradicciones detectadas y la calidad del proceso, no solo el nombre. Reconocer que la evidencia es insuficiente es una conclusión válida.</p>' +
+    return '<form class="stack-lg" data-form="verdict"><article class="panel dossier stack"><h3>Emitir veredicto</h3><p class="muted" style="font-size:.9rem">El veredicto se compara con la verdad interna del caso. Se evalúan la conclusión principal, el móvil, el método, la cronología, las pruebas, las contradicciones detectadas y la calidad del proceso. Reconocer que la evidencia es insuficiente es una conclusión válida.</p>' +
       '<p class="faint" style="font-size:.84rem">Una vez emitido, el caso se cierra. Podrás revisarlo o repetirlo desde cero.</p></article>' +
-      '<div class="grid"><article class="panel stack"><label class="field">Autoría<select id="v-culprit" name="culprit" required><option value="">Elige…</option>' + c.people.map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('') + '<option value="insuficiente">Evidencia insuficiente para una atribución concluyente</option></select></label>' +
-      '<label class="field">Móvil' + sel('v-motive', 'motive', vo.motives) + '</label><label class="field">Método' + sel('v-method', 'method', vo.methods) + '</label><label class="field">Momento de la agresión' + sel('v-window', 'window', vo.windows) + '</label>' +
-      '<div class="sub">Cómplices</div><div class="grid-sm">' + c.people.map(p => '<label class="check"><input type="checkbox" name="acc" value="' + p.id + '" id="v-acc-' + p.id + '">' + esc(p.name) + '</label>').join('') + '</div></article>' +
+      '<div class="grid"><article class="panel stack"><label class="field">' + esc(vo.culpritLabel || 'Autoría') + sel('v-culprit', 'culprit', culpritOptions(c)) + '</label>' +
+      '<label class="field">Móvil' + sel('v-motive', 'motive', vo.motives) + '</label><label class="field">Método' + sel('v-method', 'method', vo.methods) + '</label><label class="field">' + esc(vo.windowLabel || 'Momento de la agresión') + sel('v-window', 'window', vo.windows) + '</label>' +
+      '<div class="sub">' + esc(vo.accompliceLabel || 'Cómplices') + '</div><div class="grid-sm">' + c.people.map(p => '<label class="check"><input type="checkbox" name="acc" value="' + p.id + '" id="v-acc-' + p.id + '">' + esc(p.name) + '</label>').join('') + '</div></article>' +
       '<article class="panel stack"><div class="sub">Pruebas principales (máximo 6)</div><div class="stack" style="gap:6px;max-height:360px;overflow-y:auto">' +
       facts.map(f => '<label class="check"><input type="checkbox" name="ev" value="' + f.id + '" id="v-ev-' + f.id + '" data-act="ev-limit">' + esc(factLabel(c, f.id)) + '</label>').join('') + '</div></article></div>' +
       '<article class="panel stack"><label class="field">Explicación global<textarea id="v-expl" name="explain" rows="5" required placeholder="Reconstruye el caso con tus palabras."></textarea></label><div class="row"><button class="btn primary" type="submit">Emitir veredicto y cerrar el caso</button></div></article></form>';
@@ -550,22 +679,25 @@
   function verdictResult(c, cs) {
     const ev = cs.evaluation;
     const v = cs.verdict;
+    const vo = c.verdictOptions;
     const lab = (arr, id) => { const o = arr.find(x => x.id === id); return o ? o.label : '—'; };
-    const accused = v.culprit !== 'insuficiente' ? v.culprit : null;
+    const key = v.culprit !== 'insuficiente' ? v.culprit : null;
+    const isPerson = key && c.people.some(p => p.id === key);
     const LEVEL = { 1: 'Directamente observable', 2: 'Requiere interpretación', 3: 'Admite varias explicaciones', 4: 'Contradictoria o ambigua', 5: 'Parece incriminatoria pero engaña' };
     let trial = '';
-    if (accused) {
+    if (key) {
       if (cs.trial) {
-        trial = '<article class="panel stack"><h3>Juicio simulado · resultado</h3>' + cs.trial.res.map(r => '<div class="objection"><b>Defensa:</b> ' + esc(r.text) + '<div class="result ' + (r.ok ? '' : 'neutral') + '">' + (r.answer ? 'Respuesta: ' + esc(c.facts[r.answer].text) + ' — ' + (r.ok ? 'el tribunal la considera pertinente.' : 'el tribunal no la considera suficiente.') : 'Sin respuesta.') + '</div></div>').join('') + '<div class="result">' + esc(cs.trial.verdict) + '</div></article>';
+        trial = '<article class="panel stack"><h3>Juicio simulado · resultado</h3>' + cs.trial.res.map(r => '<div class="objection"><b>Objeción:</b> ' + esc(r.text) + '<div class="result ' + (r.ok ? '' : 'neutral') + '">' + (r.answer ? 'Respuesta: ' + esc(c.facts[r.answer].text) + ' — ' + (r.ok ? 'el tribunal la considera pertinente.' : 'el tribunal no la considera suficiente.') : 'Sin respuesta.') + '</div></div>').join('') + '<div class="result">' + esc(cs.trial.verdict) + '</div></article>';
       } else {
-        const set = c.trial[accused] || c.trial.generic;
-        trial = '<form class="panel stack" data-form="trial"><h3>Juicio simulado</h3><p class="muted" style="font-size:.88rem">La defensa de ' + esc(EN.personName(c, accused)) + ' ataca tu reconstrucción. Responde a cada objeción con el elemento del expediente que mejor la rebata.</p>' +
-          set.map(o => '<div class="objection"><b>Defensa:</b> ' + esc(o.text) + '<select id="trial-' + o.id + '" name="' + o.id + '">' + factOptions(c, cs, { placeholder: 'Responder con…' }) + '</select></div>').join('') +
+        const set = EN.trialSet(c, key);
+        const intro = (c.trialIntro || {})[key] || (isPerson ? 'La defensa de ' + EN.personName(c, key) + ' ataca tu reconstrucción.' : 'La parte contraria ataca tu conclusión.');
+        trial = '<form class="panel stack" data-form="trial"><h3>Juicio simulado</h3><p class="muted" style="font-size:.88rem">' + esc(intro) + ' Responde a cada objeción con el elemento del expediente que mejor la rebata.</p>' +
+          set.map(o => '<div class="objection"><b>Objeción:</b> ' + esc(o.text) + '<select id="trial-' + o.id + '" name="' + o.id + '">' + factOptions(c, cs, { placeholder: 'Responder con…' }) + '</select></div>').join('') +
           '<div class="row"><button class="btn primary" type="submit">Presentar respuestas</button></div></form>';
       }
     }
     return '<div class="stack-lg"><article class="panel dossier stack"><div class="spread"><div><div class="eyebrow">Resultado del caso</div><div class="score-big">' + ev.total + '<span style="font-size:1.2rem;color:var(--muted)">/100</span></div></div>' +
-      '<div class="stack" style="gap:4px;font-size:.88rem"><span>Autoría: <b>' + esc(accused ? EN.personName(c, accused) : 'Evidencia insuficiente') + '</b></span><span>Móvil: ' + esc(lab(c.verdictOptions.motives, v.motive)) + '</span><span>Método: ' + esc(lab(c.verdictOptions.methods, v.method)) + '</span></div></div>' +
+      '<div class="stack" style="gap:4px;font-size:.88rem"><span>' + esc(vo.culpritLabel || 'Autoría') + ': <b>' + esc(lab(culpritOptions(c), v.culprit)) + '</b></span><span>Móvil: ' + esc(lab(vo.motives, v.motive)) + '</span><span>Método: ' + esc(lab(vo.methods, v.method)) + '</span></div></div>' +
       ev.comp.map(x => '<div class="skill-row"><span>' + esc(x.name) + '</span><div class="bar"><i style="width:' + Math.round(x.pts / x.max * 100) + '%"></i></div><span class="mono">' + x.pts + '/' + x.max + '</span><div class="skill-why">' + esc(x.text) + '</div></div>').join('') +
       (cs.rewards ? '<div class="result">Recompensa: +' + cs.rewards.xp + ' XP · ' + (cs.rewards.rep >= 0 ? '+' : '') + cs.rewards.rep + ' reputación · +' + money(cs.rewards.money) + (cs.rewards.promo ? ' · Ascenso: ' + esc(cs.rewards.promo) : '') + '</div>' : '') + '</article>' +
       '<div class="grid"><article class="panel stack"><h3>Perfil de razonamiento observado en esta partida</h3>' +
@@ -608,7 +740,7 @@
   }
 
   E0.ui = {
-    esc, rankInfo, topbar, sidebar, modal, factLabel,
+    esc, rankInfo, topbar, sidebar, modal, factLabel, unlocked,
     screens: { home: screenHome, cases: screenCases, academy: screenAcademy, career: screenCareer, notebook: screenNotebook, profile: screenProfile, settings: screenSettings, case: screenCase }
   };
 })();

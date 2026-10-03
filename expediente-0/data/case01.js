@@ -11,7 +11,10 @@ E0.cases.push({
   difficulty: 'Alta',
   location: 'C/ del Almendro 22, 3.º, puerta 17 · Valencia',
   date: 'Noche del sábado 14 al domingo 15 de marzo de 2026',
+  minRank: 0,
+  budget: 900,
   victim: {
+    id: 'daniel',
     name: 'Daniel Ferrer Sanz',
     age: 41,
     job: 'Socio fundador de Ferrer & Molina Consultores (desarrollo de software)'
@@ -25,6 +28,7 @@ E0.cases.push({
   ],
   initialFacts: ['F_HALLAZGO', 'F_VENTANA_MUERTE', 'F_PUERTA'],
 
+  mapScale: 0.147,
   places: {
     almendro: { name: 'C/ del Almendro 22 (vivienda de Daniel)', x: 52, y: 46, kind: 'escena' },
     benimaclet: { name: 'Benimaclet (domicilio de Javier)', x: 70, y: 22, kind: 'domicilio' },
@@ -56,7 +60,7 @@ E0.cases.push({
         F_PORTAL_JAV_OUT: { a: 'Sí, ese soy yo saliendo. Ya ve que no estuve ni un cuarto de hora.', reveals: ['S_JAV_VISITA'] },
         F_TEL_2312: { a: 'Le llamé, sí... Estaba abajo. Subí a hablar con él. Discutimos y me fui sobre las once y media. Estaba vivo, se lo juro.', reveals: ['S_JAV_VISITA'] },
         F_ANT_JAV: { a: 'De acuerdo. Estuve en su calle. Subí, hablamos a gritos y me fui antes de las once y media.', reveals: ['S_JAV_VISITA'] },
-        F_MANILLA_JAVIER: { a: 'He estado en ese piso muchas veces por trabajo. Una huella en una puerta no significa nada.', reveals: [], afterVisit: 'Claro que hay huellas mías: le acabo de decir que estuve allí esa noche.' },
+        F_MANILLA_JAVIER: { a: 'He estado en ese piso muchas veces por trabajo. Una huella en una puerta no significa nada.', reveals: [], afterFact: 'S_JAV_VISITA', afterVisit: 'Claro que hay huellas mías: le acabo de decir que estuve allí esa noche.' },
         F_FIN_SEGURO_SOCIO: { a: '¿Cree que mataría a mi amigo por un seguro? ...Sí, sabía que seguía en vigor. Lo contratamos los dos. Eso no me convierte en nada.', reveals: [] },
         F_TEL_2158: { a: 'Yo llevo las cuentas de la empresa, sí. Pero la empresa está en rojo porque no entra trabajo, no porque yo robe. Su dinero personal lo llevaba una asesora externa; eso yo no lo tocaba.', reveals: ['S_JAV_GESTORA'] },
         S_ANDRES_GOLPE: { a: 'A las doce menos cuarto yo ya no estaba allí. Me fui antes de las once y media.', reveals: [] },
@@ -175,34 +179,41 @@ E0.cases.push({
 
   /* ---------- ESCENA (plano) ---------- */
   scene: {
-    rooms: [
-      { id: 'cocina', name: 'Cocina', x: 0, y: 0, w: 30, h: 42 },
-      { id: 'recibidor', name: 'Recibidor', x: 0, y: 42, w: 30, h: 58 },
-      { id: 'salon', name: 'Salón', x: 30, y: 0, w: 42, h: 100 },
-      { id: 'estudio', name: 'Estudio', x: 72, y: 0, w: 28, h: 62 },
-      { id: 'bano', name: 'Baño', x: 72, y: 62, w: 28, h: 38 }
-    ],
-    hotspots: [
-      { ev: 'E09', x: 3, y: 66 },
-      { ev: 'E07', x: 14, y: 56 },
-      { ev: 'E13', x: 18, y: 86 },
-      { ev: 'E03', x: 14, y: 20 },
-      { ev: 'E08', x: 44, y: 9 },
-      { ev: 'E12', x: 66, y: 22 },
-      { ev: 'E02', x: 42, y: 46 },
-      { ev: 'E04', x: 50, y: 40 },
-      { ev: 'E11', x: 62, y: 52 },
-      { ev: 'E01', x: 48, y: 70 },
-      { ev: 'E10', x: 58, y: 80 },
-      { ev: 'E05', x: 82, y: 22 },
-      { ev: 'E06', x: 90, y: 40 }
-    ],
-    garage: { ev: 'E14', label: 'Sótano −1 · Plaza 17' }
+    plans: [
+      {
+        id: 'vivienda', name: 'Vivienda 17', legend: 'Planta 3.ª · vivienda 17 · 78 m²',
+        rooms: [
+          { id: 'cocina', name: 'Cocina', x: 0, y: 0, w: 30, h: 42 },
+          { id: 'recibidor', name: 'Recibidor', x: 0, y: 42, w: 30, h: 58 },
+          { id: 'salon', name: 'Salón', x: 30, y: 0, w: 42, h: 100 },
+          { id: 'estudio', name: 'Estudio', x: 72, y: 0, w: 28, h: 62 },
+          { id: 'bano', name: 'Baño', x: 72, y: 62, w: 28, h: 38 }
+        ],
+        hotspots: [
+          { ev: 'E09', x: 3, y: 66 }, { ev: 'E07', x: 14, y: 56 }, { ev: 'E13', x: 18, y: 86 },
+          { ev: 'E03', x: 14, y: 20 }, { ev: 'E08', x: 44, y: 9 }, { ev: 'E12', x: 66, y: 22 },
+          { ev: 'E02', x: 42, y: 46 }, { ev: 'E04', x: 50, y: 40 }, { ev: 'E11', x: 62, y: 52 },
+          { ev: 'E01', x: 48, y: 70 }, { ev: 'E10', x: 58, y: 80 }, { ev: 'E05', x: 82, y: 22 },
+          { ev: 'E06', x: 90, y: 40 }
+        ]
+      },
+      {
+        id: 'garaje', name: 'Sótano −1', legend: 'Garaje comunitario · 24 plazas · rampa a la calle',
+        rooms: [
+          { id: 'rampa', name: 'Rampa', x: 0, y: 0, w: 22, h: 100 },
+          { id: 'plazas', name: 'Plazas 1–24', x: 22, y: 0, w: 58, h: 100 },
+          { id: 'escalera', name: 'Escalera', x: 80, y: 0, w: 20, h: 45 },
+          { id: 'trasteros', name: 'Trasteros', x: 80, y: 45, w: 20, h: 55 }
+        ],
+        hotspots: [{ ev: 'E14', x: 56, y: 62 }]
+      }
+    ]
   },
+  sceneSummary: 'Vivienda en tercer piso con acceso por portal y por garaje comunitario. La puerta no presenta signos de forzamiento y estaba cerrada sin echar la llave.',
 
   /* ---------- EVIDENCIAS ---------- */
   evidence: [
-    { id: 'E01', name: 'Cuerpo de la víctima', type: 'Forense', level: 1, room: 'Salón',
+    { id: 'E01', name: 'Cuerpo de la víctima', type: 'Forense', level: 1, custody: 'Cadáver trasladado al Instituto de Medicina Legal', room: 'Salón',
       public: 'Daniel Ferrer yace en el suelo del salón, junto al sofá.',
       detail: 'Herida contusa única en la región parieto-occipital izquierda. No se aprecian heridas de defensa ni desorden alrededor.',
       value: 'Determina causa y forma probable de la muerte.', limits: 'La estimación de la hora en el lugar es amplia.',
@@ -243,13 +254,13 @@ E0.cases.push({
       detail: 'El llavero tiene la llave del portal, la llave de la vivienda y una anilla pequeña abierta, vacía.',
       value: 'Indica qué llaves usaba la víctima a diario.', limits: 'La anilla pudo estar vacía desde hace tiempo.',
       reveals: ['F_ANILLA_VACIA'] },
-    { id: 'E08', name: 'Estantería del salón', type: 'Escena', level: 3, room: 'Salón',
+    { id: 'E08', name: 'Estantería del salón', type: 'Escena', level: 3, fixed: true, room: 'Salón',
       public: 'Estantería con libros y objetos decorativos.',
       detail: 'Un sujetalibros de bronce en forma de ancla (1,1 kg) sostiene una fila de libros. En el otro extremo los libros están caídos y en el polvo del estante se ve la marca rectangular de un objeto que ya no está.',
       value: 'Puede relacionarse con el objeto lesivo.', limits: 'No se ha encontrado el objeto que falta.',
       reveals: ['F_SUJETALIBROS_FALTA'],
       lab: { comparativa: { cost: 180, label: 'Comparativa lesión-objeto', reveals: ['F_HERIDA_COMPATIBLE'] }, huellas: { cost: 120, reveals: ['F_SUJ_HUELLAS'] } } },
-    { id: 'E09', name: 'Manilla interior de la puerta', type: 'Huella', level: 5, room: 'Recibidor',
+    { id: 'E09', name: 'Manilla interior de la puerta', type: 'Huella', level: 5, custody: 'Huella revelada con polvo y levantada con lámina adhesiva', room: 'Recibidor',
       public: 'Manilla interior de la puerta de entrada.',
       detail: 'Manilla metálica. Se aprecian restos de huellas latentes.',
       value: 'Puede identificar a quien abrió desde dentro.', limits: 'Las huellas no se pueden fechar.',
@@ -267,7 +278,7 @@ E0.cases.push({
       value: 'Puede indicar presencia de otra persona.', limits: 'Pudo quedar allí días o semanas antes.',
       reveals: ['F_CABELLO_ESCENA'],
       lab: { adn: { cost: 250, reveals: ['F_CABELLO_SIN_RAIZ'] } } },
-    { id: 'E12', name: 'Ventana entreabierta', type: 'Escena', level: 5, room: 'Salón',
+    { id: 'E12', name: 'Ventana entreabierta', type: 'Escena', level: 5, fixed: true, room: 'Salón',
       public: 'Ventana del salón abierta unos 10 cm.',
       detail: 'Tercer piso, sin balcón. El polvo del alféizar exterior está intacto, no hay marcas en el marco y la fachada no ofrece puntos de apoyo.',
       value: 'Descarta o confirma una vía de entrada.', limits: '—',
@@ -277,7 +288,7 @@ E0.cases.push({
       detail: 'Dentro del cajón: una llave del portal y una de la vivienda unidas por una etiqueta escrita a mano con la letra «M».',
       value: 'Indica quién tenía o tuvo llaves.', limits: 'No prueba que no existan copias.',
       reveals: ['F_LLAVE_M'] },
-    { id: 'E14', name: 'Plaza de garaje 17', type: 'Vehículo', level: 2, room: 'Sótano',
+    { id: 'E14', name: 'Plaza de garaje 17', type: 'Vehículo', level: 2, fixed: true, room: 'Sótano',
       public: 'Plaza de garaje asignada a la vivienda 17.',
       detail: 'El coche de Daniel, un Toyota Corolla blanco, está aparcado en su plaza. El capó está frío y no hay nada anómalo en el interior.',
       value: 'Indica si la víctima usó su vehículo.', limits: '—',
@@ -487,12 +498,28 @@ E0.cases.push({
     ]
   },
 
+  evaluation: {
+    subtle: { ids: ['F_ANILLA_VACIA', 'F_COCHE_DANIEL', 'F_COPA_ESCURRIDOR', 'F_BOTELLA_SIN_HUELLAS'], label: 'llavero, plaza de garaje, escurridor y botella limpia' },
+    movement: { ids: ['D_GARAJE', 'D_CALLE', 'D_VEH'], label: 'garaje, calle y vehículos' },
+    judicialRelevant: ['elena', 'javier'],
+    spatialBonus: ['F_TICKET_JAV'],
+    temporalConflicts: ['C09', 'C10'],
+    lateral: [
+      { type: 'fact', id: 'S_JAV_DOSCOPAS', pts: 30, yes: 'Preguntaste qué vio el último visitante conocido.', no: 'No obtuviste lo que vio el último visitante conocido.' },
+      { type: 'conflict', id: 'C10', pts: 30, yes: 'Relacionaste la tarjeta del garaje con el coche de la víctima.', no: 'No relacionaste la salida del garaje con el coche de la víctima.' },
+      { type: 'conflict', id: 'C07', pts: 20 },
+      { type: 'chosen', id: 'F_ANILLA_VACIA', pts: 20 }
+    ],
+    usefulLab: ['E01:autopsia', 'E02:toxicologia', 'E03:huellas', 'E04:huellas', 'E08:comparativa', 'E09:huellas']
+  },
+
   truth: {
     culprit: 'elena',
     motive: 'm_fraude',
     method: 'me_sed_golpe',
     window: 'w_despues',
     accomplices: [],
+    partialMethods: { me_golpe: 'Identificaste el golpe, pero no la sedación previa.' },
     decisive: ['F_GAR_0002', 'F_PC_2352', 'F_TEL_2246', 'F_ANT_ELENA', 'S_JAV_DOSCOPAS', 'F_PC_EXCEL', 'F_FIN_EV', 'F_COCHE_DANIEL', 'F_ANILLA_VACIA', 'F_PORTAL_JAV_OUT', 'F_COPA_ZOLPIDEM', 'F_PC_BORRADOR', 'F_CALLE_0002', 'F_GAR_2247'],
     weak: ['F_MANILLA_JAVIER', 'F_FIBRAS_COMUN', 'F_CABELLO_SIN_RAIZ', 'S_MARTA_ZOLPIDEM', 'F_FIN_SEGURO_SOCIO', 'S_ANDRES_MISMO', 'S_LUCIA_DINERO', 'F_FIN_SEGURO_VIDA', 'F_TEL_1303'],
     keyConflicts: ['C04', 'C05', 'C06', 'C07', 'C09', 'C10'],

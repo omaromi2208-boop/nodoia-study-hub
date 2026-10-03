@@ -27,6 +27,7 @@
       settings: { theme: 'noche', anim: true, scale: 100, sound: false },
       cases: {},
       history: [],
+      budgets: {},
       view: { screen: 'home', caseId: null, tab: 'resumen' }
     };
   }
@@ -54,6 +55,10 @@
       transcripts: {},
       queries: [],
       report: { reconstruccion: '', incertidumbres: '' },
+      photos: {},
+      custodyNotes: {},
+      wall: { cards: [], links: [] },
+      mapLinks: [],
       lastView: {}
     };
   }
