@@ -381,7 +381,11 @@ E0.cases.push({
     S7_VICTOR_NOCHE: { kind: 'statement', text: 'Víctor declara que estuvo en la tienda hasta las 20:00, que después subió a su piso, encima de la tienda, y que no salió.', time: '19:00', end: '08:00', person: 'victor', place: 'tienda', source: 'declaración', tags: ['coartada'] },
     S7_VICTOR_NEREA: { kind: 'statement', text: 'Víctor declara que Nerea va con sus amigas a los torneos de los sábados y que en septiembre le cambió la pantalla del móvil.', person: 'victor', source: 'declaración', tags: ['tienda'] },
     S7_VICTOR_DANI: { kind: 'statement', text: 'Víctor declara que no sabe quién hay detrás de la cuenta «dani_16».', person: 'victor', source: 'declaración', tags: ['chat'] },
-    S7_VICTOR_PISO: { kind: 'statement', text: 'Víctor declara que no tiene ni alquila más vivienda que su piso encima de la tienda.', person: 'victor', source: 'declaración', tags: ['domicilio'] }
+    S7_VICTOR_PISO: { kind: 'statement', text: 'Víctor declara que no tiene ni alquila más vivienda que su piso encima de la tienda.', person: 'victor', source: 'declaración', tags: ['domicilio'] },
+
+    /* Registros con orden judicial (comunes) */
+    F7_REG_JULIAN_OBRA: { text: 'Registro en casa de Julián: herramientas de albañil, sacos de mortero y un cuaderno con el presupuesto a mano de una reforma en un piso de la calle trasera del pabellón; en la hoja del martes 20, «17:00–19:30».', person: 'julian', source: 'registro', tags: ['coartada'] },
+    F7_REG_OSCAR_APUESTAS: { text: 'Registro en casa de Óscar: boletos de apuestas deportivas del bar Los Arcos con fecha del martes 20 y un sobre con recibos de cuotas del club cobradas y no ingresadas.', person: 'oscar', place: 'oscar', source: 'registro', tags: ['dinero', 'coartada'] }
   },
 
   /* Contradicciones comunes (pistas falsas incluidas). */
@@ -477,7 +481,22 @@ E0.cases.push({
         S7_JULIAN_PORTAL: { kind: 'statement', text: 'Julián declara que hacia las 23:30 oyó la puerta del portal y vio de espaldas a una mujer con un abrigo largo que salía deprisa.', time: '23:30', person: 'julian', place: 'piso', source: 'testigo', tags: ['testigo', 'nota'] },
         S7_ANDREA_ACOSO: { kind: 'statement', text: 'Andrea declara que oyó hablar de un vídeo trucado de Nerea que circulaba en su clase y que se lo comentó a Óscar.', person: 'andrea', source: 'declaración', tags: ['acoso'] },
         S7_RAMON_ADMITE: { kind: 'statement', text: 'Ramón admite que Nerea está en la casa de Noceda desde el martes, que su hermana la recogió en el pabellón y que él fue después del trabajo. Dice que lo hizo «para que el juez la escuchara».', time: '21:05', person: 'ramon', place: 'noceda', source: 'declaración', tags: ['noceda', 'custodia'] },
-        S7_MARISA_ADMITE: { kind: 'statement', text: 'Marisa admite que recogió a Nerea en el aparcamiento lateral a las 19:10, que la llevó a Noceda y que volvió por la noche a dejar en el buzón una nota que escribió ella imitando su letra.', time: '19:10', end: '23:40', person: 'marisa', place: 'pabellon', source: 'declaración', tags: ['noceda', 'nota'] }
+        S7_MARISA_ADMITE: { kind: 'statement', text: 'Marisa admite que recogió a Nerea en el aparcamiento lateral a las 19:10, que la llevó a Noceda y que volvió por la noche a dejar en el buzón una nota que escribió ella imitando su letra.', time: '19:10', end: '23:40', person: 'marisa', place: 'pabellon', source: 'declaración', tags: ['noceda', 'nota'] },
+        F7_REG_RAMON_MOVIL: { text: 'Registro en la casa de Ramón en Bembibre: la caja vacía y el tique de un teléfono móvil libre con tarjeta de prepago, comprado el lunes 19 en una tienda de Bembibre. El teléfono no aparece.', person: 'ramon', place: 'bembibre', source: 'registro', tags: ['telefono'] },
+        F7_REG_RAMON_ESCRITO: { text: 'Registro en la casa de Ramón en Bembibre: una copia del escrito de oposición al traslado con una anotación a mano en el margen: «que el juez la oiga antes del jueves».', person: 'ramon', place: 'bembibre', source: 'registro', tags: ['custodia', 'documento'] },
+        F7_REG_MARISA_ENSAYOS: { text: 'Registro en el piso de Marisa: en la papelera, varias hojas de cuaderno arrugadas con ensayos de la firma «Nerea» y de la frase «Mamá: estoy bien».', person: 'marisa', place: 'marisa', source: 'registro', tags: ['nota'] }
+      },
+      planted: [
+        { ev: 'E7_07', label: 'nota falsificada imitando la letra de Nerea', tells: ['F7_NOTA_LETRA', 'F7_NOTA_HUELLAS'] }
+      ],
+      lineups: [
+        { id: 'L1', witness: 'julian', saw: 'hacia las 23:30, por la mirilla y de espaldas, a una mujer con un abrigo largo que salía deprisa del portal', target: 'marisa', quality: 0.5, requires: 'S7_JULIAN_PORTAL' }
+      ],
+      searches: {
+        ramon: { place: 'la casa de Ramón Valcarce en Bembibre', facts: ['F7_REG_RAMON_MOVIL', 'F7_REG_RAMON_ESCRITO'] },
+        marisa: { place: 'el piso de Marisa Valcarce en Compostilla', facts: ['F7_REG_MARISA_ENSAYOS'] },
+        julian: { place: 'el domicilio de Julián Rodera en Flores del Sil', facts: ['F7_REG_JULIAN_OBRA'] },
+        oscar: { place: 'la casa de Óscar Méndez en Fuentesnuevas', facts: ['F7_REG_OSCAR_APUESTAS'] }
       },
       evidence: {
         E7_02: { detail: 'La hucha de lata pesa: está llena. El DNI de Nerea está en el cajón, entre apuntes y pósits.' },
@@ -585,7 +604,20 @@ E0.cases.push({
         F7_ANT_VICTOR: { text: 'Teléfono de Víctor: Flores del Sil hasta las 19:10; antena del centro (Avenida de la Puebla) de 19:18 a 19:34; Cacabelos de 19:55 a 22:50; Flores del Sil de 23:05 a 23:35; de nuevo Cacabelos desde las 00:10.', time: '19:18', end: '00:10', person: 'victor', place: 'cacabelos', source: 'antena', tags: ['ubicacion', 'telefono'] },
         S7_JULIAN_PORTAL: { kind: 'statement', text: 'Julián declara que hacia las 23:20 vio por la mirilla a un hombre con capucha que salía del portal, de espaldas.', time: '23:20', person: 'julian', place: 'piso', source: 'testigo', tags: ['testigo', 'nota'] },
         S7_ANDREA_ACOSO: { kind: 'statement', text: 'Andrea declara que oyó hablar de un vídeo trucado de Nerea que circulaba en su clase y que se lo comentó a Óscar.', person: 'andrea', source: 'declaración', tags: ['acoso'] },
-        S7_VICTOR_ADMITE: { kind: 'statement', text: 'Víctor admite que recogió a Nerea en la Avenida de la Puebla y la llevó a un estudio de Cacabelos «porque quería escapar de su casa», pero niega ser «dani_16».', time: '19:26', person: 'victor', place: 'cacabelos', source: 'declaración', tags: ['vehiculo'] }
+        S7_VICTOR_ADMITE: { kind: 'statement', text: 'Víctor admite que recogió a Nerea en la Avenida de la Puebla y la llevó a un estudio de Cacabelos «porque quería escapar de su casa», pero niega ser «dani_16».', time: '19:26', person: 'victor', place: 'cacabelos', source: 'declaración', tags: ['vehiculo'] },
+        F7_REG_VICTOR_LLAVES: { text: 'Registro en el piso de Víctor: en un cajón, un segundo juego de llaves con el llavero de una inmobiliaria de Cacabelos y una caja de guantes de nitrilo empezada.', person: 'victor', place: 'tienda', source: 'registro', tags: ['domicilio'] },
+        F7_REG_VICTOR_PC: { text: 'Registro en la tienda de Víctor: en el ordenador del almacén, el juego en línea con la sesión de «dani_16» abierta y la contraseña de la cuenta en un pósit pegado al monitor.', person: 'victor', place: 'tienda', source: 'registro', tags: ['chat'] }
+      },
+      planted: [
+        { ev: 'E7_07', label: 'nota dictada a Nerea y dejada con guantes para frenar la búsqueda', tells: ['F7_NOTA_LETRA', 'F7_NOTA_HUELLAS'] }
+      ],
+      lineups: [
+        { id: 'L1', witness: 'julian', saw: 'hacia las 23:20, por la mirilla y de espaldas, a un hombre con capucha que salía del portal', target: 'victor', quality: 0.5, requires: 'S7_JULIAN_PORTAL' }
+      ],
+      searches: {
+        victor: { place: 'el piso y la tienda de Víctor Arias en Flores del Sil', facts: ['F7_REG_VICTOR_LLAVES', 'F7_REG_VICTOR_PC'] },
+        julian: { place: 'el domicilio de Julián Rodera en Flores del Sil', facts: ['F7_REG_JULIAN_OBRA'] },
+        oscar: { place: 'la casa de Óscar Méndez en Fuentesnuevas', facts: ['F7_REG_OSCAR_APUESTAS'] }
       },
       evidence: {
         E7_02: { detail: 'La hucha de lata pesa: está llena. El DNI está en el cajón. Al fondo, entre papeles, hay un envoltorio pequeño de plástico.' },
@@ -690,7 +722,17 @@ E0.cases.push({
         F7_ANT_VICTOR: { text: 'Teléfono de Víctor: antena de Flores del Sil toda la tarde y toda la noche.', time: '17:00', end: '01:00', person: 'victor', place: 'tienda', source: 'antena', tags: ['ubicacion', 'telefono'] },
         S7_JULIAN_PORTAL: { kind: 'statement', text: 'Julián declara que hacia las 23:00 vio salir del portal a una chica joven con coleta, deprisa.', time: '23:00', person: 'julian', place: 'piso', source: 'testigo', tags: ['testigo', 'nota'] },
         S7_ANDREA_ACOSO: { kind: 'statement', text: 'Andrea declara que no sabe nada de problemas de Nerea en el instituto: «no me contaba sus cosas».', person: 'andrea', source: 'declaración', tags: ['acoso'] },
-        S7_ANDREA_ADMITE: { kind: 'statement', text: 'Andrea admite que Nerea está en su piso desde el martes por la tarde: le dejó las llaves en la taquilla y llevó ella la nota al buzón. Dice que Nerea le suplicó que no lo contara.', time: '19:27', person: 'andrea', place: 'lazurtegui', source: 'declaración', tags: ['domicilio', 'nota'] }
+        S7_ANDREA_ADMITE: { kind: 'statement', text: 'Andrea admite que Nerea está en su piso desde el martes por la tarde: le dejó las llaves en la taquilla y llevó ella la nota al buzón. Dice que Nerea le suplicó que no lo contara.', time: '19:27', person: 'andrea', place: 'lazurtegui', source: 'declaración', tags: ['domicilio', 'nota'] },
+        F7_REG_ANDREA_NEREA: { text: 'Registro en el piso de Andrea: Nerea está allí, ilesa y tranquila, y abre ella misma la puerta de la habitación. Junto a la cama están la bolsa de viaje grande de su casa, su neceser y su DNI.', person: 'nerea', place: 'lazurtegui', source: 'registro', tags: ['domicilio'] }
+      },
+      planted: [],
+      lineups: [
+        { id: 'L1', witness: 'julian', saw: 'hacia las 23:00, de pasada, a una chica joven con coleta que salía deprisa del portal', target: 'andrea', quality: 0.55, requires: 'S7_JULIAN_PORTAL' }
+      ],
+      searches: {
+        andrea: { place: 'el piso compartido de Andrea Soto junto a la plaza Lazúrtegui', facts: ['F7_REG_ANDREA_NEREA'] },
+        julian: { place: 'el domicilio de Julián Rodera en Flores del Sil', facts: ['F7_REG_JULIAN_OBRA'] },
+        oscar: { place: 'la casa de Óscar Méndez en Fuentesnuevas', facts: ['F7_REG_OSCAR_APUESTAS'] }
       },
       evidence: {
         E7_02: { detail: 'La hucha de lata está abierta y vacía. No está el DNI. Dentro de la hucha hay un papel doblado.' },

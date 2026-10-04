@@ -94,7 +94,8 @@ E0.cases.push({
         { id: 'despues', q: '¿Dónde pasó la noche?', a: 'En mi casa, en Valencia. Llegué pasada la medianoche. Por la mañana me llamó Jordi y volví corriendo.', type: 'mentira', reveals: ['S5_LID_VALENCIA'] },
         { id: 'llamada', q: 'Su padre la llamó a las 00:31. ¿Por qué no contestó?', requires: ['F5_TEL_LLAMADA', 'F5_ANT_LIDIA'], a: 'Estaba dormida, con el móvil en silencio. Lo vi por la mañana.', type: 'media', reveals: ['S5_LID_DORMIDA'] },
         { id: 'digoxina', q: '¿Tiene acceso a digoxina?', requires: ['F5_CRIBADO'], a: 'En el hospital, claro, como cualquier enfermera de planta. Pero está controlada: cada comprimido se registra. Compruébelo.', type: 'verdad', reveals: ['S5_LID_HOSPITAL'] },
-        { id: 'salud', q: '¿Cómo estaba de salud su padre?', a: 'Del corazón, controlado. Bisoprolol, aspirina y el protector de estómago. Rocío le preparaba el pastillero y alguna vez se equivocaba.', type: 'verdad', reveals: [] }
+        { id: 'salud', q: '¿Cómo estaba de salud su padre?', a: 'Del corazón, controlado. Bisoprolol, aspirina y el protector de estómago. Rocío le preparaba el pastillero y alguna vez se equivocaba.', type: 'verdad', reveals: [] },
+        { id: 'ventana', q: '¿Vio algo que le llamara la atención durante la cena?', a: 'Hacia las diez menos veinte me levanté a contestar un mensaje junto a la ventana del comedor, la que da al patio. Vi a una mujer cruzar el patio hacia el obrador, con un bolso grande. Estaba oscuro y la vi de lado, desde arriba. Pensé que sería alguien de la casa y no dije nada.', type: 'verdad', reveals: ['S5_LID_VENTANA'] }
       ],
       confront: {
         F5_LPR_LIDIA: { a: '(Respira hondo.) Me quedé en Alcoy, en casa de Raúl, mi expareja. Estoy casada. No quería que esto saliera. Por eso no oí a mi padre.', reveals: ['S5_LID_RAUL'] },
@@ -159,6 +160,7 @@ E0.cases.push({
         F5_AL_PATIO: { a: '(Se echa a llorar.) Volví a por mi sobre de la semana, que Vicente me lo deja en el obrador, y me llevé un táper de comida que sobraba. Amparo me tiene dicho que no me lleve nada. No subí arriba, se lo juro.', reveals: ['S5_ROC_VOLVIO'] },
         F5_POLVO_PUERTA: { a: 'Entré por la puerta del patio, sí. A por mi sobre. No subí a la casa.', reveals: ['S5_ROC_VOLVIO'] },
         F5_ANT_ROCIO: { a: 'Fui un momento a por mi sobre y un táper. Me daba miedo que me echaran.', reveals: ['S5_ROC_VOLVIO'] },
+        S5_LID_VENTANA: { a: '(Baja la cabeza.) Era yo. Volví a por mi sobre y un táper, por el patio. No subí a la casa.', reveals: ['S5_ROC_VOLVIO'] },
         F5_PASTILLERO_TOX: { a: '¿Dos pastillas? (Se tapa la cara.) Me equivocaría con las prisas. Pero eso no mata a nadie, ¿verdad?', reveals: [] }
       },
       confrontDefault: 'Yo de eso no sé nada, de verdad.'
@@ -379,6 +381,10 @@ E0.cases.push({
     F5_MAIL_VALDEMAR: { text: 'Correo de Supermercados Valdemar a Vicente (jueves 5): «Según nos indica su socio, el señor Climent, la firma está prevista para el día 20». Respuesta de Vicente: «Nadie ha hablado conmigo. El local es mío y no se vende».', person: 'bernat', source: 'documento', tags: ['correo', 'dinero'] },
     F5_LPR_LIDIA: { text: 'Lectores de matrículas: el coche de Lidia entra en Alcoy a las 20:09 del sábado y no sale del municipio en toda la noche. El domingo a las 08:52 se lee en la avenida que baja al centro.', person: 'lidia', place: 'santarosa', source: 'registro', tags: ['vehiculo', 'ubicacion'] },
 
+    /* ----- Registros con orden judicial (comunes) ----- */
+    F5_REG_BATOY_BANCO: { text: 'Registro en Batoy: cartas del banco que reclaman las tres cuotas impagadas del préstamo de la tienda que Jordi cerró y un aviso de inclusión en un fichero de morosos.', person: 'jordi', place: 'batoy', source: 'registro', tags: ['dinero'] },
+    F5_REG_ERN_DIGOXINA: { text: 'Registro en casa de Ernesto: en el armario de la cocina, la caja de digoxina del 2 de marzo, con los comprimidos que corresponden a una toma diaria desde ese día; no falta ninguno más. En el patio, su podadera grande de mango largo.', person: 'ernesto', place: 'ernesto', source: 'registro', tags: ['tox', 'medicacion'] },
+
     /* ----- Antenas (judicial) ----- */
     F5_ANT_JORDI: { text: 'Teléfono de Jordi: zona de C/ del Molí de 20:20 a 23:10; después, Batoy. Sesión de datos activa a las 23:54. Vuelve a la zona del Molí a las 06:25.', time: '23:10', end: '06:25', person: 'jordi', place: 'batoy', source: 'antena', tags: ['ubicacion', 'telefono'] },
     F5_ANT_AMPARO: { text: 'Teléfono de Amparo: zona de C/ del Molí de 20:20 a 23:10; después, Batoy toda la noche. Sin llamadas.', time: '23:10', end: '08:00', person: 'amparo', place: 'batoy', source: 'antena', tags: ['ubicacion', 'telefono'] },
@@ -404,6 +410,7 @@ E0.cases.push({
     S5_LID_VALENCIA: { kind: 'statement', text: 'Lidia declara que pasó la noche en su casa de Valencia y que volvió por la mañana tras la llamada de Jordi.', time: '00:00', end: '08:00', person: 'lidia', place: 'valencia', source: 'declaración', tags: ['coartada'] },
     S5_LID_DORMIDA: { kind: 'statement', text: 'Lidia declara que a las 00:31 estaba dormida con el móvil en silencio.', time: '00:31', person: 'lidia', source: 'declaración', tags: ['llamada'] },
     S5_LID_HOSPITAL: { kind: 'statement', text: 'Lidia declara que en el hospital tiene acceso a digoxina, pero que cada comprimido queda registrado.', person: 'lidia', source: 'declaración', tags: ['tox'] },
+    S5_LID_VENTANA: { kind: 'statement', text: 'Lidia declara que hacia las 21:40, desde la ventana del comedor, vio a una mujer con un bolso grande cruzar el patio hacia el obrador; estaba oscuro y no la reconoció.', time: '21:40', person: 'lidia', place: 'horno', source: 'testigo', tags: ['testigo', 'acceso'] },
     S5_LID_RAUL: { kind: 'statement', text: 'Lidia admite que pasó la noche en Alcoy, en casa de su expareja, y que lo ocultó porque está casada.', time: '22:35', end: '08:00', person: 'lidia', place: 'santarosa', source: 'declaración', tags: ['coartada'] },
     S5_BER_NADA: { kind: 'statement', text: 'Bernat declara que con la cadena de supermercados solo hubo tanteos y que no hay nada firmado.', person: 'bernat', source: 'declaración', tags: ['dinero'] },
     S5_BER_PURO: { kind: 'statement', text: 'Bernat declara que a las 21:50 salió a su coche a por un puro y que se lo fumó en el patio con el café.', time: '21:50', end: '22:40', person: 'bernat', place: 'horno', source: 'declaración', tags: ['vehiculo'] },
@@ -432,7 +439,13 @@ E0.cases.push({
     { id: 'C03', a: 'S5_ERN_SANO', b: 'F5_FARM_ERNESTO', type: 'Hecho distinto', severity: 'media', desc: 'Ernesto dice que no toma medicación; la receta electrónica le dispensa digoxina cada mes.' },
     { id: 'C04', a: 'S5_ROC_NOVOLVIO', b: 'F5_AL_PATIO', type: 'Hecho distinto', severity: 'media', desc: 'Rocío dice que no volvió; la puerta del patio se abre a las 21:38 y hay movimiento en el obrador.' },
     { id: 'C05', a: 'S5_BER_NADA', b: 'F5_FIN_ARRAS', type: 'Hecho distinto', severity: 'alta', desc: 'Bernat dice que no hay nada firmado con la cadena; cobró 60.000 € de arras en enero.' },
-    { id: 'C06', a: 'S5_AMP_CUENTAS', b: 'F5_FIN_TRANSF', type: 'Hecho omitido', severity: 'alta', desc: 'Amparo dice que en las cuentas no hay nada raro; hay 14 transferencias a su cuenta por 38.400 €.' }
+    { id: 'C06', a: 'S5_AMP_CUENTAS', b: 'F5_FIN_TRANSF', type: 'Hecho omitido', severity: 'alta', desc: 'Amparo dice que en las cuentas no hay nada raro; hay 14 transferencias a su cuenta por 38.400 €.' },
+    { id: 'C07', a: 'S5_ROC_NOVOLVIO', b: 'S5_LID_VENTANA', type: 'Hecho distinto', severity: 'baja', desc: 'Rocío dice que no volvió a la casa; Lidia vio a una mujer con un bolso grande cruzar el patio hacia el obrador hacia las 21:40.' }
+  ],
+
+  /* Rueda de reconocimiento (común a las dos versiones: Rocío volvió en ambas) */
+  lineups: [
+    { id: 'L1', witness: 'lidia', saw: 'hacia las 21:40, desde la ventana del comedor, de noche y desde arriba, a una mujer con un bolso grande que cruzaba el patio hacia el obrador', target: 'rocio', quality: 0.55, requires: 'S5_LID_VENTANA' }
   ],
 
   verdictOptions: {
@@ -493,7 +506,17 @@ E0.cases.push({
         S5_BER_PATIO: { kind: 'statement', text: 'Bernat declara que entre las 22:30 y las 22:50 se quedó en el patio fumando un puro; Jordi y Ernesto fueron al obrador, Vicente subió al baño y él se quedó solo unos minutos.', time: '22:30', end: '22:50', person: 'bernat', place: 'horno', source: 'declaración', tags: ['coartada'] },
         S5_AMP_MOVIO: { kind: 'statement', text: 'Amparo admite que tocó el termo mientras hacía los cafés: dice que solo lo movió para hacer sitio y que no lo abrió.', time: '22:06', end: '22:19', person: 'amparo', place: 'horno', source: 'declaración', tags: ['tox'] },
         S5_AMP_CAJA: { kind: 'statement', text: 'Amparo admite que recogió una segunda caja de digoxina el 3 de marzo; dice que la anterior se cayó al fregadero.', person: 'amparo', source: 'declaración', tags: ['tox', 'medicacion'] },
-        S5_AMP_PROVEEDOR: { kind: 'statement', text: 'Amparo declara que las transferencias a su cuenta eran pagos a proveedores que pasaban por ella.', person: 'amparo', source: 'declaración', tags: ['dinero'] }
+        S5_AMP_PROVEEDOR: { kind: 'statement', text: 'Amparo declara que las transferencias a su cuenta eran pagos a proveedores que pasaban por ella.', person: 'amparo', source: 'declaración', tags: ['dinero'] },
+        F5_REG_BATOY_CAJA: { text: 'Registro en Batoy: en el contenedor de papel del garaje, una caja de digoxina 0,25 mg vacía, con la etiqueta de dispensación de la Farmacia de Batoy del 3 de marzo y sin ningún blíster dentro. El tique de esa compra está en la guantera del coche de Amparo.', person: 'amparo', place: 'batoy', source: 'registro', tags: ['tox', 'medicacion'] },
+        F5_REG_BATOY_LIBRETA: { text: 'Registro en Batoy: en un cajón del despacho de casa, una libreta con letra de Amparo con fechas e importes que coinciden con las 14 transferencias del horno, sin ningún concepto; en la última página, la suma: 38.400 €.', person: 'amparo', place: 'batoy', source: 'registro', tags: ['dinero'] },
+        F5_REG_BER_ARRAS: { text: 'Registro en casa de Bernat: en el despacho, el contrato de arras con Supermercados Valdemar y un borrador de escritura con la fecha del día 20; en la guantera del coche, una caja de puros empezada.', person: 'bernat', place: 'cocentaina', source: 'registro', tags: ['dinero'] }
+      },
+      planted: [],
+      searches: {
+        amparo: { place: 'el domicilio de Jordi y Amparo en Batoy', facts: ['F5_REG_BATOY_CAJA', 'F5_REG_BATOY_LIBRETA', 'F5_REG_BATOY_BANCO'] },
+        jordi: { place: 'el domicilio de Jordi y Amparo en Batoy', facts: ['F5_REG_BATOY_CAJA', 'F5_REG_BATOY_LIBRETA', 'F5_REG_BATOY_BANCO'] },
+        bernat: { place: 'el domicilio de Bernat Climent en Cocentaina', facts: ['F5_REG_BER_ARRAS'] },
+        ernesto: { place: 'la casa de Ernesto Moltó', facts: ['F5_REG_ERN_DIGOXINA'] }
       },
       answers: {
         amparo: {
@@ -603,7 +626,18 @@ E0.cases.push({
         S5_BER_ACERCO: { kind: 'statement', text: 'Bernat admite que tocó la copa de Vicente: dice que solo se la acercó cuando Vicente volvió del baño.', time: '22:42', person: 'bernat', place: 'horno', source: 'declaración', tags: ['copa'] },
         S5_BER_ABOGADO: { kind: 'statement', text: 'Bernat se niega a seguir declarando sin abogado al conocer el análisis de la copa.', person: 'bernat', source: 'declaración', tags: [] },
         S5_ERN_CORTES: { kind: 'statement', text: 'Ernesto declara que los cortes recientes de las adelfas no son suyos: él podó por abajo hace un mes.', person: 'ernesto', source: 'declaración', tags: ['tox'] },
-        S5_AMP_PRESTAMOS: { kind: 'statement', text: 'Amparo admite que las transferencias eran préstamos de Vicente para la residencia de su madre y que lo ocultó por vergüenza; dice que hay un documento firmado en el despacho.', person: 'amparo', source: 'declaración', tags: ['dinero'] }
+        S5_AMP_PRESTAMOS: { kind: 'statement', text: 'Amparo admite que las transferencias eran préstamos de Vicente para la residencia de su madre y que lo ocultó por vergüenza; dice que hay un documento firmado en el despacho.', person: 'amparo', source: 'declaración', tags: ['dinero'] },
+        F5_REG_BATOY_CAJA: { text: 'Registro en Batoy: en la casa no hay ninguna caja de digoxina. En el despacho, las facturas mensuales de la residencia de Encarna Mas desde 2025, que suman algo más de 38.000 €.', person: 'amparo', place: 'batoy', source: 'registro', tags: ['tox', 'dinero'] },
+        F5_REG_BATOY_LIBRETA: { text: 'Registro en Batoy: en un cajón del despacho de casa, una libreta con letra de Amparo titulada «Préstamo de Vicente · residencia», con las 14 transferencias y la cuenta de lo que queda por devolver.', person: 'amparo', place: 'batoy', source: 'registro', tags: ['dinero'] },
+        F5_REG_BER_FRASCO: { text: 'Registro en casa de Bernat: en el maletero de su coche, un frasco pequeño de cristal enjuagado, con un poso verdoso en el fondo. El laboratorio identifica oleandrina en el poso.', person: 'bernat', place: 'cocentaina', source: 'registro', tags: ['tox'] },
+        F5_REG_BER_TIJERAS: { text: 'Registro en casa de Bernat: en el garaje, unas tijeras de podar finas con restos de savia seca en las hojas. En la casa y en el coche no hay puros, cortapuros ni ceniceros.', person: 'bernat', place: 'cocentaina', source: 'registro', tags: ['tox'] }
+      },
+      planted: [],
+      searches: {
+        bernat: { place: 'el domicilio de Bernat Climent en Cocentaina', facts: ['F5_REG_BER_FRASCO', 'F5_REG_BER_TIJERAS'] },
+        amparo: { place: 'el domicilio de Jordi y Amparo en Batoy', facts: ['F5_REG_BATOY_CAJA', 'F5_REG_BATOY_LIBRETA', 'F5_REG_BATOY_BANCO'] },
+        jordi: { place: 'el domicilio de Jordi y Amparo en Batoy', facts: ['F5_REG_BATOY_CAJA', 'F5_REG_BATOY_LIBRETA', 'F5_REG_BATOY_BANCO'] },
+        ernesto: { place: 'la casa de Ernesto Moltó', facts: ['F5_REG_ERN_DIGOXINA'] }
       },
       answers: {
         amparo: {

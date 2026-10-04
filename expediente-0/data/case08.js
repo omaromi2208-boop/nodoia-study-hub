@@ -211,6 +211,15 @@ E0.cases.push({
           { id: 'eras', name: 'Camino de las eras', x: 0, y: 55, w: 100, h: 45 }
         ],
         hotspots: [{ ev: 'E8_07', x: 30, y: 48 }, { ev: 'E8_14', x: 36, y: 64 }, { ev: 'E8_12', x: 72, y: 82 }, { ev: 'E8_13', x: 82, y: 28 }]
+      },
+      {
+        id: 'casaPilar', name: 'Casa de Pilar (Fuenterroble)', unlock: 'F8_E2_HALLAZGO', legend: 'Casa de la segunda víctima · precintada desde septiembre; Lorena facilita la llave',
+        rooms: [
+          { id: 'salonp', name: 'Salón de Pilar', x: 0, y: 0, w: 55, h: 55 },
+          { id: 'dormitoriop', name: 'Dormitorio de Pilar', x: 55, y: 0, w: 45, h: 55 },
+          { id: 'cocinap', name: 'Cocina de Pilar', x: 0, y: 55, w: 100, h: 45 }
+        ],
+        hotspots: [{ ev: 'E8_16', x: 18, y: 20 }, { ev: 'E8_17', x: 40, y: 42 }, { ev: 'E8_18', x: 52, y: 80 }]
       }
     ]
   },
@@ -275,7 +284,19 @@ E0.cases.push({
     { id: 'E8_13', name: 'Contenedor de basura de la esquina', model: 'trashbag', type: 'Escena', level: 3, fixed: true, room: 'Calle de la Iglesia',
       public: 'El contenedor de basura de la esquina de la calle.', detail: 'Contenedor verde a veinte metros de la puerta de Eloísa.',
       value: 'Algo que alguien quiso tirar.', limits: '—',
-      reveals: ['F8_CONTENEDOR'], lab: { adn: { cost: 200, label: 'ADN de lo hallado en el contenedor', reveals: ['F8_CONTENEDOR_ADN'] } } }
+      reveals: ['F8_CONTENEDOR'], lab: { adn: { cost: 200, label: 'ADN de lo hallado en el contenedor', reveals: ['F8_CONTENEDOR_ADN'] } } },
+    { id: 'E8_16', name: 'Terminal de teleasistencia de Pilar', model: 'tablet', type: 'Dispositivo', level: 3, fixed: true, room: 'Salón de Pilar',
+      public: 'El terminal de teleasistencia de Pilar, sobre una mesita del salón.', detail: 'Un aparato con altavoz y una pantalla pequeña; el cable de corriente va a un enchufe detrás del sofá.',
+      value: 'Su memoria interna guarda los eventos de la noche en que murió Pilar.', limits: 'Se revisó en septiembre; desde entonces lo han tocado la familia y la Guardia Civil.',
+      reveals: ['F8_P2_TERMINAL'], forensic: { polvo: { reveals: ['F8_P2_POLVO'] } } },
+    { id: 'E8_17', name: 'Folleto de la teleasistencia', model: 'papers', type: 'Documento', level: 4, room: 'Salón de Pilar',
+      public: 'El folleto del servicio de teleasistencia, en el revistero del salón.', detail: 'El folleto del servicio, con la tarjeta de la revisión del 9/9 grapada en la portada.',
+      value: 'Un detalle de la visita del técnico.', limits: '—',
+      reveals: ['F8_P2_FOLLETO'] },
+    { id: 'E8_18', name: 'Cartilla de ahorro de Pilar', model: 'papers', type: 'Documento', level: 3, room: 'Cocina de Pilar',
+      public: 'Un cajón de la cocina con la cartilla de ahorro y papeles del banco.', detail: 'La cartilla de ahorro de Pilar y recibos del banco.',
+      value: 'Qué pasaba con el dinero de Pilar antes de morir.', limits: 'Solo recoge lo que se actualizó en la cartilla.',
+      reveals: ['F8_P2_CARTILLA'] }
   ],
 
   labKinds: { autopsia: 'Autopsia completa', documentos: 'Documentoscopia', adn: 'ADN', biologia: 'Biología forense', toxicologia: 'Toxicología', comparativa: 'Comparativa' },
@@ -373,7 +394,18 @@ E0.cases.push({
     S8_FELISA_TECNICO: { kind: 'statement', text: 'Felisa dice que el técnico de la teleasistencia fue a revisar el aparato el jueves 1/10 por la mañana.', person: 'felisa', source: 'testigo', tags: ['testigo', 'teleasistencia'] },
     S8_LORENA_NIEVES: { kind: 'statement', text: 'Lorena dice que Nieves iba a casa de su madre de lunes a viernes por la mañana y que su madre la adoraba.', person: 'lorena', source: 'declaración', tags: ['visitas'] },
     S8_LORENA_NOCHE: { kind: 'statement', text: 'Lorena declara que el domingo 4 por la noche estaba en su casa de Salamanca con su marido.', time: '20:00', end: '02:00', person: 'lorena', place: 'salamanca', source: 'declaración', tags: ['coartada'] },
-    S8_LORENA_PODCAST: { kind: 'statement', text: 'Lorena dice que Darío Velasco se presentó dos veces en su puerta para grabarla y que la segunda le denunció.', person: 'lorena', source: 'declaración', tags: ['prensa'] }
+    S8_LORENA_PODCAST: { kind: 'statement', text: 'Lorena dice que Darío Velasco se presentó dos veces en su puerta para grabarla y que la segunda le denunció.', person: 'lorena', source: 'declaración', tags: ['prensa'] },
+
+    /* Casa de Pilar (segunda escena) */
+    F8_P2_TERMINAL: { text: 'Memoria interna del terminal de Pilar, 17/9: «Fallo de alimentación 22:40» y «Alimentación restablecida 23:31». El enchufe está detrás del sofá: para llegar a él hay que apartarlo.', time: '22:40', end: '23:31', person: 'pilar', place: 'fuenterroble', source: 'escena', tags: ['teleasistencia', 'serie'] },
+    F8_P2_POLVO: { prints: [{ at: 'Clavija del cable de corriente', q: 'no_apta' }, { at: 'Teclado del terminal', match: 'pilar' }], text: 'Polvo revelador en el terminal de Pilar: en la clavija del cable de corriente, solo marcas de guante y una latente emborronada, no apta; en el teclado, huellas de Pilar.', place: 'fuenterroble', source: 'laboratorio', tags: ['huella', 'teleasistencia'] },
+    F8_P2_FOLLETO: { text: 'El folleto de la teleasistencia de Pilar está entero, con la tarjeta de la revisión del 9/9 grapada en la portada.', place: 'fuenterroble', source: 'escena', tags: ['teleasistencia'] },
+    F8_P2_CARTILLA: { text: 'Cartilla de ahorro de Pilar: la pensión, los recibos y algún reintegro en la ventanilla de Fuenterroble. Nada anómalo.', person: 'pilar', place: 'fuenterroble', source: 'documento', tags: ['dinero'] },
+
+    /* Registros con orden judicial (comunes) */
+    F8_REG_GONZ_BANCO: { text: 'Registro en el piso de Gonzalo: cartas del banco que reclaman el préstamo de su negocio y la notificación del embargo en curso.', person: 'gonzalo', place: 'salamanca', source: 'registro', tags: ['dinero', 'deuda'] },
+    F8_REG_NIE_LLAVE: { text: 'Registro en casa de Nieves: una llave suelta con una etiqueta escrita a mano: «Eloísa».', person: 'nieves', place: 'guijuelo', source: 'registro', tags: ['llave', 'acceso'] },
+    F8_REG_BEN_TARJETAS: { text: 'Registro en casa de Benito: en la furgoneta, un chaleco reflectante y un taco de tarjetas de «Revisiones del gas Sastre» impresas este año.', person: 'benito', place: 'bejar', source: 'registro', tags: ['antecedentes'] }
   },
 
   /* Contradicciones comunes a todas las versiones (pistas falsas incluidas). */
@@ -382,7 +414,9 @@ E0.cases.push({
     { id: 'C02', a: 'S8_NIEVES_LLAVE', b: 'S8_FELISA_LLAVES', type: 'Hecho distinto', severity: 'media', desc: 'Nieves dice que nunca tuvo llave; Felisa afirma que Eloísa le dio una a escondidas.' },
     { id: 'C03', a: 'S8_GONZ_AGOSTO', b: 'S8_FELISA_TARDE', type: 'Hecho distinto', severity: 'media', desc: 'Gonzalo dice que no veía a su tía desde agosto; Felisa vio su coche el domingo de 17:40 a 18:35 y oyó la discusión.' },
     { id: 'C04', a: 'S8_DARIO_NOCHE', b: 'F8_BAR_DARIO', type: 'Lugar distinto', severity: 'media', desc: 'Darío dice que pasó la noche en Salamanca; la cámara del bar de Linares le graba de 21:30 a 00:40, con una salida de 22:05 a 22:50.' },
-    { id: 'C05', a: 'S8_BENITO_NOCHE', b: 'F8_LPR_OTROS', type: 'Lugar distinto', severity: 'media', desc: 'Benito dice que no salió de su casa de Béjar; su furgoneta sale de Béjar a las 20:30 y no vuelve hasta la 01:24.' }
+    { id: 'C05', a: 'S8_BENITO_NOCHE', b: 'F8_LPR_OTROS', type: 'Lugar distinto', severity: 'media', desc: 'Benito dice que no salió de su casa de Béjar; su furgoneta sale de Béjar a las 20:30 y no vuelve hasta la 01:24.' },
+    { id: 'C06', a: 'S8_NIEVES_LLAVE', b: 'F8_REG_NIE_LLAVE', type: 'Hecho distinto', severity: 'media', desc: 'Nieves dice que nunca tuvo llave de la casa de Eloísa; en su casa hay una llave con la etiqueta «Eloísa».' },
+    { id: 'C07', a: 'S8_BENITO_TRABAJO', b: 'F8_REG_BEN_TARJETAS', type: 'Hecho distinto', severity: 'baja', desc: 'Benito dice que no ha vuelto a hacer «revisiones del gas»; en su furgoneta hay tarjetas de revisiones impresas este año.' }
   ],
 
   verdictOptions: {
@@ -471,9 +505,25 @@ E0.cases.push({
         S8_FELISA_NOCHE: { kind: 'statement', text: 'Felisa oyó a las 22:55 abrir con llave, dos vueltas, la puerta de la calle de Eloísa. Pensó que era el sobrino. No oyó ningún coche por delante.', time: '22:55', person: 'felisa', place: 'casa', source: 'testigo', tags: ['testigo', 'llave'] },
         S8_FELISA_ELOISA: { kind: 'statement', text: 'Felisa dice que Eloísa le contó que el técnico de la teleasistencia le había hecho muchas preguntas: si dormía sola, a qué hora se acostaba.', person: 'felisa', source: 'testigo', tags: ['testigo', 'teleasistencia'] },
         S8_LORENA_MADRE: { kind: 'statement', text: 'Lorena dice que su madre no se quejaba de nada, ni de dinero ni de nadie.', person: 'lorena', source: 'declaración', tags: ['dinero'] },
-        S8_LORENA_TECNICO: { kind: 'statement', text: 'Lorena dice que en la revisión del 9/9 el técnico de la teleasistencia le hizo a su madre una grulla de papel con el folleto del aparato «para que se riera»; ella la vio en la mesa.', person: 'lorena', source: 'declaración', tags: ['teleasistencia', 'pajarita'] }
+        S8_LORENA_TECNICO: { kind: 'statement', text: 'Lorena dice que en la revisión del 9/9 el técnico de la teleasistencia le hizo a su madre una grulla de papel con el folleto del aparato «para que se riera»; ella la vio en la mesa.', person: 'lorena', source: 'declaración', tags: ['teleasistencia', 'pajarita'] },
+        F8_P2_TERMINAL: { text: 'Memoria interna del terminal de Pilar, 17/9: «Modo prueba 22:41» y «Fin modo prueba 23:37». El cable de corriente sigue sujeto a la pared con una brida intacta: nadie lo desenchufó.', time: '22:41', end: '23:37', person: 'pilar', place: 'fuenterroble', source: 'escena', tags: ['teleasistencia', 'serie'] },
+        F8_P2_POLVO: { prints: [{ at: 'Carcasa del terminal', match: 'ruben' }, { at: 'Teclado del terminal', match: 'pilar' }], text: 'Polvo revelador en el terminal de Pilar: huellas de Rubén Lozano en la carcasa (revisión del 9/9) y de Pilar en el teclado.', person: 'ruben', place: 'fuenterroble', source: 'laboratorio', tags: ['huella', 'teleasistencia'] },
+        F8_P2_FOLLETO: { text: 'Al folleto de la teleasistencia de Pilar le falta la contraportada, recortada en cuadrado. En el aparador sigue una grulla hecha con ese papel satinado, con el logotipo de la empresa en un ala, plegada igual que las grullas granate.', place: 'fuenterroble', source: 'escena', tags: ['teleasistencia', 'pajarita'] },
+        F8_REG_RUB_PAPEL: { text: 'Registro en casa de Rubén: en un cajón del dormitorio, un paquete de papel de papiroflexia granate de 15 × 15 cm empezado y un lápiz.', person: 'ruben', place: 'bejar', source: 'registro', tags: ['pajarita'] },
+        F8_REG_RUB_LIBRETA: { text: 'Registro en casa de Rubén: en la guantera del todoterreno, una libreta con nombres de usuarios de la teleasistencia de la comarca y, junto a algunos, anotaciones como «sola» o «se acuesta a las 22». Los nombres de Anselmo, Pilar y Eloísa están tachados.', person: 'ruben', place: 'bejar', source: 'registro', tags: ['serie', 'teleasistencia'] }
+      },
+      planted: [],
+      lineups: [
+        { id: 'L1', witness: 'dario', saw: 'hacia las 22:44, de noche en el camino de las eras, a un hombre con un chaleco de trabajo que bajaba de un todoterreno oscuro aparcado con las luces apagadas', target: 'ruben', quality: 0.55, requires: 'S8_DARIO_VIO' }
+      ],
+      searches: {
+        ruben: { place: 'el domicilio de Rubén Lozano en Béjar', facts: ['F8_REG_RUB_PAPEL', 'F8_REG_RUB_LIBRETA'] },
+        gonzalo: { place: 'el piso de Gonzalo Carrasco en Salamanca', facts: ['F8_REG_GONZ_BANCO'] },
+        nieves: { place: 'la casa de Nieves Arroyo en Guijuelo', facts: ['F8_REG_NIE_LLAVE'] },
+        benito: { place: 'la casa y la furgoneta de Benito Sastre en Béjar', facts: ['F8_REG_BEN_TARJETAS'] }
       },
       evidence: {
+        E8_17: { detail: 'Al folleto le falta la contraportada, recortada en cuadrado. En el aparador hay una grulla de papel satinado.' },
         E8_02: { detail: 'Una grulla de papiroflexia de papel granate, con las alas abiertas y el pico hacia la cara de Eloísa.' },
         E8_03: { detail: 'Una almohada bajo la cabeza; la otra, a los pies de la cama, con una mancha en la funda.' },
         E8_04: { detail: 'Luz verde. En la pantalla, dos eventos de la noche: «Modo prueba» y «Fin modo prueba».' },
@@ -609,7 +659,17 @@ E0.cases.push({
         S8_FELISA_NOCHE: { kind: 'statement', text: 'Felisa oyó hacia las 23:10 un coche por el camino de las eras, detrás de la casa de Eloísa, y hacia las 23:45 el mismo motor alejándose.', time: '23:10', end: '23:45', person: 'felisa', place: 'eras', source: 'testigo', tags: ['testigo', 'vehiculo'] },
         S8_FELISA_ELOISA: { kind: 'statement', text: 'Felisa dice que Eloísa estaba muy disgustada con el sobrino «por unos papeles del banco» y que el martes iba a ir a la notaría.', person: 'felisa', source: 'testigo', tags: ['testigo', 'poder'] },
         S8_LORENA_MADRE: { kind: 'statement', text: 'Lorena dice que su madre no se quejaba de nada, ni de dinero ni de nadie.', person: 'lorena', source: 'declaración', tags: ['dinero'] },
-        S8_LORENA_TECNICO: { kind: 'statement', text: 'Lorena dice que el técnico de la teleasistencia fue el 9/9, revisó el aparato en media hora y se marchó; muy correcto.', person: 'lorena', source: 'declaración', tags: ['teleasistencia'] }
+        S8_LORENA_TECNICO: { kind: 'statement', text: 'Lorena dice que el técnico de la teleasistencia fue el 9/9, revisó el aparato en media hora y se marchó; muy correcto.', person: 'lorena', source: 'declaración', tags: ['teleasistencia'] },
+        F8_REG_GONZ_ZAPATOS: { text: 'Registro en el piso de Gonzalo: en el armario, unos zapatos de vestir del 42 con la suela de cuero recién limpiada y restos de barro seco en el canto del tacón.', person: 'gonzalo', place: 'salamanca', source: 'registro', tags: ['calzado'] }
+      },
+      planted: [
+        { ev: 'E8_02', label: 'pajarita de imitación para atribuir la muerte a la serie', tells: ['F8_PAJ3_DOC', 'F8_PAJ3_ADN', 'F8_REVISTA'] }
+      ],
+      lineups: [],
+      searches: {
+        gonzalo: { place: 'el piso de Gonzalo Carrasco en Salamanca', facts: ['F8_REG_GONZ_ZAPATOS', 'F8_REG_GONZ_BANCO'] },
+        nieves: { place: 'la casa de Nieves Arroyo en Guijuelo', facts: ['F8_REG_NIE_LLAVE'] },
+        benito: { place: 'la casa y la furgoneta de Benito Sastre en Béjar', facts: ['F8_REG_BEN_TARJETAS'] }
       },
       evidence: {
         E8_02: { detail: 'Una pajarita de papel clásica, de papel satinado con letras y fotos impresas.' },
@@ -746,9 +806,25 @@ E0.cases.push({
         S8_FELISA_NOCHE: { kind: 'statement', text: 'Felisa oyó chirriar la cancela del corral de Eloísa hacia las 22:50, «como cuando se abre del todo». No oyó ningún coche.', time: '22:50', person: 'felisa', place: 'casa', source: 'testigo', tags: ['testigo', 'acceso'] },
         S8_FELISA_ELOISA: { kind: 'statement', text: 'Felisa dice que el sábado Eloísa le contó que le faltaba dinero de la cartilla y que el lunes iba a ir al cuartel; no le dijo de quién sospechaba.', person: 'felisa', source: 'testigo', tags: ['testigo', 'dinero'] },
         S8_LORENA_MADRE: { kind: 'statement', text: 'Lorena dice que el 16/9 su madre le contó que le faltaba dinero de la cartilla y que «lo iba a hablar con la chica» antes de ir al banco.', person: 'lorena', source: 'declaración', tags: ['dinero'] },
-        S8_LORENA_TECNICO: { kind: 'statement', text: 'Lorena dice que el técnico de la teleasistencia fue el 9/9, revisó el aparato en media hora y se marchó; muy correcto.', person: 'lorena', source: 'declaración', tags: ['teleasistencia'] }
+        S8_LORENA_TECNICO: { kind: 'statement', text: 'Lorena dice que el técnico de la teleasistencia fue el 9/9, revisó el aparato en media hora y se marchó; muy correcto.', person: 'lorena', source: 'declaración', tags: ['teleasistencia'] },
+        F8_P2_POLVO: { prints: [{ at: 'Clavija del cable de corriente', match: 'nieves' }, { at: 'Teclado del terminal', match: 'pilar' }], text: 'Polvo revelador en el terminal de Pilar: en la clavija del cable de corriente, una huella de Nieves Arroyo; en el teclado, huellas de Pilar.', person: 'nieves', place: 'fuenterroble', source: 'laboratorio', tags: ['huella', 'teleasistencia'] },
+        F8_P2_CARTILLA: { text: 'En la cartilla de Pilar, los reintegros de 500 € de agosto y septiembre están rodeados a bolígrafo; al margen, con su letra: «¿Guijuelo? Hablarlo con la chica».', person: 'pilar', place: 'fuenterroble', source: 'documento', tags: ['dinero', 'robo'] },
+        F8_REG_NIE_PIN: { text: 'Registro en casa de Nieves: en su bolso, una libreta con los números secretos de las tarjetas de Pilar Vidal y de Eloísa Carrasco escritos a lápiz junto a sus iniciales.', person: 'nieves', place: 'guijuelo', source: 'registro', tags: ['dinero', 'robo'] },
+        F8_REG_NIE_PAPEL: { text: 'Registro en casa de Nieves: en un cajón de la cocina, un taco de papel de papiroflexia granate de 15 × 15 cm empezado y una caja de guantes de nitrilo azules.', person: 'nieves', place: 'guijuelo', source: 'registro', tags: ['pajarita', 'guantes'] }
+      },
+      planted: [
+        { ev: 'E8_02', label: 'grulla numerada «3» para inventar una serie a partir de una muerte natural', tells: ['F8_PAJ3_DOC', 'F8_E1_FIGURA', 'F8_E1_AUTOPSIA'] }
+      ],
+      lineups: [
+        { id: 'L1', witness: 'dario', saw: 'hacia las 22:42, de noche al principio del camino de las eras, a una mujer bajita con un abrigo largo y un bolso grande que bajaba de un coche pequeño', target: 'nieves', quality: 0.5, requires: 'S8_DARIO_VIO' }
+      ],
+      searches: {
+        nieves: { place: 'la casa de Nieves Arroyo en Guijuelo', facts: ['F8_REG_NIE_PIN', 'F8_REG_NIE_PAPEL', 'F8_REG_NIE_LLAVE'] },
+        gonzalo: { place: 'el piso de Gonzalo Carrasco en Salamanca', facts: ['F8_REG_GONZ_BANCO'] },
+        benito: { place: 'la casa y la furgoneta de Benito Sastre en Béjar', facts: ['F8_REG_BEN_TARJETAS'] }
       },
       evidence: {
+        E8_18: { detail: 'La cartilla de ahorro de Pilar, con anotaciones a bolígrafo.' },
         E8_02: { detail: 'Una grulla de papiroflexia de papel granate, con las alas abiertas y el pico hacia la cara de Eloísa.' },
         E8_03: { detail: 'Una almohada bajo la cabeza; la otra, a los pies de la cama, con una mancha en la funda.' },
         E8_04: { detail: 'La pantalla está apagada. El cable de corriente cuelga suelto detrás del aparador.' },

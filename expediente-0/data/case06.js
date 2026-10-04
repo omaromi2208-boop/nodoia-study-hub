@@ -97,7 +97,8 @@ E0.cases.push({
         { id: 'amenaza', q: '¿Dijo que la nave iba a arder?', a: 'Dije que un día aquello iba a arder, con tanto serrín y tanta chapuza. Era un aviso, no una amenaza.', type: 'media', reveals: ['S6_AND_AVISO'] },
         { id: 'gasoil', q: '¿Tiene combustible en la finca?', a: 'Gasóleo agrícola para el tractor, en un depósito del almacén. Como todo el mundo aquí.', type: 'verdad', reveals: ['S6_AND_GASOLEO'] },
         { id: 'juicio', q: '¿Cómo va el pleito con la empresa?', a: 'Lo perdí la semana pasada. Me condenaron en costas: seis mil euros por quejarme de que me ensucian la tierra.', type: 'verdad', reveals: ['S6_AND_SENTENCIA'] },
-        { id: 'valla', q: '¿Usa el hueco de la valla?', a: 'Ese hueco lo hicieron los perros hace años. Yo no paso por ahí.', type: 'verdad', reveals: ['S6_AND_HUECO'] }
+        { id: 'valla', q: '¿Usa el hueco de la valla?', a: 'Ese hueco lo hicieron los perros hace años. Yo no paso por ahí.', type: 'verdad', reveals: ['S6_AND_HUECO'] },
+        { id: 'semana', q: '¿Vio movimiento raro en la nave otras noches de esa semana?', a: 'No. Esa semana, nada fuera de lo normal: el vigilante y sus rondas.', type: 'verdad', reveals: [] }
       ],
       confront: {
         F6_FIN_ANDRES: { a: 'Seis mil euros. ¿Usted sabe lo que es eso para un jubilado?', reveals: [] },
@@ -191,6 +192,17 @@ E0.cases.push({
           { ev: 'N14', x: 20, y: 20 }, { ev: 'N08', x: 56, y: 10 }, { ev: 'N09', x: 64, y: 18 },
           { ev: 'N11', x: 40, y: 55 }, { ev: 'N10', x: 60, y: 70 }, { ev: 'N12', x: 50, y: 88 }
         ]
+      },
+      {
+        id: 'naveB', name: 'Nave B (almacén)', unlock: 'F6_CRA_NAVEB', legend: 'Nave intacta: almacén de género, vestuario del vigilante y bidones de reserva',
+        rooms: [
+          { id: 'entradanb', name: 'Entrada de la nave B', x: 0, y: 0, w: 30, h: 35 },
+          { id: 'despachonb', name: 'Despacho y vestuario', x: 0, y: 35, w: 30, h: 65 },
+          { id: 'almacennb', name: 'Almacén de género', x: 30, y: 0, w: 70, h: 100 }
+        ],
+        hotspots: [
+          { ev: 'N15', x: 12, y: 64 }, { ev: 'N16', x: 60, y: 28 }, { ev: 'N17', x: 82, y: 76 }
+        ]
       }
     ]
   },
@@ -280,7 +292,23 @@ E0.cases.push({
       public: 'Cámara sobre la verja de entrada a la parcela.',
       detail: 'Graba la entrada principal: vehículos y personas que entran y salen por la verja.',
       value: 'Quién entró por delante.', limits: 'No ve el camino de atrás ni la valla con la finca.',
-      reveals: ['F6_VERJA_ESCENA'] }
+      reveals: ['F6_VERJA_ESCENA'] },
+    { id: 'N15', name: 'Taquilla de Gabriel', type: 'Objeto', level: 3, model: 'wardrobe', fixed: true, room: 'Despacho y vestuario',
+      public: 'Taquilla metálica con el nombre de Gabriel en el vestuario de la nave B.',
+      detail: 'Ropa de repuesto, un termo y un libro.',
+      value: 'Qué guardaba Gabriel para el turno y qué se llevó esa noche.', limits: 'No dice cuándo se sacó algo.',
+      reveals: ['F6_NB_TAQUILLA'] },
+    { id: 'N16', name: 'Bidones de disolvente de reserva', type: 'Objeto', level: 3, model: 'bottle', room: 'Almacén de género',
+      public: 'Bidones de plástico apilados al fondo del almacén.',
+      detail: 'Bidones de 25 litros de disolvente nitro, de reserva para la cabina de barnizado.',
+      value: 'Comprobar si falta o sobra algún bidón respecto a la cabina.', limits: 'Los mueve el personal del taller a diario.',
+      reveals: ['F6_NB_BIDONES'],
+      forensic: { polvo: { reveals: ['F6_NB_POLVO'] } } },
+    { id: 'N17', name: 'Hueco de los muebles de la familia', type: 'Escena', level: 4, fixed: true, room: 'Almacén de género',
+      public: 'Rincón del almacén junto a la pared lateral.',
+      detail: 'Un espacio vacío entre muebles embalados, con marcas en el polvo del suelo.',
+      value: 'Qué se llevó Inés y cuándo.', limits: 'No dice nada de la nave A.',
+      reveals: ['F6_NB_MUEBLES'] }
   ],
 
   labKinds: { autopsia: 'Autopsia completa', cromatografia: 'Cromatografía de acelerantes', peritaje: 'Peritaje de incendios', comparativa: 'Comparativa de calzado', huellas: 'Huellas dactilares' },
@@ -359,6 +387,15 @@ E0.cases.push({
     F6_FIN_ANDRES: { text: 'Andrés Peñarroja: sentencia del 9 de octubre que desestima su demanda contra Muebles Ferrús por el lindero y el serrín, con 6.000 € de costas.', person: 'andres', source: 'documento', tags: ['dinero'] },
     F6_FIN_INES: { text: 'Inés Ferrús: oferta firmada de una cooperativa de la comarca para comprar la empresa por 700.000 €; Salvador la rechazó en septiembre.', person: 'ines', source: 'documento', tags: ['dinero'] },
     F6_FURGO: { text: 'GPS de la furgoneta de la empresa: ningún movimiento fuera del horario de reparto en el último mes.', source: 'registro', tags: ['vehiculo'] },
+
+    /* ----- Nave B (segunda escena) ----- */
+    F6_NB_TAQUILLA: { text: 'En la taquilla de Gabriel, en la nave B: ropa de repuesto, un termo, un libro y una manta de lana doblada en la balda de arriba.', person: 'gabriel', place: 'nave', source: 'escena', tags: ['objeto'] },
+    F6_NB_BIDONES: { text: 'En la nave B hay cuatro bidones de disolvente nitro de 25 litros, precintados y con la etiqueta del proveedor. Según el último albarán, no falta ni sobra ninguno.', place: 'nave', source: 'escena', tags: ['objeto'] },
+    F6_NB_POLVO: { prints: [{ at: 'Asa de un bidón de reserva', q: 'no_apta' }], text: 'Polvo revelador en los bidones de reserva: marcas de guantes de trabajo y una latente emborronada, no apta.', place: 'nave', source: 'laboratorio', tags: ['huella', 'objeto'] },
+    F6_NB_MUEBLES: { text: 'En la nave B, contra la pared lateral, las marcas limpias en el polvo de una cómoda y dos sillas retiradas hace poco; en el suelo queda un cartón con «Mamá · Inés» escrito a rotulador. No falta nada más en ese rincón.', person: 'ines', place: 'nave', source: 'escena', tags: ['objeto'] },
+
+    /* ----- Registros con orden judicial (comunes) ----- */
+    F6_REG_AND_ALMACEN: { text: 'Registro en la finca de Andrés: en el almacén, el depósito de gasóleo agrícola del tractor, medio lleno, y unas botas de goma de campo de la talla 43 con barro seco de días.', person: 'andres', place: 'finca', source: 'registro', tags: ['objeto'] },
 
     /* ----- Antenas (judicial) ----- */
     F6_ANT_SALVADOR: { text: 'Teléfono de Salvador: Onda centro de 21:20 a 00:50; domicilio desde la 01:00 toda la noche. Ninguna llamada hasta las 03:31, cuando le llama la Guardia Civil.', time: '21:20', end: '03:31', person: 'salvador', place: 'onda', source: 'antena', tags: ['ubicacion', 'telefono'] },
@@ -475,9 +512,28 @@ E0.cases.push({
         S6_SAL_ABOGADO: { kind: 'statement', text: 'Salvador dice que alguien pudo usar su cuenta del enchufe y se niega a seguir declarando sin abogado.', person: 'salvador', source: 'declaración', tags: [] },
         S6_SAL_TRACTOR: { kind: 'statement', text: 'Salvador declara que la gasolina del jueves era para el tractor de su huerto.', person: 'salvador', source: 'declaración', tags: ['objeto'] },
         S6_INE_AVISO: { kind: 'statement', text: 'Inés declara que el martes su hermano le dijo que no dejara nada de valor en la nave «por si acaso», y que por eso fue a por los muebles de su madre.', person: 'ines', source: 'declaración', tags: ['testigo'] },
-        S6_OSC_MAQUINAS: { kind: 'statement', text: 'Óscar declara que la escuadradora y la chapadora no estaban desde el jueves y que Salvador dijo que estaban en reparación.', person: 'oscar', source: 'declaración', tags: ['objeto'] }
+        S6_OSC_MAQUINAS: { kind: 'statement', text: 'Óscar declara que la escuadradora y la chapadora no estaban desde el jueves y que Salvador dijo que estaban en reparación.', person: 'oscar', source: 'declaración', tags: ['objeto'] },
+        S6_AND_MIERCOLES: { kind: 'statement', text: 'Andrés declara que el miércoles, hacia las 23:00, vio desde su almacén luz en la nave A y a un hombre con gorra cargando dos máquinas grandes en la furgoneta blanca de la empresa con una transpaleta; estaba lejos y no le vio la cara.', time: '23:00', person: 'andres', place: 'finca', source: 'testigo', tags: ['testigo', 'vehiculo'] },
+        F6_NB_TAQUILLA: { text: 'En la taquilla de Gabriel, en la nave B: ropa de repuesto, un termo y un libro. La balda de arriba está vacía y tiene pelusa de lana gris, como la de una manta doblada que se ha sacado hace poco.', person: 'gabriel', place: 'nave', source: 'escena', tags: ['objeto'] },
+        F6_NB_BIDONES: { text: 'En la nave B, detrás de unos palés y separado de los cuatro bidones de reserva precintados, hay un quinto bidón de disolvente nitro empezado, con «CABINA» escrito a rotulador: el que se usa a diario en la cabina de barnizado.', place: 'nave', source: 'escena', tags: ['objeto'] },
+        F6_NB_POLVO: { prints: [{ at: 'Asa del bidón «CABINA»', match: 'salvador' }, { at: 'Tapón del bidón «CABINA»', match: 'oscar' }], text: 'Polvo revelador en el bidón «CABINA»: huellas de Salvador Ferrús en el asa y de Óscar Llorens en el tapón.', person: 'salvador', place: 'nave', source: 'laboratorio', tags: ['huella', 'objeto'] },
+        F6_REG_SAL_ALQUILER: { text: 'Registro en casa de Salvador: en un cajón del despacho, el contrato de alquiler de una nave del polígono de Vila-real a nombre de Salvador Ferrús, firmado el 28 de septiembre, con dos llaves.', person: 'salvador', place: 'vilareal', source: 'registro', tags: ['vehiculo', 'dinero'] },
+        F6_REG_SAL_EMBUDO: { text: 'Registro en casa de Salvador: en el maletero de su coche, un embudo de plástico que huele a gasolina y unos guantes de trabajo manchados. El bidón de 25 litros no aparece.', person: 'salvador', place: 'onda', source: 'registro', tags: ['objeto'] }
+      },
+      planted: [
+        { ev: 'N03', label: 'estufa tumbada contra trapos con gasolina para simular un accidente eléctrico', tells: ['F6_ESTUFA_PERITAJE', 'F6_ENCHUFE_NUBE', 'F6_ACELERANTE'] }
+      ],
+      lineups: [
+        { id: 'L1', witness: 'andres', saw: 'el miércoles hacia las 23:00, de noche y a unos cuarenta metros, a un hombre con gorra que cargaba dos máquinas grandes en la furgoneta blanca de la empresa', target: 'salvador', quality: 0.5, requires: 'S6_AND_MIERCOLES' }
+      ],
+      searches: {
+        salvador: { place: 'el domicilio de Salvador Ferrús en Onda', facts: ['F6_REG_SAL_ALQUILER', 'F6_REG_SAL_EMBUDO'] },
+        andres: { place: 'la finca y el almacén de Andrés Peñarroja', facts: ['F6_REG_AND_ALMACEN'] }
       },
       answers: {
+        andres: {
+          semana: { a: 'Ahora que lo dice: el miércoles, pasadas las once, oí la puerta grande de la nave A. Desde mi almacén vi luz dentro y a un hombre con gorra metiendo dos máquinas grandes en la furgoneta blanca de la empresa, con una transpaleta. Estaba lejos y no le vi la cara. Pensé que sería cosa de ellos.', reveals: ['S6_AND_MIERCOLES'] }
+        },
         salvador: {
           poliza: { type: 'mentira' },
           maquinas: { type: 'mentira' },
@@ -527,7 +583,8 @@ E0.cases.push({
         { id: 'V1c', a: 'S6_SAL_TODO', b: 'F6_INVENTARIO', type: 'Hecho distinto', severity: 'alta', desc: 'Salvador dice que todo estaba en su sitio; entre los restos faltan la escuadradora y la chapadora.' },
         { id: 'V1d', a: 'S6_SAL_TRACTOR', b: 'S6_SAL_GASOLEO', type: 'Hecho distinto', severity: 'media', desc: 'Salvador dice que la gasolina era para el tractor; antes declaró que su tractor funciona con gasóleo agrícola.' },
         { id: 'V1e', a: 'S6_SAL_POLIZA', b: 'S6_HEC_AMPLIACION', type: 'Hecho distinto', severity: 'media', desc: 'Salvador dice que la ampliación fue idea del agente; el agente dice que se la pidió Salvador.' },
-        { id: 'V1f', a: 'S6_PIL_NODORMIA', b: 'F6_RONDAS', type: 'Hecho distinto', severity: 'baja', desc: 'Pilar dice que Gabriel nunca paraba en el turno; tras fichar en el despacho a las 02:05 no hay más fichajes.' }
+        { id: 'V1f', a: 'S6_PIL_NODORMIA', b: 'F6_RONDAS', type: 'Hecho distinto', severity: 'baja', desc: 'Pilar dice que Gabriel nunca paraba en el turno; tras fichar en el despacho a las 02:05 no hay más fichajes.' },
+        { id: 'V1g', a: 'S6_SAL_REPARAR', b: 'F6_REG_SAL_ALQUILER', type: 'Hecho distinto', severity: 'media', desc: 'Salvador dice que llevó las máquinas a reparar a casa de un amigo; en su casa está el contrato de alquiler, a su nombre, de una nave en Vila-real.' }
       ],
       truth: {
         culprit: 'salvador',
@@ -598,7 +655,16 @@ E0.cases.push({
         S6_SAL_ADMITE: { kind: 'statement', text: 'Salvador admite que vio la llamada perdida de Gabriel de las 02:41 y que lo ocultó por vergüenza de no haberla cogido.', time: '02:41', person: 'salvador', source: 'declaración', tags: ['llamada'] },
         S6_AND_LUZ: { kind: 'statement', text: 'Andrés dice que el corte de la grabación se debe a que se le fue la luz.', person: 'andres', place: 'finca', source: 'declaración', tags: ['camara'] },
         S6_AND_HIJO: { kind: 'statement', text: 'Andrés admite que llamó a su hijo a las 02:57; dice que vio el resplandor y se asustó.', time: '02:57', person: 'andres', place: 'finca', source: 'declaración', tags: ['llamada'] },
-        S6_AND_ABOGADO: { kind: 'statement', text: 'Andrés se niega a seguir declarando sin abogado al conocer el análisis de la pila de palés.', person: 'andres', source: 'declaración', tags: [] }
+        S6_AND_ABOGADO: { kind: 'statement', text: 'Andrés se niega a seguir declarando sin abogado al conocer el análisis de la pila de palés.', person: 'andres', source: 'declaración', tags: [] },
+        F6_REG_AND_ALMACEN: { text: 'Registro en la finca de Andrés: en el almacén, junto al depósito de gasóleo agrícola, una garrafa de 5 litros vacía que huele a gasóleo, con restos de colorante rojo, y unos alicates de corte con restos de alambre galvanizado del mismo calibre que la valla.', person: 'andres', place: 'finca', source: 'registro', tags: ['objeto', 'acceso'] },
+        F6_REG_AND_CAMARA: { text: 'Registro en la finca de Andrés: el grabador de su cámara está en el almacén, enchufado a una regleta con interruptor, y no tiene batería: solo deja de grabar si se desenchufa o se apaga la regleta. La instalación eléctrica funciona con normalidad.', person: 'andres', place: 'finca', source: 'registro', tags: ['camara'] },
+        F6_REG_SAL_GASOLEO: { text: 'Registro en casa de Salvador: en el garaje, una garrafa de gasóleo agrícola de 20 litros a medias, de la cooperativa de Betxí, y la copia de la póliza ampliada con el correo del agente que proponía la ampliación.', person: 'salvador', place: 'onda', source: 'registro', tags: ['objeto', 'seguro'] }
+      },
+      planted: [],
+      lineups: [],
+      searches: {
+        andres: { place: 'la finca y el almacén de Andrés Peñarroja', facts: ['F6_REG_AND_ALMACEN', 'F6_REG_AND_CAMARA'] },
+        salvador: { place: 'el domicilio de Salvador Ferrús en Onda', facts: ['F6_REG_SAL_GASOLEO'] }
       },
       answers: {
         salvador: {
@@ -707,7 +773,19 @@ E0.cases.push({
         S6_HEC_AMPLIACION: { kind: 'statement', text: 'Héctor declara que fue él quien propuso a Salvador en junio ampliar la póliza porque estaban muy por debajo del valor real.', person: 'hector', source: 'declaración', tags: ['seguro'] },
         S6_PIL_RARO: { kind: 'statement', text: 'Pilar declara que Gabriel le había contado que faltaban herramientas y chapa en el taller y que sospechaba de alguien de dentro, sin decirle de quién.', person: 'pilar', source: 'testigo', tags: ['testigo'] },
         S6_OSC_ARDIENDO: { kind: 'statement', text: 'Óscar admite que fue a la nave de madrugada a por unas herramientas suyas, pero dice que cuando llegó ya estaba ardiendo y que huyó sin avisar por miedo.', time: '02:35', person: 'oscar', place: 'camino', source: 'declaración', tags: ['coartada'] },
-        S6_OSC_ABOGADO: { kind: 'statement', text: 'Óscar se niega a seguir declarando sin abogado al conocer la autopsia.', person: 'oscar', source: 'declaración', tags: [] }
+        S6_OSC_ABOGADO: { kind: 'statement', text: 'Óscar se niega a seguir declarando sin abogado al conocer la autopsia.', person: 'oscar', source: 'declaración', tags: [] },
+        F6_REG_OSC_TRASTERO: { text: 'Registro en casa de Óscar: en el trastero, once herramientas eléctricas con el número de inventario de Muebles Ferrús raspado y dos rollos de chapa de roble.', person: 'oscar', place: 'onda', source: 'registro', tags: ['objeto'] },
+        F6_REG_OSC_SARGENTO: { text: 'Registro en casa de Óscar: en el maletero de su coche, un sargento de carpintero metálico de 60 cm recién lavado con lejía. En la rosca quedan restos que se envían al laboratorio.', person: 'oscar', place: 'onda', source: 'registro', tags: ['objeto', 'golpe'] },
+        F6_REG_SAL_GASOLEO: { text: 'Registro en casa de Salvador: en el garaje, una garrafa de gasóleo agrícola de 20 litros a medias, de la cooperativa de Betxí, y la copia de la póliza ampliada con el correo del agente que proponía la ampliación.', person: 'salvador', place: 'onda', source: 'registro', tags: ['objeto', 'seguro'] }
+      },
+      planted: [
+        { ev: 'N05', label: 'bidón de disolvente volcado para que el fuego pareciera un accidente de la cabina', tells: ['F6_BIDON_TOX', 'F6_ORIGEN'] }
+      ],
+      lineups: [],
+      searches: {
+        oscar: { place: 'el domicilio y el trastero de Óscar Llorens en Onda', facts: ['F6_REG_OSC_TRASTERO', 'F6_REG_OSC_SARGENTO'] },
+        andres: { place: 'la finca y el almacén de Andrés Peñarroja', facts: ['F6_REG_AND_ALMACEN'] },
+        salvador: { place: 'el domicilio de Salvador Ferrús en Onda', facts: ['F6_REG_SAL_GASOLEO'] }
       },
       answers: {
         salvador: {
@@ -758,7 +836,8 @@ E0.cases.push({
         { id: 'V3c', a: 'S6_OSC_ARDIENDO', b: 'F6_CV_CLAVE', type: 'Secuencia incompatible', severity: 'alta', desc: 'Óscar dice que llegó con la nave ya ardiendo; alguien entra por el hueco a la 01:19 y el resplandor no aparece hasta las 02:33.' },
         { id: 'V3d', a: 'S6_OSC_ARDIENDO', b: 'F6_AUTOPSIA', type: 'Secuencia incompatible', severity: 'alta', desc: 'Óscar dice que el fuego ya había empezado al llegar; Gabriel murió de un golpe entre la 01:25 y las 02:00, sin respirar humo.' },
         { id: 'V3e', a: 'S6_OSC_VENTAS', b: 'F6_INVENTARIO', type: 'Hecho distinto', severity: 'media', desc: 'Óscar dice que las herramientas que vende son suyas; del taller faltan unas veinte herramientas eléctricas y cuatro rollos de chapa, de los mismos modelos.' },
-        { id: 'V3f', a: 'S6_OSC_HERRAMIENTAS', b: 'F6_TG_FALTAS', type: 'Hecho distinto', severity: 'media', desc: 'Óscar dice que no faltaba ninguna herramienta; Gabriel fotografió la estantería con huecos el 12 de octubre.' }
+        { id: 'V3f', a: 'S6_OSC_HERRAMIENTAS', b: 'F6_TG_FALTAS', type: 'Hecho distinto', severity: 'media', desc: 'Óscar dice que no faltaba ninguna herramienta; Gabriel fotografió la estantería con huecos el 12 de octubre.' },
+        { id: 'V3g', a: 'S6_OSC_VENTAS', b: 'F6_REG_OSC_TRASTERO', type: 'Hecho distinto', severity: 'media', desc: 'Óscar dice que las herramientas que vende son suyas, de antes; en su trastero hay herramientas del taller con el número de inventario raspado.' }
       ],
       truth: {
         culprit: 'oscar',
