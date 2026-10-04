@@ -16,7 +16,8 @@
       cloth: pick(['#2f3a4a', '#4a2f2f', '#2f4a3c', '#3c3c46', '#4a432f', '#1f2833'], 5),
       style: (h >>> 7) % 4,
       glasses: (h >>> 9) % 3 === 0,
-      beard: (h >>> 11) % 5 === 0
+      beard: (h >>> 11) % 5 === 0,
+      iris: ['#4a2e1a', '#6b4423', '#3d2b1f', '#5b6b3a', '#4f6b7a', '#6b7a82', '#2a1d14'][h % 7]
     };
   }
   window.E0 = window.E0 || {};
@@ -28,7 +29,7 @@
   /* ---------- Piezas ---------- */
   const mats = {};
   function mat(color, opts) {
-    const k = color + JSON.stringify(opts || {});
+    const k = color + JSON.stringify(Object.assign({}, opts || {}, { map: opts && opts.map ? opts.map.uuid : undefined }));
     if (!mats[k]) mats[k] = new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.8, metalness: 0.05 }, opts || {}));
     return mats[k];
   }
@@ -122,14 +123,14 @@
     chair(1.0, Math.PI);
 
     // luces
-    scene.add(new THREE.HemisphereLight('#8aa0b8', '#1c1712', 0.38));
+    scene.add(new THREE.HemisphereLight('#8aa0b8', '#1c1712', 0.3));
     const lamp = new THREE.Group();
     lamp.position.set(0, 2.9, 0.12);
     lamp.add(at(cyl(0.006, 0.006, 0.95, '#111', 6), 0, -0.47, 0));
     const shade = at(cyl(0.07, 0.3, 0.2, '#1f2a24', 24, { metalness: 0.5, roughness: 0.5, side: THREE.DoubleSide }), 0, -1.0, 0);
     shade.castShadow = false; lamp.add(shade);
     lamp.add(at(sph(0.06, '#fff4d6', { emissive: '#ffe9b0', emissiveIntensity: 2 }), 0, -1.08, 0));
-    const spot = new THREE.SpotLight('#ffe7bd', 1.25, 6, 0.8, 0.6, 1.4);
+    const spot = new THREE.SpotLight('#ffe7bd', 1.25, 6, 0.8, 0.6, 1.4); spot.userData.base = 1.25;
     spot.position.set(0, -1.05, 0);
     spot.castShadow = true; spot.shadow.mapSize.set(1024, 1024); spot.shadow.bias = -0.0005;
     lamp.add(spot);
@@ -137,9 +138,20 @@
     spot.target.position.set(0, 0.75, -0.2); scene.add(spot.target);
     const fill = new THREE.PointLight('#5f86a8', 0.35, 6); fill.position.set(-2, 1.6, 1.5); scene.add(fill);
     // luz suave desde el lado de quien interroga, para que se lea la cara
-    const key = new THREE.DirectionalLight('#dfe6ee', 0.5); key.position.set(0.6, 1.9, 2.4); key.target.position.set(0, 1.4, -0.8);
+    const key = new THREE.DirectionalLight('#dfe6ee', 0.26); key.position.set(0.6, 1.9, 2.4); key.target.position.set(0, 1.4, -0.8);
     scene.add(key, key.target);
-    return { scene, lamp, recLed, camLed, mh };
+    return { scene, lamp, recLed, camLed, mh, spot };
+  }
+
+  /* Textura de mechones para el pelo. */
+  const hairTex = {};
+  function hairTexture(col) {
+    if (hairTex[col]) return hairTex[col];
+    hairTex[col] = canvasTex(256, 128, (g, w, h) => {
+      g.fillStyle = col; g.fillRect(0, 0, w, h);
+      for (let i = 0; i < 1400; i++) { const x = Math.random() * w, y = Math.random() * h; g.strokeStyle = 'rgba(' + (Math.random() < 0.5 ? '0,0,0' : '255,255,255') + ',' + (0.05 + Math.random() * 0.1) + ')'; g.lineWidth = 0.8; g.beginPath(); g.moveTo(x, y); g.lineTo(x + (Math.random() - 0.5) * 6, y + 6 + Math.random() * 12); g.stroke(); }
+    });
+    return hairTex[col];
   }
 
   /* ---------- Persona sentada ---------- */
@@ -167,30 +179,25 @@
     const handL = at(sph(0.045, A.skin), -0.11, 0.8, 0.5), handR = at(sph(0.045, A.skin), 0.11, 0.8, 0.5);
     handL.scale.set(1, 0.6, 1.3); handR.scale.set(1, 0.6, 1.3);
     arms.add(handL, handR);
-    // cabeza
-    const head = new THREE.Group(); head.position.set(0, 1.47, 0.01); torso.add(head);
-    const skull = sph(0.13, A.skin); skull.scale.set(0.9, 1.08, 0.95); head.add(skull);
-    [-1, 1].forEach(s => { const ear = sph(0.025, A.skin); ear.scale.set(0.5, 1, 0.8); head.add(at(ear, s * 0.118, 0, 0)); });
-    const eyes = new THREE.Group(); head.add(eyes);
-    [-1, 1].forEach(s => {
-      eyes.add(at(sph(0.02, '#f3efe8', { roughness: 0.3 }), s * 0.042, 0.018, 0.105));
-      eyes.add(at(sph(0.011, '#1a1612', { roughness: 0.2 }), s * 0.042, 0.018, 0.122));
-      const brow = at(box(0.05, 0.009, 0.012, A.old ? '#8f8a82' : A.hair), s * 0.044, 0.056, 0.115);
-      brow.rotation.z = -s * 0.08; head.add(brow);
-    });
-    const nose = sph(0.02, A.skin); nose.scale.set(0.8, 1.2, 1); head.add(at(nose, 0, -0.012, 0.125));
-    const mouth = at(box(0.052, 0.008, 0.012, '#5b2f2a'), 0, -0.058, 0.122); head.add(mouth);
+    // cabeza (cara modelada: js/face3d.js)
+    const F = E0.face3d.build(A, H, mat);
+    const head = F.head; head.position.set(0, 1.47, 0.01); torso.add(head);
     // pelo
-    const hairMat = { roughness: 0.95 };
+    const hairMat = { roughness: 1, map: hairTexture(A.hair) };
     const capLen = [0.42, 0.5, 0.46, 0.36][A.style];
-    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.138, 26, 16, 0, Math.PI * 2, 0, Math.PI * capLen), mat(A.hair, hairMat));
-    cap.scale.set(0.92, 1.08, 0.98); cap.rotation.x = -0.32; cap.castShadow = true; head.add(cap);
-    if (A.style === 1) { const back = box(0.24, 0.32, 0.06, A.hair, hairMat); head.add(at(back, 0, -0.12, -0.1)); }
-    if (A.style === 2) [-1, 1].forEach(s => head.add(at(box(0.02, 0.09, 0.08, A.hair, hairMat), s * 0.118, 0.02, -0.01)));
-    if (A.beard) {
-      const beard = new THREE.Mesh(new THREE.SphereGeometry(0.136, 22, 12, Math.PI * 0.1, Math.PI * 0.8, Math.PI * 0.64, Math.PI * 0.24), mat(A.hair, hairMat));
-      beard.scale.set(0.92, 1.08, 0.97); head.add(beard);
+    // casquete con la línea del pelo irregular (no un corte recto)
+    const capGeo = new THREE.SphereGeometry(0.144, 40, 20, 0, Math.PI * 2, 0, Math.PI * (capLen + 0.1));
+    const cp = capGeo.attributes.position, hr = (A.h >>> 3) % 97;
+    for (let i = 0; i < cp.count; i++) {
+      const x = cp.getX(i), y = cp.getY(i), z = cp.getZ(i);
+      const edge = Math.max(0, 1 - (y / 0.144 - Math.cos(Math.PI * (capLen + 0.1))) / 0.3);
+      if (edge > 0) { const a = Math.atan2(x, z); cp.setY(i, y + edge * 0.006 * (Math.sin(a * 7 + hr) + Math.sin(a * 13 + hr * 2) * 0.5)); }
     }
+    capGeo.computeVertexNormals();
+    const cap = new THREE.Mesh(capGeo, mat(A.hair, hairMat));
+    cap.scale.set(0.85, 1.06, 0.98); cap.rotation.x = -0.48; cap.position.set(0, 0.004, -0.006); cap.castShadow = true; head.add(cap);
+    if (A.style === 1) { const back = box(0.24, 0.32, 0.06, A.hair, hairMat); head.add(at(back, 0, -0.12, -0.1)); }
+    if (A.style === 2) [-1, 1].forEach(s => head.add(at(box(0.01, 0.045, 0.022, A.hair, hairMat), s * 0.104, -0.002, 0.03)));
     if (A.glasses) {
       const gm = { metalness: 0.6, roughness: 0.3 };
       [-1, 1].forEach(s => { const r = new THREE.Mesh(new THREE.TorusGeometry(0.03, 0.0045, 6, 20), mat('#1a1d22', gm)); head.add(at(r, s * 0.044, 0.018, 0.128)); });
@@ -198,7 +205,7 @@
     }
     const fear = (H.miedo || 50) / 100, self = (H.autocontrol || 50) / 100, conf = (H.confianza || 50) / 100;
     return {
-      g, torso, head, eyes, mouth, handR, handL,
+      g, torso, head, F, handR, handL,
       traits: { fear, self, conf },
       breath: 1.5 + fear * 1.6,
       sway: 0.03 + (1 - self) * 0.07,
@@ -211,7 +218,8 @@
   /* ---------- Cámara ---------- */
   function camUpdate() {
     const o = RR.orbit;
-    const t = new THREE.Vector3(0, 1.12, -0.6);
+    const zoom = Math.max(0, Math.min(1, (2.35 - o.r) / 1.6));
+    const t = new THREE.Vector3(0, 1.12 + zoom * 0.34, -0.6 - zoom * 0.18);
     RR.camera.position.set(t.x + o.r * Math.sin(o.yaw) * Math.cos(o.pitch), t.y + o.r * Math.sin(o.pitch), t.z + o.r * Math.cos(o.yaw) * Math.cos(o.pitch));
     RR.camera.lookAt(t);
   }
@@ -225,7 +233,7 @@
     });
     const up = () => { down = null; };
     el.addEventListener('pointerup', up); el.addEventListener('pointercancel', up);
-    el.addEventListener('wheel', e => { e.preventDefault(); RR.orbit.r = Math.max(1.3, Math.min(3.6, RR.orbit.r * (e.deltaY > 0 ? 1.08 : 0.92))); }, { passive: false });
+    el.addEventListener('wheel', e => { e.preventDefault(); RR.orbit.r = Math.max(0.62, Math.min(3.6, RR.orbit.r * (e.deltaY > 0 ? 1.08 : 0.92))); }, { passive: false });
   }
 
   /* ---------- Animación ---------- */
@@ -257,16 +265,34 @@
       yaw += (1 - T.self) * 0.18 * k;
     }
     P.torso.rotation.x = lean;
-    // hablar
+    // hablar: la mandíbula baja y se ve el interior de la boca
+    const F = P.F;
     const talking = RR.talkUntil > s;
-    if (talking) { pitch += Math.sin(s * 5.5) * 0.025; P.mouth.scale.y = 1 + Math.abs(Math.sin(s * 13)) * 3.2 * (0.6 + 0.4 * Math.sin(s * 3.1)); }
-    else P.mouth.scale.y += (1 - P.mouth.scale.y) * 0.3;
+    const open = talking ? Math.abs(Math.sin(s * 13)) * (0.6 + 0.4 * Math.sin(s * 3.1)) : 0;
+    if (talking) pitch += Math.sin(s * 5.5) * 0.02;
+    F.jaw.position.y += (-open * 0.007 - F.jaw.position.y) * 0.5;
+    F.inside.scale.y += (0.05 + open * 1.3 - F.inside.scale.y) * 0.5;
     P.head.rotation.y = yaw; P.head.rotation.x = pitch;
-    // parpadeo
+    // mirada fija: con mucha tensión, tras una confrontación, deja de parpadear y te clava los ojos
+    const stare = RR.react > 0 && tn > 0.55;
+    // los ojos siguen a la cámara (salvo cuando aparta la mirada)
+    const cam = P.head.worldToLocal(RR.camera.position.clone());
+    let ey = Math.atan2(cam.x, cam.z), ex = -Math.atan2(cam.y - 0.017, Math.hypot(cam.x, cam.z));
+    if (P.avertT > 0 && !stare) { ey += 0.45; ex += 0.12; }
+    ey = Math.max(-0.5, Math.min(0.5, ey)); ex = Math.max(-0.35, Math.min(0.35, ex));
+    F.eyes.forEach(e => { e.rotation.y += (ey - e.rotation.y) * 0.25; e.rotation.x += (ex - e.rotation.x) * 0.25; });
+    F.pupils.forEach(pp => { const k = 1 + tn * 0.9 + (stare ? 0.3 : 0); pp.scale.setScalar(pp.scale.x + (k - pp.scale.x) * 0.1); });
+    // cejas: se fruncen con la tensión y se levantan en la mirada fija
+    F.brows.forEach(b => { const want = stare ? -b.s * 0.18 : b.s * 0.28 * Math.min(1, tn * 1.4); b.piv.rotation.z += (want - b.piv.rotation.z) * 0.15; b.piv.position.y += ((stare ? 0.054 : 0.048) - b.piv.position.y) * 0.15; });
+    // sudor: la piel brilla más cuanto más tensa está
+    F.skinMat.roughness = 0.72 - tn * 0.38;
+    // parpadeo con párpados
     P.nextBlink -= dt;
-    if (P.nextBlink <= 0) { P.blinkT = 0.13; P.nextBlink = (1.2 + Math.random() * 3.5) * (1.3 - T.fear * 0.6); }
+    if (P.nextBlink <= 0 && !stare) { P.blinkT = 0.14; P.nextBlink = (1.2 + Math.random() * 3.5) * (1.3 - T.fear * 0.6); }
     if (P.blinkT > 0) P.blinkT -= dt;
-    P.eyes.scale.y = P.blinkT > 0 ? 0.12 : 1;
+    const lid = P.blinkT > 0 ? 0 : stare ? 1 : F.lidOpen + tn * 0.15;
+    P.lidNow = P.lidNow == null ? lid : P.lidNow + (lid - P.lidNow) * (P.blinkT > 0 ? 0.7 : 0.25);
+    E0.face3d.setLids(F, P.lidNow);
     // dedos inquietos
     if (P.fidget || tn > 0.55) { const burst = Math.sin(s * 0.7) > 0.3; P.handR.position.y = 0.8 + (burst ? Math.abs(Math.sin(s * 9)) * 0.012 : 0); }
     // prueba sobre la mesa
@@ -296,6 +322,11 @@
     RR.room.recLed.material.emissiveIntensity = on ? 1.4 : 0.1;
     RR.room.camLed.material.emissiveIntensity = Math.sin(s * 1.3) > 0 ? 1.2 : 0.2;
     RR.room.mh.rotation.z = -0.6 - s * 0.002;
+    // la lámpara falla de vez en cuando (más a menudo cuanto más tensa está la sala)
+    const sp = RR.room.spot;
+    RR.nextFlicker = RR.nextFlicker == null ? s + 6 : RR.nextFlicker;
+    if (s > RR.nextFlicker) { RR.flickerUntil = s + 0.25 + Math.random() * 0.45; RR.nextFlicker = s + (14 - (RR.tensionNow || 0) * 9) * (0.6 + Math.random()); }
+    sp.intensity = RR.flickerUntil > s ? sp.userData.base * (Math.random() < 0.5 ? 0.15 : 0.9) : sp.userData.base;
     animate(s, dt);
     camUpdate();
     RR.renderer.render(RR.scene, RR.camera);

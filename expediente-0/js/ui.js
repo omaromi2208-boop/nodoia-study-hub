@@ -20,28 +20,55 @@
   const icon = k => '<svg viewBox="0 0 24 24" aria-hidden="true">' + ICONS[k] + '</svg>';
 
   /* Retrato procedural: rasgos derivados del identificador de la persona (estable entre partidas). */
+  /* Retrato tipo ficha policial: pared con marcas de altura, luz dura lateral, ojos con
+     iris, párpados y ojeras. Rasgos fijos derivados del identificador de la persona. */
+  function shadeHex(hex, f) { const n = parseInt(hex.slice(1), 16); return 'rgb(' + [n >> 16, (n >> 8) & 255, n & 255].map(v => Math.max(0, Math.min(255, Math.round(v * f)))).join(',') + ')'; }
   function portrait(p, size) {
     const A = E0.appearance(p);
     const { skin, hair, cloth, style, glasses, beard, old } = A;
+    const H = p.hidden || {};
+    const id = 'pt' + (A.h % 100000);
+    const fear = (H.miedo || 50) / 100;
+    const jaw = 14 + (A.h >>> 4) % 5;               // anchura de la mandíbula
+    const lidY = 46.6 - ((H.confianza || 50) / 100) * 0.8;
     const hairSvg = [
-      '<path d="M30 44c0-14 9-22 20-22s20 8 20 22c-3-6-9-10-20-10s-17 4-20 10z" fill="' + hair + '"/>',
-      '<path d="M28 50c-2-18 8-28 22-28s24 10 22 28c-1 10-2 22-4 30h-6c2-10 3-20 2-30-6-6-22-6-28 0-1 10 0 20 2 30h-6c-2-8-3-20-4-30z" fill="' + hair + '"/>',
-      '<path d="M31 42c1-12 9-19 19-19 11 0 19 7 19 19-5-5-12-7-19-7s-14 2-19 7z" fill="' + hair + '"/><path d="M31 42c-1 4-1 8 0 11M69 42c1 4 1 8 0 11" stroke="' + hair + '" stroke-width="3"/>',
-      '<path d="M33 40c3-10 10-15 17-15 9 0 15 5 17 15-4-3-10-4-17-4s-13 1-17 4z" fill="' + hair + '" opacity=".85"/>'
+      '<path d="M31 45c-1-15 8-24 19-24s21 8 19 24c-2-7-8-12-19-12s-16 5-19 12z" fill="' + hair + '"/>',
+      '<path d="M29 50c-3-19 7-29 21-29s25 10 21 29c-1 11-2 22-5 31h-5c3-11 3-21 2-31-6-7-20-7-26 0-1 10-1 20 2 31h-5c-3-9-4-20-5-31z" fill="' + hair + '"/>',
+      '<path d="M32 43c1-13 9-20 18-20 11 0 19 7 19 20-5-6-12-8-19-8s-14 2-18 8z" fill="' + hair + '"/><path d="M32 43c-1 4-1 9 0 12M68 43c1 4 1 9 0 12" stroke="' + hair + '" stroke-width="2.4"/>',
+      '<path d="M34 40c3-10 9-14 16-14 8 0 14 4 16 14-4-4-9-5-16-5s-12 1-16 5z" fill="' + hair + '" opacity=".8"/>'
     ][style];
+    const eye = x => '<g>' +
+      '<path d="M' + (x - 5) + ' 48c2-2.6 8-2.6 10 0c-2 2.2-8 2.2-10 0z" fill="#e9e1d4"/>' +
+      '<circle cx="' + x + '" cy="48" r="2.3" fill="' + (A.iris || '#4a2e1a') + '"/><circle cx="' + x + '" cy="48" r="' + (1 + fear * 0.5).toFixed(2) + '" fill="#080808"/>' +
+      '<circle cx="' + (x - 0.8) + '" cy="47.2" r=".55" fill="#fff" opacity=".85"/>' +
+      '<path d="M' + (x - 5.4) + ' 48c2-3.4 8.8-3.4 10.8 0" fill="none" stroke="' + shadeHex(skin, 0.45) + '" stroke-width="1.1"/>' +
+      '<path d="M' + (x - 5.2) + ' ' + lidY + 'c2-2.4 8.4-2.4 10.4 0v-3h-10.4z" fill="' + shadeHex(skin, 0.92) + '"/>' +
+      '<path d="M' + (x - 4.5) + ' 50.6c2 1.6 7 1.6 9 0" fill="none" stroke="' + shadeHex(skin, 0.6) + '" stroke-width="' + (0.6 + fear * 0.6).toFixed(2) + '" opacity=".7"/>' +
+      '</g>';
     return '<svg class="portrait" width="' + size + '" height="' + size + '" viewBox="0 0 100 100" role="img" aria-label="Retrato de ' + esc(p.name) + '">' +
-      '<circle cx="50" cy="50" r="50" fill="var(--panel-2)"/>' +
-      '<path d="M16 100c2-18 16-26 34-26s32 8 34 26z" fill="' + cloth + '"/>' +
-      '<rect x="44" y="62" width="12" height="12" rx="4" fill="' + skin + '"/>' +
-      '<ellipse cx="50" cy="48" rx="18" ry="21" fill="' + skin + '"/>' +
-      (beard ? '<path d="M34 52c2 14 8 19 16 19s14-5 16-19c-4 6-10 8-16 8s-12-2-16-8z" fill="' + hair + '" opacity=".9"/>' : '') +
+      '<defs><radialGradient id="' + id + 's" cx="38%" cy="36%" r="70%"><stop offset="0" stop-color="' + shadeHex(skin, 1.12) + '"/><stop offset=".65" stop-color="' + skin + '"/><stop offset="1" stop-color="' + shadeHex(skin, 0.62) + '"/></radialGradient>' +
+      '<linearGradient id="' + id + 'l" x1="0" x2="1"><stop offset=".45" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".42"/></linearGradient>' +
+      '<clipPath id="' + id + 'c"><rect width="100" height="100" rx="12"/></clipPath>' +
+      '<filter id="' + id + 'f"><feColorMatrix type="saturate" values=".55"/></filter></defs>' +
+      '<g clip-path="url(#' + id + 'c)" filter="url(#' + id + 'f)">' +
+      '<rect width="100" height="100" fill="#5d6166"/>' +
+      [18, 34, 50, 66, 82].map((y, k) => '<path d="M0 ' + y + 'h100" stroke="#7b8086" stroke-width=".6"/><text x="3" y="' + (y - 1.5) + '" font-size="5" fill="#9aa0a6" font-family="monospace">' + (190 - k * 10) + '</text>').join('') +
+      '<g transform="translate(50 58) scale(1.24) translate(-50 -52)">' +
+      '<path d="M14 100c2-17 15-25 36-25s34 8 36 25z" fill="' + cloth + '"/>' +
+      '<path d="M43 63h14v14c-4 3-10 3-14 0z" fill="' + shadeHex(skin, 0.7) + '"/>' +
+      '<ellipse cx="' + (50 - jaw - 3.5) + '" cy="50" rx="2.8" ry="4.6" fill="' + shadeHex(skin, 0.85) + '"/><ellipse cx="' + (50 + jaw + 3.5) + '" cy="50" rx="2.8" ry="4.6" fill="' + shadeHex(skin, 0.75) + '"/>' +
+      '<path d="M50 25c11 0 19 8 19 21 0 6-1 10-' + (19 - jaw) + ' 15-4 6-10 10-' + (jaw - 9) + ' 11h-' + (2 * (jaw - 9) + 2) + 'c-' + (jaw - 9) + '-1-' + (jaw - 7) + '-5-' + (jaw - 5) + '-11-' + (18 - jaw) + '-5-' + (19 - jaw) + '-9-' + (19 - jaw) + '-15 0-13 8-21 19-21z" fill="url(#' + id + 's)"/>' +
+      (beard ? '<path d="M33 52c1 12 8 20 17 20s16-8 17-20c-3 5-6 8-10 8-2-2-5-3-7-3s-5 1-7 3c-4 0-7-3-10-8z" fill="' + hair + '" opacity=".88"/>' : '') +
+      eye(43) + eye(57) +
+      '<path d="M37.5 42.5c2-1.6 6-2 9-1M53.5 41.5c3-1 7-.6 9 1" stroke="' + (old ? '#8f8a82' : shadeHex(hair, 0.9)) + '" stroke-width="' + (1.8 + ((A.h >>> 5) % 3) * 0.4) + '" fill="none" stroke-linecap="round"/>' +
+      '<path d="M50 46c-.6 4-1.6 7-3.2 9 1.4 1 4.8 1 6.4 0" fill="none" stroke="' + shadeHex(skin, 0.6) + '" stroke-width="1.1" stroke-linecap="round"/>' +
+      '<path d="M44.5 61.2c3.6-1.2 7.4-1.2 11 0" stroke="' + shadeHex(skin, 0.45) + '" stroke-width="1.3" fill="none" stroke-linecap="round"/><path d="M45.5 61.6c3 1.8 6 1.8 9 0" fill="' + shadeHex(skin, 0.68) + '"/>' +
+      (old ? '<path d="M40 54c1 3 2 5 4 7M60 54c-1 3-2 5-4 7M41 33c6-1.5 12-1.5 18 0M42 36c5-1 11-1 16 0" stroke="#00000030" stroke-width=".8" fill="none"/>' : '') +
       hairSvg +
-      '<ellipse cx="43" cy="48" rx="2.2" ry="2.6" fill="#1a1a1a"/><ellipse cx="57" cy="48" rx="2.2" ry="2.6" fill="#1a1a1a"/>' +
-      '<path d="M39 42.5h8M53 42.5h8" stroke="' + (old ? '#8f8a82' : hair) + '" stroke-width="2" stroke-linecap="round"/>' +
-      '<path d="M44 59c4 2 8 2 12 0" stroke="#5b2f2a" stroke-width="1.8" fill="none" stroke-linecap="round"/>' +
-      (glasses ? '<g fill="none" stroke="#1a1d22" stroke-width="1.6"><circle cx="43" cy="48" r="6"/><circle cx="57" cy="48" r="6"/><path d="M49 48h2"/></g>' : '') +
-      (old ? '<path d="M38 54c2 1 4 1 6 0M56 54c2 1 4 1 6 0" stroke="#00000033" stroke-width="1"/>' : '') +
-      '</svg>';
+      (glasses ? '<g fill="none" stroke="#15181c" stroke-width="1.4"><rect x="37" y="44" width="12" height="8" rx="2.5"/><rect x="51" y="44" width="12" height="8" rx="2.5"/><path d="M49 47.5h2"/></g>' : '') +
+      '</g>' +
+      '<rect width="100" height="100" fill="url(#' + id + 'l)"/>' +
+      '</g></svg>';
   }
 
   function rankIndex(xp) {
