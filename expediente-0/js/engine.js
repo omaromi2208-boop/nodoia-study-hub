@@ -442,13 +442,13 @@
     const v = c.victim && c.victim.id ? [{ id: c.victim.id, name: c.victim.name, role: 'Víctima (necrorreseña)' }] : [];
     return v.concat(c.people.map(p => ({ id: p.id, name: p.name, role: p.role })), (c.extraPersons || []).map(p => ({ id: p.id, name: p.name, role: 'Víctima (necrorreseña)' })));
   }
-  function gateReveal(c, cs, ids) {
+  function gateReveal(c, cs, ids, revealed) {
     const direct = [], pending = [];
     (ids || []).forEach(id => {
       const P = printsOf(c, id);
       if (!P.length || known(cs, id)) { direct.push(id); return; }
       cs.latents[id] = cs.latents[id] || { items: {} };
-      P.forEach((_, i) => { cs.latents[id].items[i] = cs.latents[id].items[i] || { status: 'pendiente', pick: null, pairs: [], bad: {}, match: null }; });
+      P.forEach((_, i) => { cs.latents[id].items[i] = cs.latents[id].items[i] || { status: 'pendiente', pick: null, pairs: [], bad: {}, match: null, revealed: revealed !== false }; });
       pending.push(id);
     });
     return { fresh: discover(cs, direct), pending };

@@ -514,6 +514,19 @@
           const k = b.cand + '#' + i, out = (it.bad[k] || 0) >= PR.MAX_BAD;
           return '<button class="finger' + (out ? ' out' : '') + '" data-act="bench-finger" data-i="' + i + '" aria-pressed="' + (b.fi === i) + '" title="' + esc(f) + '"><canvas width="72" height="72" data-thumb="' + b.cand + '|' + i + '"></canvas><small>' + (i + 1) + ' · ' + esc(PR.TYPES[PR.finger(b.cand, i).type].replace('Presilla ', 'P. ')) + '</small></button>';
         }).join('') + '</div>' : '<p class="muted" style="font-size:.86rem">Elige una ficha. Empieza por el tipo de dibujo: descarta los dedos que no coinciden.</p>') + '</div>';
+      if (it.status === 'pendiente' && it.revealed === false) {
+        const lv = cs.lastView.labBench || { powder: 'negro', light: false };
+        const ev = c.evidence.find(x => x.lab && Object.values(x.lab).some(a => a.reveals.includes(b.fid)));
+        const surf = E0.lab3d && ev ? E0.lab3d.surfaceFor(ev).name : 'la superficie';
+        const has3d = E0.lab3d && E0.lab3d.available();
+        bench = '<div class="labbench"><div class="sub">Mesa de revelado · ' + esc(L.label) + ' · superficie de ' + esc(surf) + '</div>' +
+          (has3d ? '<div class="lab3d" id="lab3d" aria-label="Mesa de revelado en 3D"><div class="s3-hint">Arrastra la brocha sobre la superficie · fuera de ella, gira la vista</div></div>' : '<p class="muted">Tu navegador no permite 3D: el revelado se hace automáticamente.</p>') +
+          '<div class="lab-tools"><div class="row"><span class="eyebrow">Polvo</span><button class="btn small" data-act="lab-powder" data-id="negro" aria-pressed="' + (lv.powder === 'negro') + '">Negro</button><button class="btn small" data-act="lab-powder" data-id="aluminio" aria-pressed="' + (lv.powder === 'aluminio') + '">Aluminio</button></div>' +
+          '<div class="row"><button class="btn small" data-act="lab-light" aria-pressed="' + !!lv.light + '">' + (lv.light ? 'Apagar luz rasante' : 'Encender luz rasante') + '</button><button class="btn small ghost" data-act="lab-clean">Limpiar</button><button class="btn small primary" data-act="lab-lift">Levantar con cinta</button></div>' +
+          (has3d ? '<div class="bench-stats"><span>Huella revelada <b class="mono" id="lab-cov">0 %</b></span><span>Exceso de polvo <b class="mono" id="lab-smear">0 %</b></span></div>' : '') + '</div>' +
+          '<p class="muted" style="font-size:.86rem">La huella es invisible. Enciende la luz rasante para ver dónde brillan los residuos. Elige el polvo que contraste con la superficie: negro sobre superficies claras y aluminio sobre las oscuras. Pasa la brocha sin insistir demasiado: el exceso empasta las crestas. Con la huella revelada, levántala con cinta.</p>' +
+          '<div class="row"><button class="btn small ghost" data-act="bench-close">Cerrar el banco</button></div></div>';
+      } else
       bench = '<div class="bench">' + fichero +
         '<div class="bench-col"><div class="sub">Latente · ' + esc(L.label) + '</div><canvas class="print-cv" width="256" height="256" data-act="bench-latent" aria-label="Huella latente"></canvas>' +
         '<div class="bench-stats"><span>Dibujo: <b>' + (L.apta ? esc(PR.TYPES[L.F.type]) : 'no determinable') + '</b></span>' +

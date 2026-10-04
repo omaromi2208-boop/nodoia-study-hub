@@ -83,6 +83,7 @@
     if (tr) tr.scrollTop = tr.scrollHeight;
     drawWall();
     drawBench();
+    mountLab();
     drawMapTokens();
     mount3d();
     mountRoom();
@@ -384,7 +385,7 @@
     if (cs.lab[key] || !cs.examined[id]) return;
     if (!spend(cs, EN.costOf('lab', a.cost))) return;
     cs.lab[key] = true;
-    const { fresh, pending } = EN.gateReveal(c, cs, a.reveals);
+    const { fresh, pending } = EN.gateReveal(c, cs, a.reveals, false);
     EN.log(cs, 'lab', { ev: id, kind });
     toast(pending.length ? 'Huellas latentes recogidas: pendientes de cotejo en el banco de lofoscopia.' : 'Resultado de laboratorio recibido.');
     newInfo(fresh);
@@ -451,12 +452,36 @@
       const it = cs.latents[fid].items[i];
       if (it.status !== 'pendiente') return;
       const L = E0.prints.latent(c, fid, i);
+      it.revealed = true;
       if (L.apta) { it.status = 'identificada'; it.match = L.source.pid; } else it.status = 'no_apta';
     });
     EN.log(cs, 'cotejo_auto', { fact: fid });
     toast('Cotejo automático completado.');
     finishLatent(c, cs, fid);
   }
+  /* ---------- Mesa de revelado ---------- */
+  function labView() { const { cs } = curCase(); cs.lastView.labBench = cs.lastView.labBench || { powder: 'negro', light: false }; return cs.lastView.labBench; }
+  function labLift() {
+    const x = benchCtx(); if (!x || x.it.revealed !== false || !guardOpen(x.cs)) return false;
+    if (E0.lab3d && E0.lab3d.available() && document.getElementById('lab3d')) {
+      const M = E0.lab3d.metrics();
+      if (!M.contrastOk) { toast('Con este polvo apenas se distingue sobre esta superficie. Limpia y prueba el otro.', 'warn'); return false; }
+      if (M.smear > 0.3) { toast('Hay demasiado polvo: la huella está empastada. Limpia y vuelve a empezar.', 'warn'); return false; }
+      if (M.coverage < 0.7) { toast('Aún no está revelada: cubre más zona de la huella (' + Math.round(M.coverage * 100) + ' %).', 'warn'); return false; }
+    }
+    x.it.revealed = true;
+    EN.log(x.cs, 'revelado', { fact: x.b.fid });
+    toast('Huella levantada con cinta y digitalizada: lista para el cotejo.');
+  }
+  function mountLab() {
+    const el = document.getElementById('lab3d');
+    if (!el || !E0.lab3d) return;
+    const x = benchCtx(); if (!x) return;
+    const v = labView();
+    const e = x.c.evidence.find(ev => (ev.lab && Object.values(ev.lab).some(a => a.reveals.includes(x.b.fid)))) || { name: '' };
+    E0.lab3d.mount(el, { key: x.c.id + '|' + x.b.fid + '|' + x.b.i, L: x.L, e, powder: v.powder, light: v.light });
+  }
+
   function finishLatent(c, cs, fid) {
     if (EN.settleLatents(c, cs, fid)) {
       toast('Cotejo completo: el resultado se incorpora al expediente.');
@@ -774,7 +799,7 @@
       }
       const def = (e.forensic || {})[tool];
       cs.forensic[key] = def ? 'pos' : 'neg';
-      const gate = def ? EN.gateReveal(c, cs, def.reveals) : { fresh: [], pending: [] };
+      const gate = def ? EN.gateReveal(c, cs, def.reveals, true) : { fresh: [], pending: [] };
       const fresh = gate.fresh;
       EN.log(cs, 'forensic', { ev: id, tool, positive: !!def });
       cs.lastView.fx = { ev: id, tool, pos: !!def };
@@ -791,6 +816,10 @@
     'bench-card': (el, e) => benchCard(el, e),
     'bench-noapta': () => benchNoApta(),
     'bench-auto': el => benchAuto(el.dataset.fid),
+    'lab-powder': el => { labView().powder = el.dataset.id; },
+    'lab-light': () => { const v = labView(); v.light = !v.light; },
+    'lab-clean': () => { if (E0.lab3d) E0.lab3d.clean(); return false; },
+    'lab-lift': () => labLift(),
     'fx-off': () => { curCase().cs.lastView.fx = null; },
     'scene-plan': el => { const { cs } = curCase(); cs.lastView.plan = el.dataset.id; cs.lastView.sceneSel = null; },
     photo: el => {

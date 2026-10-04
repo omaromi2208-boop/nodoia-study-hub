@@ -574,3 +574,11 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 .s3-pad [data-move="r"] { grid-column: 3; grid-row: 2; }
 .s3-pad button:active { background: var(--accent-soft); border-color: var(--accent); }
 @media (hover: hover) and (pointer: fine) { .s3-pad { opacity: 0.75; } }
+
+/* Mesa de revelado */
+.labbench { display: grid; gap: 10px; border-top: 1px solid var(--line-soft); padding-top: 14px; }
+.lab3d { position: relative; width: 100%; aspect-ratio: 16 / 9; min-height: 260px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #0b0f14; touch-action: none; }
+.lab3d .scene3d-canvas { cursor: crosshair; }
+.lab-tools { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; justify-content: space-between; }
+.lab-tools .btn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+@media (max-width: 860px) { .lab3d { aspect-ratio: 4 / 3; } }

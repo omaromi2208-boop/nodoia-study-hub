@@ -185,5 +185,24 @@
   function latentPos(L, S, id) { const m = L.F.minutiae[id]; return fromUV(S, ...toLatent(L, m.x, m.y)); }
   function cardPos(pid, fi, S, id) { const m = finger(pid, fi).minutiae[id]; return fromUV(S, ...fingerToCard(m.x, m.y)); }
 
-  E0.prints = { NEED, MAX_BAD, FINGERS, TYPES, finger, latent, visibleCount, drawCard, drawLatent, pickLatent, pickCard, latentPos, cardPos };
+  /* Intensidad de cresta de la latente (0..1, ya con su forma parcial) para la mesa de revelado. */
+  const ridgeCache = {};
+  function latentRidge(L, S) {
+    const key = L.seed + '|' + S;
+    if (ridgeCache[key]) return ridgeCache[key];
+    const toF = toFingerFn(L), out = new Float32Array(S * S), nz2 = smooth2(L.seed + 7, 14 * S / 256);
+    for (let py = 0; py < S; py++) for (let px = 0; px < S; px++) {
+      const u = (px + 0.5) / S * 2 - 1, v = 1 - (py + 0.5) / S * 2;
+      const m = maskAt(L, u, v);
+      if (m <= 0) continue;
+      const [x, y] = toF(u, v);
+      if (!inPrint(x, y)) continue;
+      const wipe = Math.max(0, Math.min(1, (nz2(px, py) - (L.apta ? 0.12 : 0.3)) / 0.12));
+      out[py * S + px] = (0.5 + 0.5 * Math.tanh(Math.sin(phase(L.F, x, y)) * 2)) * m * (0.25 + 0.75 * wipe);
+    }
+    ridgeCache[key] = out;
+    return out;
+  }
+
+  E0.prints = { latentRidge, NEED, MAX_BAD, FINGERS, TYPES, finger, latent, visibleCount, drawCard, drawLatent, pickLatent, pickCard, latentPos, cardPos };
 })();
