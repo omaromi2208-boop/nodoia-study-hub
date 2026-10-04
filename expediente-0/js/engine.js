@@ -439,8 +439,8 @@
      expediente hasta que se cotejan todas en el banco del laboratorio. */
   function printsOf(c, fid) { return (c.facts[fid] && c.facts[fid].prints) || []; }
   function cardPeople(c) {
-    const v = c.victim && c.victim.id ? [{ id: c.victim.id, name: c.victim.name, role: 'Víctima (necrorreseña)' }] : [];
-    return v.concat(c.people.map(p => ({ id: p.id, name: p.name, role: p.role })), (c.extraPersons || []).map(p => ({ id: p.id, name: p.name, role: 'Víctima (necrorreseña)' })));
+    const v = c.victim && c.victim.id ? [{ id: c.victim.id, name: c.victim.name, role: c.victimLabel || 'Víctima' }] : [];
+    return v.concat(c.people.map(p => ({ id: p.id, name: p.name, role: p.role })), (c.extraPersons || []).map(p => ({ id: p.id, name: p.name, role: 'Víctima' })));
   }
   function gateReveal(c, cs, ids, revealed) {
     const direct = [], pending = [];
