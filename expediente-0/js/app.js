@@ -91,6 +91,7 @@
     drawVideo();
     mountLab();
     drawMapTokens();
+    mountRecon();
     mount3d();
     mountRoom();
     store.save();
@@ -590,6 +591,17 @@
     if (n === E0.threads.unlockAt) toast('Se ha abierto el expediente transversal. Míralo en Carrera.', 'warn');
   }
 
+  /* ---------- Reconstrucción ---------- */
+  function reconState() { const { cs } = curCase(); cs.recon = cs.recon || {}; const pid = cs.lastView.reconPid; cs.recon[pid] = cs.recon[pid] || { steps: [] }; return cs.recon[pid]; }
+  function mountRecon() {
+    const el = document.getElementById('recon3d');
+    if (!el || !E0.recon) return;
+    const { c, cs } = curCase();
+    const pid = cs.lastView.reconPid;
+    const res = E0.recon.check(c, cs, pid, reconState().steps);
+    E0.recon.mount(el, c, pid, res, t => { const k = document.getElementById('recon-clock'); if (k) k.textContent = EN.fmt(Math.round(t)); });
+  }
+
   /* ---------- Sonido ambiente ---------- */
   function updateAudio() {
     if (!E0.audio) return;
@@ -998,6 +1010,10 @@
       else { s.meta = { tries: ((s.meta || {}).tries || 0) + 1 }; toast(Q.wrong, 'warn'); }
     },
     'toggle-ambient': () => { const st = S().settings; st.ambient = st.ambient === false; if (E0.audio) { E0.audio.setEnabled(st.ambient); if (st.ambient) { E0.audio.unlock(true); updateAudio(); } } store.save(); },
+    'recon-add': () => { const R = reconState(); const last = R.steps[R.steps.length - 1]; let t = '22:00'; if (last && last.time) { const m = EN.minutes(last.time) + 15; t = EN.fmt(m); } R.steps.push({ time: t, place: last ? last.place : '', mode: 'pie' }); R.checked = false; },
+    'recon-del': el => { const R = reconState(); R.steps.splice(+el.dataset.i, 1); R.checked = false; },
+    'recon-check': () => { const { cs } = curCase(); const R = reconState(); R.checked = true; EN.log(cs, 'reconstruccion', { pid: cs.lastView.reconPid }); },
+    'recon-play': () => { if (E0.recon) E0.recon.play(); return false; },
     'per-open': el => { const { cs } = curCase(); cs.lastView.pericia = el.dataset.id; S().view.tab = 'laboratorio'; },
     'per-close': () => { curCase().cs.lastView.pericia = null; },
     'per-auto': el => {
@@ -1258,6 +1274,8 @@
       if (act === 'toggle-setting') { s.settings[el.dataset.key] = el.checked; applySettings(); store.save(); if (el.dataset.key === 'ambient' && E0.audio) { E0.audio.setEnabled(el.checked); if (el.checked) { E0.audio.unlock(true); updateAudio(); } } }
       else if (act === 'set-scale') { s.settings.scale = Number(el.value); applySettings(); store.save(); }
       else if (act === 'map-person') { const { cs } = curCase(); const h = new Set(cs.lastView.mapHide || []); if (el.checked) h.delete(el.value); else h.add(el.value); cs.lastView.mapHide = [...h]; drawMapTokens(); store.save(); }
+      else if (act === 'recon-pid') { const { cs } = curCase(); cs.lastView.reconPid = el.value; render(); }
+      else if (act === 'recon-time' || act === 'recon-place' || act === 'recon-mode') { const R = reconState(); const st = R.steps[+el.dataset.i]; st[act.slice(6)] = el.value; R.checked = false; render(); }
       else if (act === 'lineup-pick') { const { cs } = curCase(); cs.lastView.lineupSel = cs.lastView.lineupSel || {}; const cur = new Set(cs.lastView.lineupSel[el.dataset.l] || []); if (el.checked) { if (cur.size >= 4) { el.checked = false; toast('Como máximo cuatro personas; el resto son figurantes.', 'warn'); return; } cur.add(el.value); } else cur.delete(el.value); cs.lastView.lineupSel[el.dataset.l] = [...cur]; render(); }
       else if (act === 'warrant-pid') { const { cs } = curCase(); cs.lastView.warrantPid = el.value; cs.lastView.warrantFacts = []; render(); }
       else if (act === 'warrant-fact') { const { cs } = curCase(); const cur = new Set(cs.lastView.warrantFacts || []); if (el.checked) cur.add(el.value); else cur.delete(el.value); cs.lastView.warrantFacts = [...cur]; render(); }

@@ -690,6 +690,32 @@
       '<div class="map-now" id="map-now"></div></article>';
   }
 
+  /* Reconstrucción: pasos propuestos por el jugador, comprobación física y maqueta 3D. */
+  function reconSection(c, cs) {
+    if (!E0.recon) return '';
+    const who = [{ id: c.victim.id, name: c.victim.name }].concat(c.people.map(p => ({ id: p.id, name: p.name })));
+    const pid = cs.lastView.reconPid || '';
+    const R = (cs.recon || {})[pid] || { steps: [] };
+    const places = EN.knownPlaces(c, cs).filter(k => !c.places[k].offmap);
+    const row = (st, i) => '<div class="recon-step"><input type="time" value="' + esc(st.time || '') + '" data-act="recon-time" data-i="' + i + '" aria-label="Hora">' +
+      '<select data-act="recon-place" data-i="' + i + '" aria-label="Lugar"><option value="">Lugar…</option>' + places.map(k => '<option value="' + k + '"' + (st.place === k ? ' selected' : '') + '>' + esc(c.places[k].name) + '</option>').join('') + '</select>' +
+      '<select data-act="recon-mode" data-i="' + i + '" aria-label="Cómo llega"><option value="pie"' + (st.mode !== 'coche' ? ' selected' : '') + '>a pie</option><option value="coche"' + (st.mode === 'coche' ? ' selected' : '') + '>en coche</option></select>' +
+      '<button class="btn small ghost" data-act="recon-del" data-i="' + i + '" aria-label="Quitar paso">✕</button></div>';
+    let results = '';
+    if (pid && R.checked) {
+      const res = E0.recon.check(c, cs, pid, R.steps);
+      const bad = res.items.filter(x => x.level === 'bad').length;
+      results = '<div class="result ' + (bad ? 'warn-note' : '') + '"><b>' + (bad ? bad + ' problema(s): esta versión no se sostiene tal cual.' : res.sorted.length > 1 ? 'Físicamente posible y sin choques con los registros conocidos.' : 'Añade al menos dos pasos para comprobar desplazamientos.') + '</b></div>' +
+        res.items.map(x => '<div class="recon-item ' + x.level + '">' + esc(x.text) + '</div>').join('') +
+        (E0.recon && E0.scene3d && E0.scene3d.available() && res.sorted.length ? '<div class="recon3d" id="recon3d"><div class="s3-hint">Maqueta del recorrido · arrastra para girar</div></div><div class="row"><button class="btn small" data-act="recon-play">▶ Recorrer</button><span class="mono" id="recon-clock"></span></div>' : '');
+    }
+    return '<article class="panel stack"><div class="panel-head"><h3>Reconstrucción de movimientos</h3></div>' +
+      '<p class="muted" style="font-size:.88rem">Propón dónde estuvo una persona y a qué hora. El juego comprueba si los desplazamientos son posibles a pie o en coche y si chocan con algún registro objetivo que ya conozcas.</p>' +
+      '<label class="field">Persona<select data-act="recon-pid"><option value="">Elige…</option>' + who.map(p => '<option value="' + p.id + '"' + (pid === p.id ? ' selected' : '') + '>' + esc(p.name) + '</option>').join('') + '</select></label>' +
+      (pid ? '<div class="stack" style="gap:6px">' + R.steps.map(row).join('') + '</div><div class="row"><button class="btn small" data-act="recon-add">Añadir paso</button><button class="btn small primary" data-act="recon-check"' + (R.steps.length ? '' : ' disabled') + '>Comprobar</button></div>' + results : '') +
+      '</article>';
+  }
+
   function tabPersonas(c, cs) {
     const sel = cs.lastView.person || null;
     const grid = '<div class="people">' + c.people.map(p => {
@@ -910,7 +936,7 @@
     const selFacts = sel ? EN.knownFacts(c, cs, f => f.place === sel).sort((a, b) => (EN.minutes(a.time) || 0) - (EN.minutes(b.time) || 0)) : [];
     return '<div class="stack-lg"><div class="map-wrap"><div class="map" role="group" aria-label="Mapa de investigación"><div class="map-grid"></div>' + svg + labels + pins + '<svg class="map-gaps" id="map-gaps" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg><div class="map-tokens" id="map-tokens"></div></div>' +
       '<div class="legend"><span>Solo aparecen los lugares que constan en el expediente.</span><span>Distancias en línea recta, aproximadas.</span>' + (off.length ? '<span>Fuera del mapa: ' + off.map(k => esc(pt(k).name) + ' (' + esc(pt(k).offmap) + ')').join(', ') + '</span>' : '') + '</div></div>' +
-      mapPlayback(c, cs) +
+      mapPlayback(c, cs) + reconSection(c, cs) +
       '<div class="grid"><article class="panel stack"><h3>Conectar lugares</h3><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))"><label class="field">Desde' + placeOpts('map-a', sel) + '</label><label class="field">Hasta' + placeOpts('map-b') + '</label></div>' +
       '<label class="field">Tipo de conexión<select id="map-label">' + ['Ruta conocida', 'Desplazamiento posible', 'Llamada', 'Cámara', 'Vehículo', 'Relación', 'Otro'].map(x => '<option>' + x + '</option>').join('') + '</select></label>' +
       '<div class="row"><button class="btn primary" data-act="map-link">Trazar línea</button></div>' +

@@ -619,3 +619,11 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 hr.sep { border: 0; border-top: 1px dashed var(--line-soft); margin: 8px 0; }
 
 .sound-btn { cursor: pointer; font-size: 0.9rem; padding: 4px 9px; }
+
+/* Reconstrucción */
+.recon-step { display: grid; grid-template-columns: 110px minmax(0, 1fr) 110px auto; gap: 6px; align-items: center; }
+.recon-item { font-size: 0.86rem; padding: 6px 10px; border-left: 3px solid var(--line); background: var(--bg-2); border-radius: 0 4px 4px 0; }
+.recon-item.bad { border-left-color: var(--red); }
+.recon-item.ok { border-left-color: var(--green); }
+.recon3d { position: relative; width: 100%; aspect-ratio: 16 / 9; min-height: 240px; border: 1px solid var(--line); border-radius: var(--radius); overflow: hidden; background: #0b0f14; touch-action: none; }
+@media (max-width: 560px) { .recon-step { grid-template-columns: 1fr 1fr; } .recon3d { aspect-ratio: 4 / 3; } }
