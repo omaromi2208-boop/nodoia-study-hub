@@ -561,13 +561,14 @@
     const jmax = EN.judicialMax(c);
     const left = jmax - cs.judicial.length;
     return '<div class="stack-lg"><div class="spread"><p class="muted" style="max-width:62ch">Solicita registros digitales y compáralos después con las declaraciones y la cronología.</p><span class="chip keep"><em>Fondos</em>' + money(s.money) + '</span></div>' +
-      deviceView(c, cs) +
+      deviceView(c, cs) + (cs.lastView.video && (cs.videos || {})[cs.lastView.video] ? E0.video.html(c, cs, c.digital.find(x => x.id === cs.lastView.video)) : '') +
       '<div class="grid">' + c.digital.map(d => {
         const done = cs.digital[d.id];
         const reqOk = (!d.requires || cs.examined[d.requires]) && (!d.requiresDigital || cs.digital[d.requiresDigital]);
         const reqName = d.requires && !cs.examined[d.requires] ? 'examinar ' + c.evidence.find(e => e.id === d.requires).name : d.requiresDigital ? 'obtener «' + c.digital.find(x => x.id === d.requiresDigital).name + '»' : '';
-        const facts = done ? d.reveals.map(id => c.facts[id]) : [];
+        const facts = done ? d.reveals.filter(id => EN.known(cs, id)).map(id => c.facts[id]) : [];
         return '<article class="panel stack"><div class="spread"><h3>' + esc(d.name) + '</h3>' + (done ? '<span class="badge ok">Recibido</span>' : '<span class="badge">' + EN.costOf('digital', d.cost) + ' €</span>') + '</div><p class="muted" style="font-size:.88rem">' + esc(d.desc) + '</p>' +
+          (done && d.video && (cs.videos || {})[d.id] ? '<div class="row"><button class="btn small' + (cs.videos[d.id].status === 'pendiente' ? ' primary' : '') + '" data-act="vid-open" data-id="' + d.id + '">' + (cs.videos[d.id].status === 'pendiente' ? 'Analizar el vídeo' : 'Ver el vídeo') + '</button></div>' : '') +
           (done ? (isDevice(d) ? '<div class="row"><button class="btn small" data-act="device-open" data-id="' + d.id + '">' + (deviceKind(d) === 'pc' ? 'Abrir el ordenador' : 'Abrir el dispositivo') + '</button></div>' : '') + '<div>' + facts.map(f => factRow(c, f)).join('') + '</div>' :
             (reqOk ? '<div class="row"><button class="btn" data-act="digital" data-id="' + d.id + '"' + (s.money < EN.costOf('digital', d.cost) ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + EN.costOf('digital', d.cost) + ' €</span></button></div>' : '<p class="faint" style="font-size:.84rem">Requiere antes: ' + esc(reqName) + '.</p>')) + '</article>';
       }).join('') + '</div>' +

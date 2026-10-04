@@ -84,6 +84,7 @@
     drawWall();
     drawBench();
     drawPericia();
+    drawVideo();
     mountLab();
     drawMapTokens();
     mount3d();
@@ -559,8 +560,32 @@
     if (cs.digital[id] || (d.requires && !cs.examined[d.requires])) return;
     if (!spend(cs, EN.costOf('digital', d.cost))) return;
     cs.digital[id] = true;
-    const fresh = EN.discover(cs, d.reveals);
+    const gates = d.video ? d.video.gates : [];
+    const fresh = EN.discover(cs, d.reveals.filter(f => !gates.includes(f)));
+    if (d.video) {
+      cs.videos[id] = { status: 'pendiente', t: EN.minutes(d.video.range[0]) + d.video.offset, marks: {} };
+      toast('Grabación recibida: hay que sincronizar el reloj de la cámara antes de usarla.');
+    }
     EN.log(cs, 'digital', { id });
+    newInfo(fresh);
+  }
+
+  /* ---------- Vídeo de cámara ---------- */
+  let vidTimer = null;
+  function vidCtx() { const { c, cs } = curCase(); const id = cs && cs.lastView.video; const d = id && c.digital.find(x => x.id === id); return d && cs.videos[id] ? { c, cs, d, st: cs.videos[id] } : null; }
+  function drawVideo() {
+    const cv = document.querySelector('canvas.vid-cv');
+    const x = vidCtx();
+    if (!cv || !x) { if (vidTimer) { clearInterval(vidTimer); vidTimer = null; } return; }
+    E0.video.draw(cv, x.c, x.d, x.st);
+    const clk = document.getElementById('vid-clock'); if (clk) clk.textContent = E0.video.fmtS(x.st.t);
+    const sl = document.getElementById('vid-time'); if (sl && Math.abs(+sl.value - x.st.t) > 0.01) sl.value = x.st.t;
+  }
+  function solveVideo(c, cs, d) {
+    cs.videos[d.id].status = 'resuelto';
+    const fresh = EN.discover(cs, d.video.gates);
+    EN.log(cs, 'video', { id: d.id });
+    toast('Vídeo sincronizado: las horas reales se incorporan al expediente.');
     newInfo(fresh);
   }
 
@@ -850,6 +875,36 @@
     'bench-card': (el, e) => benchCard(el, e),
     'bench-noapta': () => benchNoApta(),
     'bench-auto': el => benchAuto(el.dataset.fid),
+    'vid-open': el => { curCase().cs.lastView.video = el.dataset.id; window.scrollTo({ top: 0 }); },
+    'vid-close': () => { curCase().cs.lastView.video = null; },
+    'vid-play': () => {
+      const btn = document.getElementById('vid-play');
+      if (vidTimer) { clearInterval(vidTimer); vidTimer = null; if (btn) btn.textContent = '▶'; store.save(); return false; }
+      const x = vidCtx(); if (!x) return false;
+      const hi = EN.minutes(x.d.video.range[1]) + x.d.video.offset;
+      if (btn) btn.textContent = '❚❚';
+      vidTimer = setInterval(() => {
+        const y = vidCtx(); if (!y || !document.querySelector('canvas.vid-cv')) { clearInterval(vidTimer); vidTimer = null; return; }
+        y.st.t = Math.min(hi, y.st.t + 0.25);
+        drawVideo();
+        if (y.st.t >= hi) { clearInterval(vidTimer); vidTimer = null; const b2 = document.getElementById('vid-play'); if (b2) b2.textContent = '▶'; }
+      }, 80);
+      return false;
+    },
+    'vid-mark': el => {
+      const x = vidCtx(); if (!x || !guardOpen(x.cs) || x.st.status !== 'pendiente') return false;
+      if (vidTimer) { clearInterval(vidTimer); vidTimer = null; }
+      const r = E0.video.mark(x.c, x.cs, x.d, el.dataset.k);
+      if (!r) return false;
+      toast(r.msg, r.warn ? 'warn' : undefined);
+      if (r.warn) return false;
+      if (r.solved) solveVideo(x.c, x.cs, x.d);
+    },
+    'vid-auto': () => {
+      const x = vidCtx(); if (!x || !guardOpen(x.cs) || x.st.status !== 'pendiente') return false;
+      if (!spend(x.cs, EN.costOf('digital', 120))) return;
+      solveVideo(x.c, x.cs, x.d);
+    },
     'per-open': el => { const { cs } = curCase(); cs.lastView.pericia = el.dataset.id; S().view.tab = 'laboratorio'; },
     'per-close': () => { curCase().cs.lastView.pericia = null; },
     'per-auto': el => {
@@ -1082,6 +1137,8 @@
       if (act === 'range-out' || act === 'hyp-conf') {
         const out = document.getElementById(el.dataset.out);
         if (out) out.textContent = el.value;
+      } else if (act === 'vid-time') {
+        const x = vidCtx(); if (x) { x.st.t = Number(el.value); drawVideo(); store.save(); }
       } else if (act === 'per-rot' || act === 'per-crot') {
         const { c, cs } = curCase();
         E0.pericias.setRot(c, cs, cs.lastView.pericia, Number(el.value), act === 'per-crot' ? 'casing' : 'pose');

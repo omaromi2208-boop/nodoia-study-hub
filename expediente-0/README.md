@@ -12,26 +12,30 @@ Abre `index.html` en el navegador (doble clic). No necesita instalación ni serv
 - **Centro de investigación**: perfil, 7 rangos, XP, reputación, dinero, energía y jornadas semanales con salario.
 - **Academia**: 12 módulos evaluables y una biblioteca jurídica que separa el contenido educativo interno, las fuentes oficiales (BOE) y la simulación del juego.
 - **Carrera** con historial de intentos, **Cuaderno** con notas de cada investigador, **Perfil** con 12 habilidades y **Ajustes** (6 temas, animaciones, tamaño, sonido, exportar, importar y borrar).
-- **Cuatro expedientes jugables de principio a fin**, y todos tienen **varias soluciones posibles** (9 versiones en total). Cada partida elige una en secreto: las personas, la escena y las solicitudes son las mismas, pero cambian las pruebas clave, las declaraciones y quién lo hizo. Repetir un caso es jugar otro. Se desbloquean por rango:
+- **Seis expedientes jugables de principio a fin**, y todos tienen **varias soluciones posibles** (14 versiones en total). Cada partida elige una en secreto: las personas, la escena y las solicitudes son las mismas, pero cambian las pruebas clave, las declaraciones y quién lo hizo. Repetir un caso es jugar otro. Se desbloquean por rango:
   - **EXP-001 «El Apartamento 17»** (2 versiones): homicidio con una sedación previa, una salida por el garaje y una persona inocente muy sospechosa.
   - **EXP-002 «La desaparición del puente»** (2 versiones): coche abandonado, peaje, mensajes programados y un audio. Hay que decidir si fue un crimen, un accidente o algo distinto.
   - **EXP-003 «Las cuatro llamadas»** (2 versiones): cámara del ascensor, una escalera sin cámara, una llave que falta, un testamento a punto de cambiar y una cronología conflictiva.
   - **EXP-004 «La masía de los Ballester»** (dificultad extrema, 3 versiones): triple homicidio con una superviviente y siete sospechosos. Cambian los cristales, la herida, los residuos de disparo, el GPS, las antenas y lo que oyó la vecina. Inspirado en patrones de casos documentados, con nombres, lugares y hechos completamente ficticios.
+  - **EXP-005 «La tisana de las once»** (2 versiones): envenenamiento tras una cena familiar en un horno. Un análisis rápido apunta a un fármaco, pero poder hacerlo no es haberlo hecho.
+  - **EXP-006 «Ceniza en El Collet»** (dificultad extrema, 3 versiones): incendio de un taller con el vigilante muerto dentro. Seguro ampliado, un vecino con un pleito perdido y un empleado con deudas.
 
 ### Herramientas de cada expediente
 
 | Herramienta | Qué hace |
 |---|---|
-| Escena | Vista 3D (girar, acercar, pulsar objetos e inspeccionarlos de cerca) o plano 2D, con varias zonas. Cada elemento se puede examinar, fotografiar, enviar al laboratorio, añadir al muro o convertir en pregunta. |
+| Escena | Vista 3D (girar, acercar, pulsar objetos e inspeccionarlos de cerca), recorrido en primera persona (WASD, flechas o botones táctiles; paredes con puertas y choque) o plano 2D, con varias zonas. Cada elemento se puede examinar, fotografiar, enviar al laboratorio, añadir al muro o convertir en pregunta. |
 | Herramientas forenses | Luminol, luz UV, polvo revelador y lupa sobre cualquier objeto examinado, con efecto visual en 3D. El luminol y el polvo son limitados en cada expediente. |
 | Laboratorio | Análisis con coste. Los resultados respetan los límites de cada técnica. |
+| Mesa de revelado | Las huellas que salen de un análisis de laboratorio se revelan en una mesa 3D: luz rasante para encontrar el brillo de los residuos, polvo negro o de aluminio según la superficie y brocha; el exceso de polvo empasta las crestas. Se levantan con cinta. |
+| Pericias | ADN (leer el electroferograma sin marcar tartamudeos), neumáticos y calzado (superponer la referencia sobre la impresión), balística (microscopio de comparación de vainas) y caligrafía (comparar letra a letra). Cada una tiene versión automática de pago. |
 | Lofoscopia | Las huellas que salen del laboratorio o del polvo revelador quedan pendientes de cotejo. En el banco eliges una ficha y un dedo del fichero decadactilar, y marcas los puntos característicos (finales de cresta y bifurcaciones) en la latente y en la ficha. Con 12 coincidentes hay identificación; tres discrepancias descartan el dedo; una latente sin puntos suficientes se declara no apta. También hay un cotejo automático de pago. |
-| Digital | Cámaras, registros, dispositivos, finanzas y vehículos. Las solicitudes judiciales de antenas son limitadas. |
-| Personas | Sala de interrogatorio en 3D: la persona se sienta frente a ti, habla, parpadea y reacciona a las confrontaciones según su carácter (sus gestos nunca delatan si miente). Botón «Escuchar» con la voz del navegador. Interrogatorio con memoria y confrontación con pruebas. Las respuestas pueden ser verdad, medias verdades, mentiras o creencias erróneas. |
+| Digital | Cámaras, registros, dispositivos, finanzas y vehículos. Los teléfonos y ordenadores extraídos se abren como un móvil o un escritorio (llamadas, mensajes, ubicación, archivos). Las grabaciones con el reloj desajustado se sincronizan buscando un hecho de hora conocida. Las solicitudes judiciales de antenas son limitadas. |
+| Personas | Sala de interrogatorio en 3D: la persona se sienta frente a ti, habla, parpadea y reacciona a las confrontaciones según su carácter (sus gestos nunca delatan si miente). Botón «Escuchar» con la voz del navegador. Medidor de tensión: al límite la persona pide un abogado y corta la entrevista; se puede volver a citar con el abogado presente, sentado a su lado. La prueba que le enseñas se desliza sobre la mesa. Interrogatorio con memoria y confrontación con pruebas. Las respuestas pueden ser verdad, medias verdades, mentiras o creencias erróneas. |
 | Comparador | Señala solo diferencias objetivas entre fuentes. Nunca dice quién miente. |
 | Cronología | Línea temporal visual con detección de solapamientos. |
-| Mapa | Lugares descubiertos, conexiones trazadas por el jugador y distancias aproximadas. |
-| Muro | Tarjetas que se arrastran, con conexiones etiquetadas que se guardan. |
+| Mapa | Lugares descubiertos, conexiones trazadas por el jugador y distancias aproximadas. Reproducción temporal: un deslizador de hora mueve a cada persona según los registros y muestra aparte dónde declara que estaba, con una línea roja cuando no coinciden. |
+| Muro | Tablón de corcho con tarjetas de papel y chinchetas, foto de cada evidencia (sacada de su modelo 3D) y retrato de cada persona, hilos de colores por tipo de conexión y línea temporal con las tarjetas que tienen hora. |
 | Hipótesis | Tus teorías, aviso de teorías en conflicto y confianza de 0 a 100. |
 | Consulta | Preguntas libres. Si el dato no consta, responde «No consta en el expediente.». |
 | Informe | Informe de 13 apartados compuesto con el material propio del jugador. |
@@ -50,10 +54,15 @@ data/case01.js     EXP-001 · única fuente de verdad del caso
 data/case02.js     EXP-002
 data/case03.js     EXP-003
 data/case04.js     EXP-004
+data/case05.js     EXP-005
+data/case06.js     EXP-006
 js/state.js        estado, guardado, exportar/importar con validación
 js/scene3d.js      escena 3D generada a partir de los planos del caso
 js/room3d.js       sala de interrogatorio 3D y aspecto de cada persona
 js/prints.js       huellas dactilares procedurales y cotejo punto a punto
+js/lab3d.js        mesa de revelado de huellas en 3D
+js/pericias.js     pericias jugables: ADN, neumáticos, calzado, balística y caligrafía
+js/video.js        análisis y sincronización de vídeo de cámara
 js/engine.js       motor genérico: consulta, comparador, cronología, mapa, custodia, evaluación
 js/ui.js           render de pantallas
 js/app.js          acciones del jugador, muro (arrastre) y arranque
@@ -86,3 +95,7 @@ Cada evidencia puede declarar `forensic: { luminol | uv | polvo | lupa: { reveal
 ### Huellas
 
 Un hecho que sale del laboratorio o de una herramienta forense puede declarar `prints: [{ at: 'lugar', match: 'idPersona' }, { at: 'lugar', q: 'no_apta' }]`. Ese hecho no entra en el expediente hasta que se cotejan todas sus latentes. Las huellas de cada persona se generan a partir de su identificador, así que siempre son las mismas.
+
+### Pericias y vídeo
+
+Un hecho que sale de un análisis de laboratorio puede declarar `pericia: { type: 'adn' | 'caligrafia', match: 'idPersona' }`, `pericia: { type: 'neumatico' | 'calzado', match: 'idReferencia' }` (referencias del catálogo de `js/pericias.js`) o `pericia: { type: 'balistica' }`. Una solicitud digital con grabación puede declarar `video: { offset, ref: { label, time }, range: [ini, fin], subject: { pid, intervals }, gates: [hechos] }`: esos hechos entran en el expediente cuando el jugador sincroniza la cámara.

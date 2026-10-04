@@ -266,7 +266,8 @@ E0.cases.push({
     { id: 'D3_CERRAJERO', name: 'Registro de la cerrajería del barrio', cost: 80, desc: 'Copias de llaves realizadas en el último mes.',
       reveals: ['F3_CERR'] },
     { id: 'D3_BAR', name: 'Registros del bar La Esquina', cost: 60, desc: 'Cámara interior y pagos con tarjeta.',
-      reveals: ['F3_BAR'] },
+      reveals: ['F3_BAR'],
+      video: { offset: 9, ref: { label: 'Un cliente paga con tarjeta en la barra', time: '22:12' }, range: ['21:55', '23:40'], subject: { pid: 'marcos', intervals: [['22:05', '22:20'], ['22:48', '23:30']] }, gates: ['F3_BAR'] } },
     { id: 'D3_FIN', name: 'Datos financieros', cost: 150, desc: 'Situación económica de las personas del expediente.',
       reveals: ['F3_FIN_MARCOS', 'F3_FIN_SERGIO', 'F3_FIN_CLARA', 'F3_FIN_JULIAN'] }
   ],

@@ -62,6 +62,7 @@
       latents: {},
       tension: {},
       pericias: {},
+      videos: {},
       lawyer: {},
       lastView: {}
     };
