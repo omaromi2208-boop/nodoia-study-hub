@@ -147,7 +147,7 @@
   function caseButton(c) {
     const cs = S().cases[c.id];
     if (!cs && !unlocked(c)) return '<button class="btn" disabled>' + esc(lockText(c)) + '</button>';
-    if (!cs) return '<button class="btn primary" data-act="open-case" data-id="' + c.id + '">Abrir expediente</button>';
+    if (!cs) return '<button class="btn primary" data-act="open-case" data-id="' + c.id + '">Abrir expediente</button><button class="btn ghost" data-act="open-case" data-id="' + c.id + '" data-nightmare="1" title="Sin pericias automáticas, plazos a la mitad y sin poder repetir">Modo pesadilla</button>';
     if (cs.status === 'cerrado') return '<button class="btn" data-act="open-case" data-id="' + c.id + '">Revisar expediente</button>';
     return '<button class="btn primary" data-act="open-case" data-id="' + c.id + '">Continuar investigación</button>';
   }
@@ -208,7 +208,7 @@
           (cs ? '<div class="row mono faint" style="font-size:.76rem">EVIDENCIAS ' + p.ev + '/' + c.evidence.length + ' · ENTREVISTAS ' + p.int + '/' + c.people.length + ' · LAB ' + p.lab + ' · DIGITAL ' + p.dig + ' · CONTRADICCIONES ' + p.con + '</div>' : '') +
           (cs && cs.evaluation ? '<div class="result">Resultado: <b>' + cs.evaluation.total + '/100</b>' + (cs.trial ? ' · Juicio: ' + cs.trial.rebutted + '/' + cs.trial.total + ' objeciones respondidas' : '') + '</div>' : '') +
           '<div class="row">' + caseButton(c) +
-          (cs ? (s.view.confirmRestart === c.id ? '<button class="btn danger" data-act="restart-case" data-id="' + c.id + '">Confirmar: borrar progreso y repetir</button><button class="btn ghost" data-act="cancel-restart">Cancelar</button>' : '<button class="btn ghost" data-act="ask-restart" data-id="' + c.id + '">Repetir desde cero</button>') : '') +
+          (cs && !cs.nightmare ? (s.view.confirmRestart === c.id ? '<button class="btn danger" data-act="restart-case" data-id="' + c.id + '">Confirmar: borrar progreso y repetir</button><button class="btn ghost" data-act="cancel-restart">Cancelar</button>' : '<button class="btn ghost" data-act="ask-restart" data-id="' + c.id + '">Repetir desde cero</button>') : '') +
           '</div></article>';
       }).join('') + '</section>';
   }
@@ -360,7 +360,7 @@
     return '<section class="screen">' +
       '<div class="case-head"><div class="min0"><div class="crumbs"><button data-act="go" data-screen="cases">Expedientes</button> / ' + c.id + ' / ' + esc(TABS.find(t => t[0] === tab)[1]) + '</div>' +
       '<div class="case-code">' + c.id + '</div><h1>' + esc(c.title) + '</h1>' +
-      '<div class="row" style="margin-top:8px"><span class="badge">' + esc(c.victimLabel || 'Víctima') + ': ' + esc(c.victim.name) + '</span><span class="badge ' + (closed ? 'ok' : 'acc') + '">' + (closed ? 'Cerrado' : 'Activo') + '</span><span class="badge warn">Dificultad ' + esc(c.difficulty) + '</span></div></div>' +
+      '<div class="row" style="margin-top:8px"><span class="badge">' + esc(c.victimLabel || 'Víctima') + ': ' + esc(c.victim.name) + '</span><span class="badge ' + (closed ? 'ok' : 'acc') + '">' + (closed ? 'Cerrado' : 'Activo') + '</span><span class="badge warn">Dificultad ' + esc(c.difficulty) + '</span>' + (E0.clock ? '<span class="badge mono" title="Reloj de la investigación">' + E0.clock.label(cs) + '</span>' : '') + (cs.nightmare ? '<span class="badge crit">Pesadilla</span>' : '') + '</div></div>' +
       '<div class="stack" style="gap:4px;align-items:flex-end"><span class="eyebrow">Objetivo</span><span style="font-size:.9rem">Reconstrucción del caso</span><span class="faint mono" style="font-size:.72rem">Investiga: ' + esc(playerName()) + '</span></div></div>' +
       '<nav class="tabs" role="tablist" aria-label="Herramientas del expediente">' + TABS.map(([id, l]) => '<button class="tab" role="tab" data-act="tab" data-tab="' + id + '" aria-selected="' + (tab === id) + '">' + l + (counts[id] ? '<sup>' + counts[id] + '</sup>' : '') + '</button>').join('') + '</nav>' +
       '<div id="tab-body">' + R[tab](c, cs) + '</div>' +
@@ -371,7 +371,7 @@
   function tabResumen(c, cs) {
     const facts = EN.knownFacts(c, cs);
     const recent = facts.slice(-6).reverse();
-    return '<div class="grid grid-2">' +
+    return (E0.clock ? E0.clock.html(c, cs, esc) : '') + '<div class="grid grid-2">' +
       '<article class="panel dossier stack"><div class="eyebrow">Informe inicial</div>' + c.briefing.map(b => '<p>' + esc(b) + '</p>').join('') +
       '<dl class="kv"><dt>Lugar</dt><dd>' + esc(c.location) + '</dd><dt>Fecha</dt><dd>' + esc(c.date) + '</dd><dt>' + esc(c.victimLabel || 'Víctima') + '</dt><dd>' + esc(c.victim.summary || c.victim.name + ', ' + c.victim.age + ' años') + '. ' + esc(c.victim.job) + '</dd><dt>Ventana</dt><dd>' + esc(c.deathWindow) + '</dd></dl></article>' +
       '<article class="panel stack"><div class="panel-head"><h3>Últimas incorporaciones</h3><span class="badge">' + facts.length + ' hechos</span></div>' +
@@ -508,7 +508,7 @@
     const sel = cs.lastView.pericia && ids.includes(cs.lastView.pericia) ? cs.lastView.pericia : null;
     return '<article class="panel stack"><div class="panel-head"><h3>Pericias</h3><span class="badge">' + ids.length + '</span></div><div class="latent-items">' +
       ids.map(id => { const st = cs.pericias[id], P = c.facts[id].pericia; return '<button class="latent-item" data-act="per-open" data-id="' + id + '" aria-pressed="' + (sel === id) + '"><span>' + esc(E0.pericias.NAMES[P.type]) + ' · ' + esc(P.label || sourceOfFact(c, id)) + '</span>' + (st.status === 'pendiente' ? '<span class="badge warn">Pendiente</span>' : '<span class="badge ok">Concluida</span>') + '</button>'; }).join('') + '</div>' +
-      (sel ? E0.pericias.html(c, cs, sel) + '<div class="row">' + (cs.pericias[sel].status === 'pendiente' ? '<button class="btn small ghost" data-act="per-auto" data-id="' + sel + '">Pericia automática <span class="cost">' + EN.costOf('lab', 150) + ' €</span></button>' : '') + '<button class="btn small ghost" data-act="per-close">Cerrar</button></div>' : '') + '</article>';
+      (sel ? E0.pericias.html(c, cs, sel) + '<div class="row">' + (cs.pericias[sel].status === 'pendiente' && !cs.nightmare ? '<button class="btn small ghost" data-act="per-auto" data-id="' + sel + '">Pericia automática <span class="cost">' + EN.costOf('lab', 150) + ' €</span></button>' : '') + '<button class="btn small ghost" data-act="per-close">Cerrar</button></div>' : '') + '</article>';
   }
 
   /* Resultado de un análisis, o aviso de huellas pendientes de cotejo. */
@@ -530,7 +530,7 @@
       const g = cs.latents[fid];
       const P = EN.printsOf(c, fid);
       const pend = P.filter((_, i) => g.items[i].status === 'pendiente').length;
-      return '<div class="latent-group"><div class="spread"><b>' + esc(sourceOfFact(c, fid)) + '</b>' + (pend ? '<button class="btn small ghost" data-act="bench-auto" data-fid="' + fid + '">Cotejo automático <span class="cost">' + EN.costOf('lab', 150) + ' €</span></button>' : '<span class="badge ok">Cotejo completo</span>') + '</div>' +
+      return '<div class="latent-group"><div class="spread"><b>' + esc(sourceOfFact(c, fid)) + '</b>' + (pend && !cs.nightmare ? '<button class="btn small ghost" data-act="bench-auto" data-fid="' + fid + '">Cotejo automático <span class="cost">' + EN.costOf('lab', 150) + ' €</span></button>' : '<span class="badge ok">Cotejo completo</span>') + '</div>' +
         '<div class="latent-items">' + P.map((p, i) => {
           const it = g.items[i];
           const st = it.status === 'identificada' ? '<span class="badge ok">' + esc(nameOf(it.match)) + '</span>' : it.status === 'no_apta' ? '<span class="badge">No apta</span>' : '<span class="badge warn">Pendiente</span>';
@@ -977,7 +977,7 @@
       trial +
       '<article class="panel stack truth"><h3>Verdad interna del caso</h3>' + (c.variants ? '<div class="result">Esta partida tenía la versión ' + (c.variantIndex + 1) + ' de ' + c.variantCount + '. Si repites el expediente te tocará otra: los hechos cambiarán.</div>' : '') + c.truth.narrative.map(p => '<p>' + esc(p) + '</p>').join('') + '</article>' +
       '<article class="panel stack"><h3>Nivel interpretativo de cada evidencia</h3><div class="stack" style="gap:6px">' + c.evidence.map(e => '<div class="spread" style="font-size:.88rem;border-bottom:1px dashed var(--line-soft);padding:4px 0"><span><span class="mono" style="color:var(--accent)">' + e.id + '</span> ' + esc(e.name) + '</span><span class="badge ' + (e.level >= 4 ? 'warn' : '') + '">Nivel ' + e.level + ' · ' + LEVEL[e.level] + '</span></div>').join('') + '</div></article>' +
-      '<div class="row"><button class="btn" data-act="go" data-screen="home">Volver al centro</button><button class="btn ghost" data-act="go" data-screen="cases">Ir a expedientes</button>' + (c.variants ? '<button class="btn primary" data-act="restart-case" data-id="' + c.id + '">Jugar otra versión</button>' : '') + '</div></div>';
+      '<div class="row"><button class="btn" data-act="go" data-screen="home">Volver al centro</button><button class="btn ghost" data-act="go" data-screen="cases">Ir a expedientes</button>' + (c.variants && !cs.nightmare ? '<button class="btn primary" data-act="restart-case" data-id="' + c.id + '">Jugar otra versión</button>' : '') + '</div></div>';
   }
 
   /* ---------- Modal de bienvenida y tutorial ---------- */

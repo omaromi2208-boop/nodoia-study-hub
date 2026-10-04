@@ -336,13 +336,14 @@
   }
 
   /* ---------- Caso ---------- */
-  function openCase(id) {
+  function openCase(id, nightmare) {
     const s = S();
     const c = EN.getCase(id);
     let cs = s.cases[id];
     if (!cs && !UI.unlocked(c)) { toast('Este expediente se desbloquea al ascender de rango.', 'warn'); return; }
     if (!cs) {
       cs = store.startCase(c);
+      if (nightmare) { cs.nightmare = true; toast('Modo pesadilla: sin pericias automáticas, plazos a la mitad y sin repetir.', 'warn'); }
       EN.discover(cs, c.initialFacts);
       EN.log(cs, 'open_case');
       s.view.tab = 'resumen';
@@ -463,7 +464,7 @@
   }
   function benchAuto(fid) {
     const { c, cs } = curCase();
-    if (!guardOpen(cs)) return;
+    if (!guardOpen(cs) || cs.nightmare) return;
     if (!spend(cs, EN.costOf('lab', 150))) return;
     EN.printsOf(c, fid).forEach((P, i) => {
       const it = cs.latents[fid].items[i];
@@ -558,7 +559,9 @@
     if (!guardOpen(cs)) return;
     const d = c.digital.find(x => x.id === id);
     if (cs.digital[id] || (d.requires && !cs.examined[d.requires])) return;
-    if (!spend(cs, EN.costOf('digital', d.cost))) return;
+    const late = E0.clock && E0.clock.isFootage(d) && (cs.hours || 0) >= E0.clock.deadlines(cs).footage;
+    if (!spend(cs, EN.costOf('digital', d.cost) * (late ? 2 : 1))) return;
+    if (late) { cs.hours = (cs.hours || 0) + 12; toast('La grabación se había sobrescrito: se recupera de una copia de seguridad (coste doble y 12 h más).', 'warn'); }
     cs.digital[id] = true;
     const gates = d.video ? d.video.gates : [];
     const fresh = EN.discover(cs, d.reveals.filter(f => !gates.includes(f)));
@@ -568,6 +571,15 @@
     }
     EN.log(cs, 'digital', { id });
     newInfo(fresh);
+  }
+
+  /* ---------- Reloj de la investigación ---------- */
+  function clockHours() { const { cs } = curCase(); return cs ? cs.hours || 0 : null; }
+  function clockCheck(h0) {
+    if (h0 === null || !E0.clock) return;
+    const { c, cs } = curCase();
+    if (!cs) return;
+    E0.clock.crossed(c, cs, h0, cs.hours || 0).forEach(m => toast(m.text, m.warn ? 'warn' : undefined));
   }
 
   /* ---------- Vídeo de cámara ---------- */
@@ -756,9 +768,13 @@
     const ev = EN.evaluate(c, cs, v);
     cs.evaluation = ev;
     cs.status = 'cerrado';
-    const xp = 60 + ev.total * 2;
-    const rep = Math.round((ev.total - 50) / 5);
-    const cash = 300 + ev.total * 4;
+    const nm = cs.nightmare ? 1.5 : 1;
+    const quick = E0.clock && (cs.hours || 0) < E0.clock.deadlines(cs).quick && ev.total >= 60;
+    const slow = E0.clock && (cs.hours || 0) >= E0.clock.deadlines(cs).flee;
+    const xp = Math.round((60 + ev.total * 2) * nm);
+    const rep = Math.round((ev.total - 50) / 5) + (quick ? 4 : 0) - (slow ? 5 : 0);
+    const cash = Math.round((300 + ev.total * 4) * nm) + (quick ? 200 : 0);
+    if (quick) toast('Cierre rápido: el jefe lo agradece (+4 reputación, +200 €).');
     const promo = addXP(xp);
     s.reputation = clamp(s.reputation + rep, 0, 100);
     s.money += cash;
@@ -786,7 +802,7 @@
     'nav-toggle': () => { document.body.classList.toggle('nav-open'); return false; },
     'scrim': () => { document.body.classList.remove('nav-open'); return false; },
     go: el => { S().view.screen = el.dataset.screen; S().view.confirmReset = false; S().view.confirmRestart = null; },
-    'open-case': el => openCase(el.dataset.id),
+    'open-case': el => openCase(el.dataset.id, el.dataset.nightmare === '1'),
     tab: el => { S().view.tab = el.dataset.tab; },
     jornada: el => doJornada(el.dataset.id),
     'academy-open': el => { S().view.module = S().view.module === el.dataset.id ? null : el.dataset.id; },
@@ -804,6 +820,7 @@
     'cancel-restart': () => { S().view.confirmRestart = null; },
     'restart-case': el => {
       const s = S();
+      if (s.cases[el.dataset.id] && s.cases[el.dataset.id].nightmare) { toast('Un caso en modo pesadilla no se puede repetir.', 'warn'); return; }
       const prev = s.cases[el.dataset.id];
       if (prev && prev.variant) { s.lastVariants = s.lastVariants || {}; s.lastVariants[el.dataset.id] = prev.variant; }
       delete s.cases[el.dataset.id];
@@ -901,7 +918,7 @@
       if (r.solved) solveVideo(x.c, x.cs, x.d);
     },
     'vid-auto': () => {
-      const x = vidCtx(); if (!x || !guardOpen(x.cs) || x.st.status !== 'pendiente') return false;
+      const x = vidCtx(); if (!x || !guardOpen(x.cs) || x.st.status !== 'pendiente' || x.cs.nightmare) return false;
       if (!spend(x.cs, EN.costOf('digital', 120))) return;
       solveVideo(x.c, x.cs, x.d);
     },
@@ -909,7 +926,7 @@
     'per-close': () => { curCase().cs.lastView.pericia = null; },
     'per-auto': el => {
       const { c, cs } = curCase();
-      if (!guardOpen(cs) || !spend(cs, EN.costOf('lab', 150))) return;
+      if (!guardOpen(cs) || cs.nightmare || !spend(cs, EN.costOf('lab', 150))) return;
       E0.pericias.autoSolve(c, cs, el.dataset.id);
       EN.settlePericia(c, cs, el.dataset.id);
       EN.log(cs, 'pericia_auto', { fact: el.dataset.id });
@@ -1119,7 +1136,9 @@
       if (!fn) return;
       e.preventDefault();
       if (el.classList.contains('nav-btn')) document.body.classList.remove('nav-open');
+      const h0 = clockHours();
       const r = fn(el, e);
+      clockCheck(h0);
       if (r !== false) render();
     });
 
@@ -1128,7 +1147,7 @@
       if (!f) return;
       e.preventDefault();
       const fn = FORMS[f.dataset.form];
-      if (fn) { fn(f); render(); }
+      if (fn) { const h0 = clockHours(); fn(f); clockCheck(h0); render(); }
     });
 
     document.addEventListener('input', e => {

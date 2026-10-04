@@ -64,8 +64,11 @@
 
   function known(cs, id) { return Object.prototype.hasOwnProperty.call(cs.discovered, id); }
 
+  /* Horas de investigación que consume cada diligencia (el reloj del caso). */
+  const HOURS = { examine: 0.5, photo: 0.1, forensic: 1, lab: 6, digital: 4, judicial: 12, ask: 0.3, confront: 0.3, revisit: 0.2, recite: 6, revelado: 1, cotejo: 0.05, cotejo_auto: 8, pericia: 3, pericia_auto: 8, video: 2, query: 0.1, compare: 0.2, timeline_compare: 0.2, search: 8, lineup: 6, reconstruccion: 1 };
   function log(cs, type, data) {
     cs.log.push(Object.assign({ type, seq: cs.seq, ts: Date.now() }, data || {}));
+    if (HOURS[type] && cs.status !== 'cerrado') cs.hours = Math.round(((cs.hours || 0) + HOURS[type]) * 100) / 100;
   }
 
   /* Incorpora hechos al expediente. Devuelve los nuevos. */
@@ -345,7 +348,7 @@
     comp.push({ name: vo.accompliceLabel || 'Cómplices', pts: aPts, max: 5, text: aPts ? (T.accomplices.length ? 'Identificaste correctamente a quien colaboró.' : 'Correcto: nadie más participó.') : (T.accomplices.length ? 'No identificaste correctamente a quien colaboró.' : 'Atribuiste una colaboración que no existió.') });
     const raw = comp.reduce((n, x) => n + x.pts, 0);
     /* Señalar a quien no fue nunca aprueba, por buena que sea la investigación. */
-    const total = okCulprit || insufficient ? raw : Math.min(raw, 45);
+    let total = okCulprit || insufficient ? raw : Math.min(raw, 45);
 
     /* --- Perfil de razonamiento observado --- */
     const P = {};
@@ -403,6 +406,15 @@
     lines.push(bias);
     if (examined) lines.push('Cadena de custodia: documentaste fotográficamente ' + photos + ' de ' + examined + ' indicios examinados.');
     if (forensicUses) lines.push('Usaste herramientas forenses ' + forensicUses + ' vez/veces; ' + forensicHits + ' dieron un hallazgo.');
+
+    // el reloj: si el autor tuvo tiempo de huir, la detención se complica
+    if (E0.clock) {
+      const D = E0.clock.deadlines(cs), hrs = cs.hours || 0;
+      lines.push('Cerraste el caso en ' + E0.clock.label(cs).toLowerCase() + ' (' + Math.round(hrs) + ' h de investigación).');
+      if (hrs >= D.flee && okCulprit && c.people.some(p => p.id === T.culprit)) { total = Math.max(0, total - 10); lines.push('El autor tuvo tiempo de salir del país antes de la detención: −10 puntos.'); }
+      const pt = E0.clock.pressTarget(c, cs);
+      if (pt && v.culprit === pt && !okCulprit) lines.push('La persona que señalaste era la misma que señalaban los titulares. La prensa publica rumores, no pruebas.');
+    }
 
     const stats = [
       ['Evidencias examinadas', examined + '/' + totalEv],

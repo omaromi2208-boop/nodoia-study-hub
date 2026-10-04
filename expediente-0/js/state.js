@@ -63,6 +63,8 @@
       tension: {},
       pericias: {},
       videos: {},
+      hours: 0,
+      nightmare: false,
       lawyer: {},
       lastView: {}
     };
