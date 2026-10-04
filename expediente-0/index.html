@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Expediente 0</title>
+  <meta name="description" content="Simulador de investigación criminal: reconstruye el caso, no lo adivines.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-e0theme="noche">
+  <header class="topbar" id="topbar"></header>
+  <div class="layout">
+    <nav class="sidebar" id="sidebar" aria-label="Navegación principal"></nav>
+    <main class="main" id="main">
+      <noscript>EXPEDIENTE 0 necesita JavaScript activado.</noscript>
+    </main>
+  </div>
+  <div class="scrim"></div>
+  <div id="toasts" aria-live="polite"></div>
+  <div id="modal-root"></div>
+
+  <!-- Datos (única fuente de verdad) -->
+  <script src="data/config.js"></script>
+  <script src="data/academy.js"></script>
+  <script src="data/legal.js"></script>
+  <script src="data/case01.js"></script>
+  <script src="data/case02.js"></script>
+  <script src="data/case03.js"></script>
+  <script src="data/case04.js"></script>
+  <script src="data/case05.js"></script>
+  <script src="data/case06.js"></script>
+  <script src="data/case07.js"></script>
+  <script src="data/case08.js"></script>
+  <script src="data/threads.js"></script>
+  <!-- Motor e interfaz -->
+  <script src="vendor/three.min.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/clock.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/scene3d.js"></script>
+  <script src="js/face3d.js"></script>
+  <script src="js/room3d.js"></script>
+  <script src="js/prints.js"></script>
+  <script src="js/lab3d.js"></script>
+  <script src="js/pericias.js"></script>
+  <script src="js/video.js"></script>
+  <script src="js/recon3d.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
