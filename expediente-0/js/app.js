@@ -83,6 +83,7 @@
     if (tr) tr.scrollTop = tr.scrollHeight;
     drawWall();
     drawBench();
+    drawPericia();
     mountLab();
     drawMapTokens();
     mount3d();
@@ -250,6 +251,21 @@
     cs.lastView.wallConnect = { on: false, from: null, label: con.label };
     render();
   }
+
+  let perDrag = null;
+  document.addEventListener('pointerdown', e => {
+    const cv = e.target.closest && e.target.closest('canvas[data-act="per-drag"]');
+    if (!cv) return;
+    perDrag = { x: e.clientX, y: e.clientY, cv };
+    try { cv.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ }
+  });
+  document.addEventListener('pointermove', e => {
+    if (!perDrag) return;
+    const { c, cs } = curCase();
+    E0.pericias.dragTo(c, cs, cs.lastView.pericia, perDrag.cv, e.clientX - perDrag.x, e.clientY - perDrag.y);
+    perDrag.x = e.clientX; perDrag.y = e.clientY;
+  });
+  document.addEventListener('pointerup', () => { if (perDrag) { perDrag = null; store.save(); } });
 
   let drag = null;
   function bindWall() {
@@ -459,6 +475,24 @@
     toast('Cotejo automático completado.');
     finishLatent(c, cs, fid);
   }
+  /* ---------- Pericias ---------- */
+  function periciaAct(el, e) {
+    const { c, cs } = curCase();
+    const fid = cs && cs.lastView.pericia;
+    if (!fid || !cs.pericias[fid] || !guardOpen(cs)) return false;
+    if (el.dataset.act === 'per-drag' || el.dataset.act === 'per-none') return false;
+    const r = E0.pericias.act(c, cs, fid, el.dataset.act, el, e);
+    if (!r) return false;
+    if (r.msg) toast(r.msg, r.warn ? 'warn' : undefined);
+    if (r.solved) { EN.settlePericia(c, cs, fid); EN.log(cs, 'pericia', { fact: fid }); toast('Pericia concluida: el resultado se incorpora al expediente.'); }
+  }
+  function drawPericia() {
+    if (!document.querySelector('.pericia')) return;
+    const { c, cs } = curCase();
+    const fid = cs.lastView.pericia;
+    if (fid && cs.pericias[fid]) E0.pericias.draw(c, cs, fid);
+  }
+
   /* ---------- Mesa de revelado ---------- */
   function labView() { const { cs } = curCase(); cs.lastView.labBench = cs.lastView.labBench || { powder: 'negro', light: false }; return cs.lastView.labBench; }
   function labLift() {
@@ -816,6 +850,16 @@
     'bench-card': (el, e) => benchCard(el, e),
     'bench-noapta': () => benchNoApta(),
     'bench-auto': el => benchAuto(el.dataset.fid),
+    'per-open': el => { const { cs } = curCase(); cs.lastView.pericia = el.dataset.id; S().view.tab = 'laboratorio'; },
+    'per-close': () => { curCase().cs.lastView.pericia = null; },
+    'per-auto': el => {
+      const { c, cs } = curCase();
+      if (!guardOpen(cs) || !spend(cs, EN.costOf('lab', 150))) return;
+      E0.pericias.autoSolve(c, cs, el.dataset.id);
+      EN.settlePericia(c, cs, el.dataset.id);
+      EN.log(cs, 'pericia_auto', { fact: el.dataset.id });
+      toast('Pericia automática concluida: el resultado se incorpora al expediente.');
+    },
     'lab-powder': el => { labView().powder = el.dataset.id; },
     'lab-light': () => { const v = labView(); v.light = !v.light; },
     'lab-clean': () => { if (E0.lab3d) E0.lab3d.clean(); return false; },
@@ -1016,7 +1060,7 @@
       if (e.target.classList && e.target.classList.contains('scrim')) { document.body.classList.remove('nav-open'); return; }
       const el = e.target.closest('[data-act]');
       if (!el || /^(INPUT|SELECT|TEXTAREA)$/.test(el.tagName)) return;
-      const fn = CLICK[el.dataset.act];
+      const fn = CLICK[el.dataset.act] || (/^per-/.test(el.dataset.act) ? (x, ev) => periciaAct(x, ev) : null);
       if (!fn) return;
       e.preventDefault();
       if (el.classList.contains('nav-btn')) document.body.classList.remove('nav-open');
@@ -1038,6 +1082,10 @@
       if (act === 'range-out' || act === 'hyp-conf') {
         const out = document.getElementById(el.dataset.out);
         if (out) out.textContent = el.value;
+      } else if (act === 'per-rot' || act === 'per-crot') {
+        const { c, cs } = curCase();
+        E0.pericias.setRot(c, cs, cs.lastView.pericia, Number(el.value), act === 'per-crot' ? 'casing' : 'pose');
+        store.save();
       } else if (act === 'map-time') {
         const { cs } = curCase();
         cs.lastView.mapT = Number(el.value);

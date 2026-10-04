@@ -347,7 +347,7 @@ E0.cases.push({
     F_UNA_COPA: { text: 'Sobre la mesa del salón hay una sola copa.', source: 'escena', tags: ['copa', 'vino'] },
     F_COPA_HUELLAS: { prints: [{ at: 'Copa del salón · cáliz', match: 'daniel' }], text: 'Huellas en la copa del salón: solo de Daniel Ferrer.', source: 'laboratorio', tags: ['copa', 'huella'] },
     F_COPA_ZOLPIDEM: { text: 'Los restos de vino de la copa del salón contienen zolpidem disuelto.', source: 'laboratorio', tags: ['copa', 'tox', 'vino'] },
-    F_COPA_ADN: { text: 'ADN en el borde de la copa del salón: perfil de Daniel Ferrer.', source: 'laboratorio', tags: ['copa', 'adn'] },
+    F_COPA_ADN: { pericia: { type: 'adn', match: 'daniel', label: 'copa del salón' }, text: 'ADN en el borde de la copa del salón: perfil de Daniel Ferrer.', source: 'laboratorio', tags: ['copa', 'adn'] },
     F_COPA_ESCURRIDOR: { text: 'En el escurridor hay una copa idéntica a la del salón, junto a un único plato; el resto de la vajilla está guardada.', source: 'escena', tags: ['copa', 'vino', 'cocina'] },
     F_ESCURRIDOR_LIMPIA: { text: 'La copa del escurridor no tiene huellas aprovechables: fue lavada con detergente.', source: 'laboratorio', tags: ['copa', 'huella'] },
     F_ESCURRIDOR_ADN: { text: 'La copa del escurridor no conserva perfil genético.', source: 'laboratorio', tags: ['copa', 'adn'] },

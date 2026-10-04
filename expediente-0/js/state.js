@@ -61,6 +61,7 @@
       forensic: {},
       latents: {},
       tension: {},
+      pericias: {},
       lawyer: {},
       lastView: {}
     };

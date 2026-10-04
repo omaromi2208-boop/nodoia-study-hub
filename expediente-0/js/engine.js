@@ -446,6 +446,13 @@
     const direct = [], pending = [];
     (ids || []).forEach(id => {
       const P = printsOf(c, id);
+      const per = c.facts[id] && c.facts[id].pericia;
+      if (per && !known(cs, id)) {
+        cs.pericias = cs.pericias || {};
+        cs.pericias[id] = cs.pericias[id] || { status: 'pendiente' };
+        pending.push(id);
+        return;
+      }
       if (!P.length || known(cs, id)) { direct.push(id); return; }
       cs.latents[id] = cs.latents[id] || { items: {} };
       P.forEach((_, i) => { cs.latents[id].items[i] = cs.latents[id].items[i] || { status: 'pendiente', pick: null, pairs: [], bad: {}, match: null, revealed: revealed !== false }; });
@@ -462,5 +469,12 @@
     return done;
   }
 
-  E0.engine = { printsOf, cardPeople, gateReveal, settleLatents, NOT_FOUND, getCase, resolveCase, pickVariant, costOf, judicialMax, minutes, fmt, known, discover, knownFacts, personName, judicialTargets, placeDistance, knownPlaces, log, query, findConflict, timelineCompare, hypStatus, custody, evaluate, trialSet, trialResolve, norm };
+  function settlePericia(c, cs, fid) {
+    const st = (cs.pericias || {})[fid];
+    if (!st || st.status === 'pendiente' || known(cs, fid)) return false;
+    discover(cs, [fid]);
+    return true;
+  }
+
+  E0.engine = { settlePericia, printsOf, cardPeople, gateReveal, settleLatents, NOT_FOUND, getCase, resolveCase, pickVariant, costOf, judicialMax, minutes, fmt, known, discover, knownFacts, personName, judicialTargets, placeDistance, knownPlaces, log, query, findConflict, timelineCompare, hypStatus, custody, evaluate, trialSet, trialResolve, norm };
 })();

@@ -244,10 +244,11 @@ E0.cases.push({
       public: 'Una nota sujeta con un imán en la nevera.',
       detail: 'Letra de Irene: «Compra: leche, pan, café. Llamar a Hugo — viernes».',
       value: 'Puede indicar una cita o un recado.', limits: 'Una nota doméstica admite muchas lecturas.',
-      reveals: ['F2_NOTA'] }
+      reveals: ['F2_NOTA'],
+      lab: { caligrafia: { cost: 120, label: 'Pericial caligráfica', reveals: ['F2_NOTA_CALIG'] } } }
   ],
 
-  labKinds: { huellas: 'Huellas dactilares', adn: 'ADN', fibras: 'Fibras', comparativa: 'Comparativa', vehiculo: 'Revisión mecánica' },
+  labKinds: { huellas: 'Huellas dactilares', adn: 'ADN', fibras: 'Fibras', comparativa: 'Comparativa', vehiculo: 'Revisión mecánica', caligrafia: 'Pericial caligráfica' },
 
   /* ---------- DIGITAL ---------- */
   digital: [
@@ -297,16 +298,17 @@ E0.cases.push({
     F2_COCHE_MECANICA: { text: 'Revisión mecánica del Clio: sin averías. Arranca y circula con normalidad.', source: 'laboratorio', tags: ['vehiculo'] },
     F2_BOLSO: { text: 'En el bolso: cartera con DNI, tarjetas y 40 €, y las llaves de casa. No hay teléfono.', place: 'puente', source: 'escena', tags: ['bolso', 'telefono'] },
     F2_ZAPATO: { text: 'Zapatilla izquierda de Irene al pie de la barandilla, de pie y alineada, con los cordones atados con doble nudo.', place: 'puente', source: 'escena', tags: ['zapato', 'rio'] },
-    F2_ZAPATO_ADN: { text: 'ADN del interior de la zapatilla: perfil de Irene Soler.', source: 'laboratorio', tags: ['zapato', 'adn'] },
+    F2_ZAPATO_ADN: { pericia: { type: 'adn', match: 'irene', label: 'interior de la zapatilla' }, text: 'ADN del interior de la zapatilla: perfil de Irene Soler.', source: 'laboratorio', tags: ['zapato', 'adn'] },
     F2_BARANDILLA: { text: 'La barandilla conserva una película de polvo y hollín sin roces, arrastres ni huellas de apoyo recientes.', place: 'puente', source: 'escena', tags: ['rio', 'barandilla'] },
     F2_BARANDILLA_FIBRAS: { text: 'No hay fibras textiles en la barandilla ni en el pretil.', source: 'laboratorio', tags: ['fibra', 'barandilla'] },
     F2_MARCAS: { text: 'A seis metros detrás del Clio, huella parcial de un neumático ancho distinto de los del Clio.', place: 'puente', source: 'escena', tags: ['vehiculo', 'neumatico'] },
-    F2_NEUMATICO: { text: 'El neumático es de medida 215/65 R16, habitual en furgonetas comerciales (Transit, Vito, Trafic…). Compatible con muchos modelos.', source: 'laboratorio', tags: ['vehiculo', 'neumatico', 'furgoneta'] },
+    F2_NEUMATICO: { pericia: { type: 'neumatico', match: 'furgoneta', label: 'marcas del arcén' }, text: 'El neumático es de medida 215/65 R16, habitual en furgonetas comerciales (Transit, Vito, Trafic…). Compatible con muchos modelos.', source: 'laboratorio', tags: ['vehiculo', 'neumatico', 'furgoneta'] },
     F2_TABLET_ESCENA: { text: 'La tablet de Irene está en el despacho, bloqueada y sincronizada con su cuenta.', source: 'escena', tags: ['tablet'] },
     F2_PASAPORTE: { text: 'En la carpeta de documentos del dormitorio está el pasaporte de Álvaro, pero no el de Irene.', place: 'paterna', source: 'escena', tags: ['pasaporte', 'documento'] },
     F2_ARMARIO: { text: 'En el armario de Irene hay perchas vacías juntas y falta la maleta pequeña del altillo.', place: 'paterna', source: 'escena', tags: ['maleta', 'ropa'] },
     F2_PORTATIL_ESCENA: { text: 'El portátil corporativo de CLM está en el despacho, cifrado.', source: 'escena', tags: ['portatil'] },
     F2_TIQUES: { text: 'Tiques en la papelera: retirada de 1.000 € (jueves 8/10, 18:12) y compra de una SIM de prepago en un estanco (jueves, 18:40).', source: 'documento', tags: ['dinero', 'sim', 'telefono'] },
+    F2_NOTA_CALIG: { pericia: { type: 'caligrafia', match: 'irene', label: 'nota de la nevera' }, text: 'Pericial caligráfica: la nota de la nevera es de puño y letra de Irene.', person: 'irene', source: 'laboratorio', tags: ['nota', 'documento'] },
     F2_NOTA: { text: 'Nota en la nevera, de puño de Irene: «Compra: leche, pan, café. Llamar a Hugo — viernes».', person: 'hugo', source: 'documento', tags: ['nota'] },
 
     F2_CV_2214: { text: 'Cámara de la vecina: sale el Clio blanco de Irene.', time: '22:14', person: 'irene', place: 'paterna', source: 'cámara', tags: ['camara', 'vehiculo'] },
@@ -493,7 +495,7 @@ E0.cases.push({
         F2_BARANDILLA_FIBRAS: { text: 'Fibras de forro polar negro enganchadas en una arista del pretil.', source: 'laboratorio', tags: ['fibra', 'barandilla'] },
         F2_LUMINOL_BARANDILLA: { text: 'Luminol: reacción débil en el pretil, a la altura de la cintura: restos de sangre.', place: 'puente', source: 'laboratorio', tags: ['barandilla', 'sangre', 'rio'] },
         F2_MARCAS: { text: 'A seis metros detrás del Clio, huella parcial de un neumático ancho de todoterreno, distinto de los del Clio.', place: 'puente', source: 'escena', tags: ['vehiculo', 'neumatico'] },
-        F2_NEUMATICO: { text: 'El neumático es de medida 225/65 R17, habitual en todoterrenos compactos (RAV4, Tucson, Qashqai…). Compatible con muchos modelos.', source: 'laboratorio', tags: ['vehiculo', 'neumatico'] },
+        F2_NEUMATICO: { pericia: { type: 'neumatico', match: 'todoterreno', label: 'marcas del arcén' }, text: 'El neumático es de medida 225/65 R17, habitual en todoterrenos compactos (RAV4, Tucson, Qashqai…). Compatible con muchos modelos.', source: 'laboratorio', tags: ['vehiculo', 'neumatico'] },
         F2_PASAPORTE: { text: 'En la carpeta de documentos del dormitorio están los pasaportes de Irene y de Álvaro.', place: 'paterna', source: 'escena', tags: ['pasaporte', 'documento'] },
         F2_POLVO_CARPETA: { prints: [{ at: 'Carpeta · cierre', match: 'irene' }, { at: 'Carpeta · solapa', match: 'alvaro' }], text: 'Polvo revelador: huellas de Irene y de Álvaro en la carpeta; el pasaporte de Irene sigue dentro.', source: 'laboratorio', tags: ['pasaporte', 'huella'] },
         F2_ARMARIO: { text: 'El armario de Irene está completo y la maleta pequeña sigue en el altillo.', place: 'paterna', source: 'escena', tags: ['maleta', 'ropa'] },

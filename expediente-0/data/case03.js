@@ -293,7 +293,7 @@ E0.cases.push({
     F3_AUTOPSIA: { text: 'Autopsia: la lesión mortal es compatible con un impacto contra una arista al caer. Los hematomas de los antebrazos son compatibles con un agarre o un empujón.', person: 'tomas', source: 'laboratorio', tags: ['muerte', 'golpe'] },
     F3_AUTOPSIA_HORA: { text: 'Autopsia: por el contenido gástrico (cena entregada a las 21:31), la muerte se produjo entre las 22:15 y las 22:50.', time: '22:15', end: '22:50', person: 'tomas', place: 'p7', source: 'informe forense', tags: ['muerte', 'hora'] },
     F3_ESQUINA_ESCENA: { text: 'Sangre y cabellos en la esquina delantera izquierda del escritorio.', source: 'escena', tags: ['golpe'] },
-    F3_ESQUINA: { text: 'La sangre y los cabellos de la esquina son de Tomás; la altura y el ángulo son compatibles con una caída hacia atrás.', source: 'laboratorio', tags: ['golpe', 'muerte'] },
+    F3_ESQUINA: { pericia: { type: 'adn', match: 'tomas', label: 'esquina del escritorio' }, text: 'La sangre y los cabellos de la esquina son de Tomás; la altura y el ángulo son compatibles con una caída hacia atrás.', source: 'laboratorio', tags: ['golpe', 'muerte'] },
     F3_CAJON: { text: 'El cajón del escritorio fue forzado con un abrecartas; queda una funda vacía rotulada «PAGARÉS S.M.».', place: 'p7', source: 'escena', tags: ['cajon', 'documento', 'pagares'] },
     F3_ABRECARTAS: { text: 'El abrecartas no tiene huellas aprovechables: fue limpiado.', source: 'laboratorio', tags: ['huella', 'cajon'] },
     F3_INTACTO: { text: 'La cartera con 310 € y el reloj de oro del dormitorio están intactos.', place: 'p7', source: 'escena', tags: ['robo'] },

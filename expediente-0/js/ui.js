@@ -460,7 +460,7 @@
     const focus = cs.lastView.labFocus;
     const avail = c.evidence.filter(e => e.lab && cs.examined[e.id]);
     const pending = c.evidence.filter(e => e.lab && !cs.examined[e.id]).length;
-    return '<div class="stack">' + benchSection(c, cs) + '<div class="spread"><p class="muted" style="max-width:62ch">Decide qué análisis solicitar. Cada análisis tiene un coste para el presupuesto de la unidad. Los resultados respetan los límites de cada técnica.</p><span class="chip keep"><em>Fondos</em>' + money(s.money) + '</span></div>' +
+    return '<div class="stack">' + periciaSection(c, cs) + benchSection(c, cs) + '<div class="spread"><p class="muted" style="max-width:62ch">Decide qué análisis solicitar. Cada análisis tiene un coste para el presupuesto de la unidad. Los resultados respetan los límites de cada técnica.</p><span class="chip keep"><em>Fondos</em>' + money(s.money) + '</span></div>' +
       (avail.length ? '<div class="grid">' + avail.map(e => '<article class="panel stack" ' + (focus === e.id ? 'style="border-color:var(--accent)"' : '') + ' id="lab-' + e.id + '"><div><div class="ev-id">' + e.id + '</div><h3>' + esc(e.name) + '</h3></div>' +
         Object.keys(e.lab).map(k => {
           const a = e.lab[k];
@@ -474,8 +474,19 @@
       (s.money < 120 ? '<div class="result neutral">Fondos bajos. Puedes conseguir presupuesto con «Trabajo administrativo» en el centro de investigación.</div>' : '') + '</div>';
   }
 
+  /* Pericias jugables pendientes y resueltas. */
+  function periciaSection(c, cs) {
+    const ids = Object.keys(cs.pericias || {}).filter(id => c.facts[id] && c.facts[id].pericia);
+    if (!ids.length) return '';
+    const sel = cs.lastView.pericia && ids.includes(cs.lastView.pericia) ? cs.lastView.pericia : null;
+    return '<article class="panel stack"><div class="panel-head"><h3>Pericias</h3><span class="badge">' + ids.length + '</span></div><div class="latent-items">' +
+      ids.map(id => { const st = cs.pericias[id], P = c.facts[id].pericia; return '<button class="latent-item" data-act="per-open" data-id="' + id + '" aria-pressed="' + (sel === id) + '"><span>' + esc(E0.pericias.NAMES[P.type]) + ' · ' + esc(P.label || sourceOfFact(c, id)) + '</span>' + (st.status === 'pendiente' ? '<span class="badge warn">Pendiente</span>' : '<span class="badge ok">Concluida</span>') + '</button>'; }).join('') + '</div>' +
+      (sel ? E0.pericias.html(c, cs, sel) + '<div class="row">' + (cs.pericias[sel].status === 'pendiente' ? '<button class="btn small ghost" data-act="per-auto" data-id="' + sel + '">Pericia automática <span class="cost">' + EN.costOf('lab', 150) + ' €</span></button>' : '') + '<button class="btn small ghost" data-act="per-close">Cerrar</button></div>' : '') + '</article>';
+  }
+
   /* Resultado de un análisis, o aviso de huellas pendientes de cotejo. */
   function factOrPending(c, cs, id) {
+    if (!EN.known(cs, id) && c.facts[id].pericia) return '<div class="result neutral"><b>Muestra preparada.</b> El resultado se conoce al hacer la pericia. <button class="linkish" data-act="per-open" data-id="' + id + '">Ir a la pericia</button></div>';
     if (EN.known(cs, id) || !EN.printsOf(c, id).length) return '<div class="result">' + esc(c.facts[id].text) + '</div>';
     const n = EN.printsOf(c, id).length;
     return '<div class="result neutral"><b>' + n + ' huella' + (n > 1 ? 's latentes recogidas' : ' latente recogida') + '.</b> El resultado se conoce al cotejarlas. <button class="linkish" data-act="bench-open" data-fid="' + id + '" data-i="0">Ir al banco de cotejo</button></div>';

@@ -582,3 +582,14 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 .lab-tools { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; justify-content: space-between; }
 .lab-tools .btn[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
 @media (max-width: 860px) { .lab3d { aspect-ratio: 4 / 3; } }
+
+/* Pericias */
+.pericia { display: grid; gap: 10px; border-top: 1px solid var(--line-soft); padding-top: 12px; }
+.per-cv { width: 100%; max-width: 360px; aspect-ratio: 1; border: 1px solid var(--line); border-radius: var(--radius); touch-action: none; cursor: move; }
+.per-cv.wide { max-width: 100%; aspect-ratio: auto; cursor: pointer; }
+.per-row { display: grid; grid-template-columns: minmax(0, 360px) minmax(0, 1fr); gap: 16px; align-items: start; }
+.letters { display: flex; flex-wrap: wrap; gap: 10px; }
+.letters canvas { width: 72px; height: 72px; border: 1px solid var(--line); border-radius: 4px; }
+.letter-pair { display: grid; gap: 4px; justify-items: center; }
+.letter-pair .btn { padding: 3px 7px; font-size: 0.72rem; }
+@media (max-width: 860px) { .per-row { grid-template-columns: 1fr; } }
