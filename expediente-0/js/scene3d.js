@@ -306,6 +306,7 @@
     scene.add(base);
 
     const floorTones = [0x3a2f27, 0x2f3540, 0x413a33, 0x343a33, 0x3b3538];
+    const walls = [];
     const hotspots = plan.hotspots.map(h => toWorld(h.x, h.y));
     plan.rooms.forEach(r => {
       const a = toWorld(r.x, r.y), b = toWorld(r.x + r.w, r.y + r.h);
@@ -313,7 +314,29 @@
       const fl = box(w - 0.02, 0.06, d - 0.02, floorTones[hash(r.id) % floorTones.length], { roughness: 0.9 });
       fl.castShadow = false; at(fl, cx, 0, cz); scene.add(fl);
       const wallC = 0x59606b;
-      [[cx, a.z, w, 0.08], [cx, b.z, w, 0.08], [a.x, cz, 0.08, d], [b.x, cz, 0.08, d]].forEach(([x, z, ww, dd]) => scene.add(at(box(ww, WALL_H, dd, wallC, { roughness: 0.95 }), x, WALL_H / 2, z)));
+      // cada lado se parte dejando un hueco de puerta donde toca otra estancia
+      const sides = [['h', a.z, a.x, b.x], ['h', b.z, a.x, b.x], ['v', a.x, a.z, b.z], ['v', b.x, a.z, b.z]];
+      sides.forEach(([o, k, s0, s1]) => {
+        const gaps = [];
+        plan.rooms.forEach(r2 => {
+          if (r2 === r) return;
+          const A = toWorld(r2.x, r2.y), B = toWorld(r2.x + r2.w, r2.y + r2.h);
+          const lines = o === 'h' ? [A.z, B.z] : [A.x, B.x];
+          if (!lines.some(L => Math.abs(L - k) < 0.05)) return;
+          const lo2 = Math.max(s0, o === 'h' ? A.x : A.z), hi2 = Math.min(s1, o === 'h' ? B.x : B.z);
+          if (hi2 - lo2 >= 1.4) gaps.push([(lo2 + hi2) / 2 - 0.5, (lo2 + hi2) / 2 + 0.5]);
+        });
+        gaps.sort((g1, g2) => g1[0] - g2[0]);
+        let cur = s0;
+        gaps.concat([[s1, s1]]).forEach(([g0, g1]) => {
+          if (g0 - cur > 0.05) {
+            const len = g0 - cur, mid = (cur + g0) / 2;
+            const m = o === 'h' ? at(box(len, WALL_H, 0.08, wallC, { roughness: 0.95 }), mid, WALL_H / 2, k) : at(box(0.08, WALL_H, len, wallC, { roughness: 0.95 }), k, WALL_H / 2, mid);
+            m.userData.wall = true; walls.push(m); scene.add(m);
+          }
+          cur = Math.max(cur, g1);
+        });
+      });
       const lbl = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 0.45), new THREE.MeshBasicMaterial({ map: textTexture(r.name, '#8d97a8'), transparent: true, depthWrite: false }));
       lbl.rotation.x = -Math.PI / 2; at(lbl, a.x + 1.35, 0.04, a.z + 0.4); scene.add(lbl);
       if (/(^|[^a-z])rio([^a-z]|$)|barandilla/.test(norm(r.id + ' ' + r.name))) {
@@ -346,9 +369,9 @@
       const ringM = new THREE.Mesh(new THREE.RingGeometry(0.55, 0.62, 40), new THREE.MeshBasicMaterial({ color: accent, transparent: true, opacity: 0.9, side: THREE.DoubleSide }));
       ringM.rotation.x = -Math.PI / 2; ringM.position.set(p.x, 0.05, p.z); ringM.visible = false;
       scene.add(g); scene.add(marker); scene.add(ringM);
-      props[e.id] = { group: g, marker, ring: ringM, pos: new THREE.Vector3(p.x, 0.3, p.z) };
+      props[e.id] = { group: g, marker, ring: ringM, pos: new THREE.Vector3(p.x, 0.3, p.z), model: modelFor(e) };
     });
-    return { scene, props, lights: { hemi, dir, rim }, bg };
+    return { scene, props, lights: { hemi, dir, rim }, bg, walls };
   }
 
   /* ---------- Efectos de herramientas forenses ---------- */
@@ -413,7 +436,14 @@
   }
 
   /* ---------- Cámara orbital propia (ratón, rueda y táctil) ---------- */
+  const EYE = 1.05;
   function camUpdate() {
+    if (R.fp) {
+      const f = R.fp, bob = f.walk ? Math.sin(f.walk * 9) * 0.025 : 0;
+      R.camera.position.set(f.x, EYE + bob, f.z);
+      R.camera.lookAt(f.x + Math.sin(f.yaw) * Math.cos(f.pitch), EYE + bob + Math.sin(f.pitch), f.z + Math.cos(f.yaw) * Math.cos(f.pitch));
+      return;
+    }
     const o = R.orbit;
     const t = R.target;
     R.camera.position.set(t.x + o.r * Math.sin(o.phi) * Math.sin(o.theta), t.y + o.r * Math.cos(o.phi), t.z + o.r * Math.sin(o.phi) * Math.cos(o.theta));
@@ -426,13 +456,13 @@
     el.addEventListener('pointerdown', e => {
       pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
       try { el.setPointerCapture(e.pointerId); } catch (err) { /* sin captura */ }
-      if (pts.size === 1) down = { x: e.clientX, y: e.clientY, moved: false, theta: R.orbit.theta, phi: R.orbit.phi };
+      if (pts.size === 1) down = { x: e.clientX, y: e.clientY, moved: false, theta: R.orbit.theta, phi: R.orbit.phi, yaw: R.fp ? R.fp.yaw : 0, pitch: R.fp ? R.fp.pitch : 0 };
       else if (pts.size === 2) { const [a, b] = [...pts.values()]; pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), r: R.orbit.r }; down = null; }
       R.autoRotate = false;
     });
     el.addEventListener('pointermove', e => {
       if (pts.has(e.pointerId)) pts.set(e.pointerId, { x: e.clientX, y: e.clientY });
-      if (pinch && pts.size === 2) {
+      if (pinch && pts.size === 2 && !R.fp) {
         const [a, b] = [...pts.values()];
         R.orbit.r = Math.min(28, Math.max(2, pinch.r * pinch.d / Math.max(20, Math.hypot(a.x - b.x, a.y - b.y))));
         camUpdate(); return;
@@ -440,7 +470,11 @@
       if (down) {
         const dx = e.clientX - down.x, dy = e.clientY - down.y;
         if (Math.abs(dx) + Math.abs(dy) > 4) down.moved = true;
-        if (down.moved) {
+        if (down.moved && R.fp) {
+          R.fp.yaw = down.yaw - dx * 0.005;
+          R.fp.pitch = Math.max(-0.9, Math.min(0.8, down.pitch - dy * 0.004));
+          camUpdate();
+        } else if (down.moved) {
           R.orbit.theta = down.theta - dx * 0.008;
           R.orbit.phi = Math.min(1.42, Math.max(0.18, down.phi - dy * 0.006));
           camUpdate();
@@ -458,6 +492,7 @@
     el.addEventListener('pointerleave', () => { if (R.tip) R.tip.hidden = true; });
     el.addEventListener('wheel', e => {
       e.preventDefault();
+      if (R.fp) return;
       R.orbit.r = Math.min(28, Math.max(2, R.orbit.r * (e.deltaY > 0 ? 1.1 : 0.9)));
       R.autoRotate = false;
       camUpdate();
@@ -500,16 +535,18 @@
     R.raf = requestAnimationFrame(loop);
     if (document.hidden) return;
     const k = 0.12;
-    if (R.goal) {
+    const dtt = Math.min(0.05, (t - (R.lastT || t)) / 1000); R.lastT = t;
+    if (R.fp) fpStep(dtt);
+    else if (R.goal) {
       R.target.lerp(R.goal.target, k);
       R.orbit.r += (R.goal.r - R.orbit.r) * k;
       if (R.target.distanceTo(R.goal.target) < 0.01 && Math.abs(R.goal.r - R.orbit.r) < 0.02) R.goal = null;
     }
-    if (R.autoRotate) R.orbit.theta += 0.004;
+    if (R.autoRotate && !R.fp) R.orbit.theta += 0.004;
     camUpdate();
     const s = t / 1000;
     Object.values(R.props).forEach((p, i) => {
-      p.marker.position.y = 1.9 + Math.sin(s * 2 + i) * 0.08;
+      p.marker.position.y = (R.fp ? 1.5 : 1.9) + Math.sin(s * 2 + i) * 0.08;
       p.marker.rotation.y = s * 1.5;
       if (p.ring.visible) p.ring.material.opacity = 0.55 + Math.sin(s * 4) * 0.3;
     });
@@ -530,7 +567,65 @@
     R.camera.updateProjectionMatrix();
   }
 
-  /* opts: { c, cs, planId, sel, inspect, onPick } */
+  /* ---------- Primera persona ---------- */
+  const keys = {};
+  window.addEventListener('keydown', e => {
+    if (!R || !R.fp || !R.container || !R.container.isConnected || /^(INPUT|SELECT|TEXTAREA)$/.test((e.target && e.target.tagName) || '')) return;
+    const k = { ArrowUp: 'f', KeyW: 'f', ArrowDown: 'b', KeyS: 'b', ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r' }[e.code];
+    if (k) { keys[k] = 1; e.preventDefault(); }
+  });
+  window.addEventListener('keyup', e => { const k = { ArrowUp: 'f', KeyW: 'f', ArrowDown: 'b', KeyS: 'b', ArrowLeft: 'l', KeyA: 'l', ArrowRight: 'r', KeyD: 'r' }[e.code]; if (k) keys[k] = 0; });
+  window.addEventListener('blur', () => { Object.keys(keys).forEach(k => { keys[k] = 0; }); });
+  function blocked(x, z, dx, dz) {
+    const len = Math.hypot(dx, dz); if (!len) return false;
+    R.ray.set(new THREE.Vector3(x, 0.5, z), new THREE.Vector3(dx / len, 0, dz / len));
+    R.ray.far = len + 0.32;
+    const hit = R.ray.intersectObjects(R.walls, false).length > 0;
+    R.ray.far = Infinity;
+    return hit;
+  }
+  function fpStep(dt) {
+    const f = R.fp, P = R.pad || {};
+    const fwd = (keys.f || P.f ? 1 : 0) - (keys.b || P.b ? 1 : 0);
+    const turn = (keys.r || P.r ? 1 : 0) - (keys.l || P.l ? 1 : 0);
+    if (turn) f.yaw -= turn * dt * 1.8;
+    if (fwd) {
+      const sp = 2.2 * dt * fwd, dx = Math.sin(f.yaw) * sp, dz = Math.cos(f.yaw) * sp;
+      if (!blocked(f.x, f.z, dx, 0)) f.x = Math.max(-W / 2 + 0.25, Math.min(W / 2 - 0.25, f.x + dx));
+      if (!blocked(f.x, f.z, 0, dz)) f.z = Math.max(-D / 2 + 0.25, Math.min(D / 2 - 0.25, f.z + dz));
+      f.walk = (f.walk || 0) + dt;
+    } else f.walk = 0;
+  }
+  /* Objetos pequeños exagerados en la maqueta; en primera persona vuelven a su tamaño. */
+  const SMALL = new Set(['glass', 'bottle', 'laptop', 'phone', 'tablet', 'keys', 'shoe', 'bag', 'papers', 'chess', 'jewelry', 'trace', 'marker', 'trashbag', 'camera']);
+  function setFp(on, plan) {
+    const scale = on ? 2.3 : 1;
+    (R.walls || []).forEach(m => { m.scale.y = scale; m.position.y = WALL_H * scale / 2; });
+    Object.values(R.props || {}).forEach(p => { if (SMALL.has(p.model)) p.group.scale.setScalar(on ? 0.45 : 1); p.marker.position.y = on ? 1.6 : 1.9; });
+    if (!on) { R.fp = null; return; }
+    if (R.fp) return;
+    // empieza en el centro de la estancia con más elementos, mirando al primero
+    let best = plan.rooms[0], bestN = -1;
+    plan.rooms.forEach(r => { const n = plan.hotspots.filter(h => h.x >= r.x && h.x <= r.x + r.w && h.y >= r.y && h.y <= r.y + r.h).length; if (n > bestN) { bestN = n; best = r; } });
+    const ctr = toWorld(best.x + best.w / 2, best.y + best.h / 2);
+    const first = plan.hotspots.find(h => h.x >= best.x && h.x <= best.x + best.w && h.y >= best.y && h.y <= best.y + best.h) || plan.hotspots[0];
+    const tgt = first ? toWorld(first.x, first.y) : { x: ctr.x, z: ctr.z + 1 };
+    const A = toWorld(best.x, best.y), B = toWorld(best.x + best.w, best.y + best.h);
+    let vx = ctr.x - tgt.x, vz = ctr.z - tgt.z; const vl = Math.hypot(vx, vz) || 1; vx /= vl; vz /= vl;
+    const reach = Math.min((B.x - A.x), (B.z - A.z)) * 0.38;
+    const sx = Math.max(A.x + 0.4, Math.min(B.x - 0.4, ctr.x + vx * reach)), sz = Math.max(A.z + 0.4, Math.min(B.z - 0.4, ctr.z + vz * reach));
+    R.fp = { x: sx, z: sz, yaw: Math.atan2(tgt.x - sx, tgt.z - sz), pitch: -0.32, walk: 0 };
+  }
+  function bindPad(container) {
+    R.pad = {};
+    container.querySelectorAll('[data-move]').forEach(b => {
+      const k = b.dataset.move;
+      const on = e => { e.preventDefault(); R.pad[k] = 1; }, off = () => { R.pad[k] = 0; };
+      b.addEventListener('pointerdown', on); b.addEventListener('pointerup', off); b.addEventListener('pointerleave', off); b.addEventListener('pointercancel', off);
+    });
+  }
+
+  /* opts: { c, cs, planId, sel, inspect, onPick, fp } */
   function mount(container, opts) {
     if (!available()) return false;
     if (!R) {
@@ -549,17 +644,19 @@
     if (R.key !== key) {
       if (R.scene) R.scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
       const b = build(opts.c, plan);
-      R.scene = b.scene; R.props = b.props; R.lights = b.lights; R.bg = b.bg; R.key = key; R.fxKey = null; R.fxGroup = null;
+      R.scene = b.scene; R.props = b.props; R.lights = b.lights; R.bg = b.bg; R.walls = b.walls; R.key = key; R.fxKey = null; R.fxGroup = null; R.fp = null;
       R.orbit = { r: 17, theta: -0.55, phi: 0.95 }; R.target.set(0, 0, 0); R.goal = null; R.sel = null; R.inspect = false;
     }
     R.c = opts.c; R.onPick = opts.onPick; R.container = container;
     container.insertBefore(R.renderer.domElement, container.firstChild);
     R.tip = container.querySelector('.s3-tip');
+    setFp(!!opts.fp, plan);
+    bindPad(container);
     Object.entries(R.props).forEach(([id, p]) => {
       p.marker.visible = !opts.cs.examined[id];
       p.ring.visible = opts.sel === id;
     });
-    if (opts.sel !== R.sel || !!opts.inspect !== R.inspect) {
+    if (!R.fp && (opts.sel !== R.sel || !!opts.inspect !== R.inspect)) {
       const p = R.props[opts.sel];
       if (p) R.goal = { target: p.pos.clone(), r: opts.inspect ? 2.6 : Math.min(R.orbit.r, 8.5) };
       else if (R.sel) R.goal = { target: new THREE.Vector3(0, 0, 0), r: 17 };

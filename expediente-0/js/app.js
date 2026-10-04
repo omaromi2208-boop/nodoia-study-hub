@@ -127,7 +127,7 @@
     if (!el || !E0.scene3d) return;
     const { c, cs } = curCase();
     const okMount = E0.scene3d.mount(el, {
-      c, cs, planId: UI.scenePlanId(c, cs), sel: cs.lastView.sceneSel || null, inspect: !!cs.lastView.inspect,
+      c, cs, planId: UI.scenePlanId(c, cs), sel: cs.lastView.sceneSel || null, inspect: !!cs.lastView.inspect, fp: !!cs.lastView.fp,
       fx: cs.lastView.fx && cs.lastView.fx.ev === cs.lastView.sceneSel ? cs.lastView.fx : null,
       onPick: id => { cs.lastView.sceneSel = id; cs.lastView.inspect = false; cs.lastView.fx = null; render(); }
     });
@@ -758,6 +758,7 @@
     'scene-sel': el => { const { cs } = curCase(); cs.lastView.sceneSel = el.dataset.id || null; cs.lastView.inspect = false; cs.lastView.fx = null; },
     view3d: el => { S().settings.view3d = el.dataset.on === '1'; },
     's3-inspect': () => { const { cs } = curCase(); cs.lastView.inspect = !cs.lastView.inspect; },
+    's3-fp': () => { const { cs } = curCase(); cs.lastView.fp = !cs.lastView.fp; cs.lastView.inspect = false; },
     's3-reset': () => { const { cs } = curCase(); cs.lastView.sceneSel = null; cs.lastView.inspect = false; if (E0.scene3d) E0.scene3d.resetView(); },
     forensic: el => {
       const { c, cs } = curCase();

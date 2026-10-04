@@ -560,3 +560,17 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 .dev-msg .bubble { max-width: 86%; padding: 8px 11px; border-radius: 14px 14px 14px 4px; background: #233142; line-height: 1.4; }
 .dev-msg.out .bubble { border-radius: 14px 14px 4px 14px; background: #1f4d55; }
 .dev-tools { margin-top: 2px; font-size: 0.72rem; }
+
+/* Escena en primera persona */
+.s3-cross { position: absolute; left: 50%; top: 50%; width: 14px; height: 14px; margin: -7px 0 0 -7px; pointer-events: none; }
+.s3-cross::before, .s3-cross::after { content: ''; position: absolute; background: rgba(255,255,255,.75); box-shadow: 0 0 2px #000; }
+.s3-cross::before { left: 6px; top: 0; width: 2px; height: 14px; }
+.s3-cross::after { left: 0; top: 6px; width: 14px; height: 2px; }
+.s3-pad { position: absolute; right: 12px; bottom: 12px; display: grid; grid-template-columns: repeat(3, 44px); grid-template-rows: repeat(2, 44px); gap: 6px; }
+.s3-pad button { border: 1px solid var(--line); border-radius: 10px; background: color-mix(in srgb, var(--panel) 80%, transparent); color: var(--text); font-size: 1rem; touch-action: none; user-select: none; }
+.s3-pad [data-move="f"] { grid-column: 2; grid-row: 1; }
+.s3-pad [data-move="l"] { grid-column: 1; grid-row: 2; }
+.s3-pad [data-move="b"] { grid-column: 2; grid-row: 2; }
+.s3-pad [data-move="r"] { grid-column: 3; grid-row: 2; }
+.s3-pad button:active { background: var(--accent-soft); border-color: var(--accent); }
+@media (hover: hover) and (pointer: fine) { .s3-pad { opacity: 0.75; } }

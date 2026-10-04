@@ -406,8 +406,10 @@
     }
     const viewTabs = '<div class="row" role="group" aria-label="Tipo de vista" style="margin-bottom:10px">' +
       (can3d ? '<button class="btn small ' + (in3d ? 'primary' : 'ghost') + '" data-act="view3d" data-on="1">Vista 3D</button><button class="btn small ' + (in3d ? 'ghost' : 'primary') + '" data-act="view3d" data-on="0">Plano</button>' : '<span class="faint" style="font-size:.8rem">Tu navegador no permite 3D: se muestra el plano.</span>') + '</div>';
-    const view3d = '<div class="scene3d" id="scene3d" aria-label="Escena en 3D: ' + esc(P.name) + '"><div class="s3-tip" hidden></div><div class="s3-hint">Arrastra para girar · rueda o pellizca para acercar · toca un objeto</div>' +
-      '<div class="s3-tools"><button class="btn small" data-act="s3-reset">Vista general</button></div></div>';
+    const fp = !!cs.lastView.fp;
+    const view3d = '<div class="scene3d' + (fp ? ' fp' : '') + '" id="scene3d" aria-label="Escena en 3D: ' + esc(P.name) + '"><div class="s3-tip" hidden></div><div class="s3-hint">' + (fp ? 'WASD o flechas para caminar · arrastra para mirar · toca un objeto' : 'Arrastra para girar · rueda o pellizca para acercar · toca un objeto') + '</div>' +
+      (fp ? '<i class="s3-cross" aria-hidden="true"></i><div class="s3-pad" aria-label="Moverse"><button data-move="f" aria-label="Avanzar">▲</button><button data-move="l" aria-label="Girar a la izquierda">◀</button><button data-move="b" aria-label="Retroceder">▼</button><button data-move="r" aria-label="Girar a la derecha">▶</button></div>' : '') +
+      '<div class="s3-tools"><button class="btn small' + (fp ? ' primary' : '') + '" data-act="s3-fp">' + (fp ? 'Salir de primera persona' : 'Recorrer en primera persona') + '</button>' + (fp ? '' : '<button class="btn small" data-act="s3-reset">Vista general</button>') + '</div></div>';
     return '<div class="scene-wrap"><div class="min0">' + viewTabs + planTabs + (in3d ? view3d : plan) +
       '<div class="legend"><span>◯ sin examinar</span><span>● examinado</span><span>' + esc(P.legend) + '</span></div></div>' + side + '</div>';
   }
