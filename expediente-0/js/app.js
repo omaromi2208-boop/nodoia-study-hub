@@ -45,7 +45,8 @@
 
   function newInfo(fresh) {
     if (fresh.length) toast('Nueva información incorporada al expediente (' + fresh.length + ').');
-    const { c } = curCase();
+    const { c, cs } = curCase();
+    if (c && cs) checkThread(c, cs);
     if (c && fresh.length) c.scene.plans.filter(pl => pl.unlock && fresh.includes(pl.unlock)).forEach(pl => toast('Nueva escena disponible: ' + pl.name + '. Ábrela en la pestaña Escena.', 'warn'));
   }
 
@@ -361,6 +362,7 @@
     }
     s.view.caseId = id;
     s.view.screen = 'case';
+    checkThread(c, cs);
   }
 
   function guardOpen(cs) {
@@ -573,6 +575,18 @@
     }
     EN.log(cs, 'digital', { id });
     newInfo(fresh);
+  }
+
+  /* ---------- Hilo conductor entre expedientes ---------- */
+  function checkThread(c, cs) {
+    const T = E0.threads && E0.threads.items[c.id];
+    const s = S();
+    s.threads = s.threads || {};
+    if (!T || s.threads[c.id] || !EN.known(cs, T.fact)) return;
+    s.threads[c.id] = true;
+    const n = Object.keys(s.threads).length;
+    toast('Un detalle se repite en otros expedientes: ' + E0.threads.name + '. Pistas del hilo conductor: ' + n + '/' + Object.keys(E0.threads.items).length + '.', 'warn');
+    if (n === E0.threads.unlockAt) toast('Se ha abierto el expediente transversal. Míralo en Carrera.', 'warn');
   }
 
   /* ---------- Reloj de la investigación ---------- */
@@ -959,6 +973,12 @@
       const fresh = EN.discover(cs, res ? res.facts : []);
       toast(res && res.facts.length ? 'Orden concedida. El registro aporta hallazgos.' : 'Orden concedida. El registro no aporta nada relevante.');
       newInfo(fresh);
+    },
+    'meta-answer': el => {
+      const s = S(), Q = E0.threads.question, o = Q.options.find(x => x.id === el.dataset.id);
+      if (s.meta && s.meta.solved) return false;
+      if (o.ok) { s.meta = { solved: true }; addXP(300); s.reputation = clamp(s.reputation + 8, 0, 100); toast('Expediente transversal resuelto: +300 XP y +8 reputación.'); }
+      else { s.meta = { tries: ((s.meta || {}).tries || 0) + 1 }; toast(Q.wrong, 'warn'); }
     },
     'per-open': el => { const { cs } = curCase(); cs.lastView.pericia = el.dataset.id; S().view.tab = 'laboratorio'; },
     'per-close': () => { curCase().cs.lastView.pericia = null; },

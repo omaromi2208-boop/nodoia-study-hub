@@ -27,6 +27,8 @@
       cases: {},
       history: [],
       budgets: {},
+      threads: {},
+      meta: null,
       view: { screen: 'home', caseId: null, tab: 'resumen' }
     };
   }

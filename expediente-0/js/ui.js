@@ -249,10 +249,25 @@
   }
 
   /* ---------- Carrera ---------- */
+  /* Hilo conductor: pistas que se repiten entre expedientes y el expediente transversal. */
+  function threadSection() {
+    const s = S(), T = E0.threads;
+    if (!T) return '';
+    const found = Object.keys(s.threads || {}).filter(k => T.items[k]);
+    const total = Object.keys(T.items).length;
+    const open = found.length >= T.unlockAt;
+    return '<article class="panel stack"><div class="panel-head"><h3>Hilo conductor</h3><span class="badge ' + (open ? 'acc' : '') + '">' + found.length + '/' + total + ' pistas</span></div>' +
+      (found.length ? found.map(k => '<div class="note"><span class="badge">' + esc(k) + '</span><p>' + esc(T.items[k].text) + '</p></div>').join('') : '<p class="muted" style="font-size:.88rem">Algunos detalles se repiten de un expediente a otro. Cuando encuentres uno, aparecerá aquí.</p>') +
+      (open ? '<div class="dossier panel stack"><div class="eyebrow">Expediente transversal</div><h3>' + esc(T.name) + '</h3>' + T.dossier.map(p => '<p>' + esc(p) + '</p>').join('') +
+        (s.meta && s.meta.solved ? '<div class="result"><b>Resuelto.</b> ' + esc(T.question.right) + '</div>' :
+          '<div class="sub">' + esc(T.question.q) + '</div><div class="stack" style="gap:6px">' + T.question.options.map(o => '<button class="btn" style="justify-content:flex-start;text-align:left" data-act="meta-answer" data-id="' + o.id + '">' + esc(o.label) + '</button>').join('') + '</div>') + '</div>' :
+        '<p class="faint" style="font-size:.82rem">Con ' + T.unlockAt + ' pistas se abre el expediente transversal.</p>') + '</article>';
+  }
+
   function screenCareer() {
     const s = S();
     const r = rankInfo(s.xp);
-    return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Progresión profesional</div><h1>Carrera</h1></div><span class="badge acc">' + s.xp + ' XP</span></div>' +
+    return '<section class="screen stack-lg"><div class="screen-head"><div><div class="eyebrow">Progresión profesional</div><h1>Carrera</h1></div><span class="badge acc">' + s.xp + ' XP</span></div>' + threadSection() +
       '<div class="grid"><article class="panel stack"><h3>Escalafón</h3><div class="ladder">' + C.ranks.map((rk, i) =>
         '<div class="rung ' + (i === r.i ? 'now' : i < r.i ? 'done' : '') + '"><span class="mono faint">' + (i + 1) + '</span><div class="min0"><b>' + esc(rk.name) + '</b><div class="faint mono" style="font-size:.72rem">Salario semanal ' + money(rk.salary) + '</div></div><span class="mono" style="font-size:.8rem">' + rk.xp + ' XP</span></div>').join('') + '</div></article>' +
       '<article class="panel stack"><h3>Situación</h3><dl class="kv"><dt>Rango</dt><dd>' + esc(r.cur.name) + '</dd><dt>Siguiente</dt><dd>' + (r.next ? esc(r.next.name) + ' (faltan ' + (r.next.xp - s.xp) + ' XP)' : '—') + '</dd><dt>Reputación</dt><dd>' + s.reputation + '/100</dd><dt>Dinero</dt><dd>' + money(s.money) + '</dd><dt>Calendario</dt><dd>Semana ' + s.week + ', jornada ' + (s.jornada % C.jornadasPorSemana + 1) + '</dd></dl>' +
