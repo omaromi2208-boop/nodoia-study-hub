@@ -64,6 +64,9 @@
       pericias: {},
       videos: {},
       hours: 0,
+      plantedMarks: {},
+      lineups: {},
+      warrants: {},
       nightmare: false,
       lawyer: {},
       lastView: {}

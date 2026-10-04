@@ -45,6 +45,8 @@
 
   function newInfo(fresh) {
     if (fresh.length) toast('Nueva información incorporada al expediente (' + fresh.length + ').');
+    const { c } = curCase();
+    if (c && fresh.length) c.scene.plans.filter(pl => pl.unlock && fresh.includes(pl.unlock)).forEach(pl => toast('Nueva escena disponible: ' + pl.name + '. Ábrela en la pestaña Escena.', 'warn'));
   }
 
   function applySettings() {
@@ -922,6 +924,42 @@
       if (!spend(x.cs, EN.costOf('digital', 120))) return;
       solveVideo(x.c, x.cs, x.d);
     },
+    'mark-planted': el => { const { cs } = curCase(); if (!guardOpen(cs)) return; cs.plantedMarks = cs.plantedMarks || {}; cs.plantedMarks[el.dataset.id] = !cs.plantedMarks[el.dataset.id]; EN.log(cs, 'planted_mark', { ev: el.dataset.id }); },
+    'lineup-run': el => {
+      const { c, cs } = curCase();
+      if (!guardOpen(cs)) return;
+      const L = (c.lineups || []).find(x => x.id === el.dataset.l);
+      const chosen = ((cs.lastView.lineupSel || {})[L.id] || []).slice(0, 4);
+      if (!chosen.length || (cs.lineups || {})[L.id]) return false;
+      const fillers = Array.from({ length: Math.max(0, 5 - chosen.length) }, (_, i) => 'figurante-' + L.id + '-' + i);
+      const order = chosen.concat(fillers).sort((a, b) => ((a + c.id).length * 31 + a.charCodeAt(a.length - 1)) % 7 - ((b + c.id).length * 31 + b.charCodeAt(b.length - 1)) % 7);
+      const res = EN.lineupResult(c, cs, L, chosen.concat(fillers));
+      cs.lineups = cs.lineups || {};
+      cs.lineups[L.id] = { chosen: order, fillers: [], res };
+      EN.log(cs, 'lineup', { id: L.id });
+      toast('Rueda de reconocimiento hecha.');
+    },
+    'warrant-ask': () => {
+      const { c, cs } = curCase();
+      if (!guardOpen(cs)) return;
+      const pid = cs.lastView.warrantPid; if (!pid) return false;
+      cs.warrants = cs.warrants || {};
+      if (cs.warrants[pid] && cs.warrants[pid].granted) return false;
+      const st = EN.warrantStrength(c, cs, pid, cs.lastView.warrantFacts || []);
+      const name = c.people.find(p => p.id === pid).name;
+      if (st.total < 3) {
+        cs.warrants[pid] = { denied: ((cs.warrants[pid] || {}).denied || 0) + 1 };
+        EN.log(cs, 'search_denied', { pid });
+        toast('El juez deniega la orden: no hay indicios suficientes que vinculen a ' + name + ' (' + st.total + ' de 3).', 'warn');
+        return;
+      }
+      cs.warrants[pid] = { granted: true };
+      EN.log(cs, 'search', { pid });
+      const res = (c.searches || {})[pid];
+      const fresh = EN.discover(cs, res ? res.facts : []);
+      toast(res && res.facts.length ? 'Orden concedida. El registro aporta hallazgos.' : 'Orden concedida. El registro no aporta nada relevante.');
+      newInfo(fresh);
+    },
     'per-open': el => { const { cs } = curCase(); cs.lastView.pericia = el.dataset.id; S().view.tab = 'laboratorio'; },
     'per-close': () => { curCase().cs.lastView.pericia = null; },
     'per-auto': el => {
@@ -1182,6 +1220,9 @@
       if (act === 'toggle-setting') { s.settings[el.dataset.key] = el.checked; applySettings(); store.save(); }
       else if (act === 'set-scale') { s.settings.scale = Number(el.value); applySettings(); store.save(); }
       else if (act === 'map-person') { const { cs } = curCase(); const h = new Set(cs.lastView.mapHide || []); if (el.checked) h.delete(el.value); else h.add(el.value); cs.lastView.mapHide = [...h]; drawMapTokens(); store.save(); }
+      else if (act === 'lineup-pick') { const { cs } = curCase(); cs.lastView.lineupSel = cs.lastView.lineupSel || {}; const cur = new Set(cs.lastView.lineupSel[el.dataset.l] || []); if (el.checked) { if (cur.size >= 4) { el.checked = false; toast('Como máximo cuatro personas; el resto son figurantes.', 'warn'); return; } cur.add(el.value); } else cur.delete(el.value); cs.lastView.lineupSel[el.dataset.l] = [...cur]; render(); }
+      else if (act === 'warrant-pid') { const { cs } = curCase(); cs.lastView.warrantPid = el.value; cs.lastView.warrantFacts = []; render(); }
+      else if (act === 'warrant-fact') { const { cs } = curCase(); const cur = new Set(cs.lastView.warrantFacts || []); if (el.checked) cur.add(el.value); else cur.delete(el.value); cs.lastView.warrantFacts = [...cur]; render(); }
       else if (act === 'conflict-resolve') { const { cs } = curCase(); cs.resolved = cs.resolved || {}; cs.resolved[el.dataset.id] = el.checked; store.save(); }
       else if (act === 'tl-note') { const { cs } = curCase(); const ev = cs.timeline.find(x => x.id === el.dataset.id); if (ev) { ev.note = el.value; store.save(); } }
       else if (act === 'hyp-conf') {

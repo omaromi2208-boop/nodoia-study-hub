@@ -28,6 +28,7 @@
     c.trial = Object.assign({}, base.trial || {}, v.trial || {});
     c.trialIntro = Object.assign({}, base.trialIntro || {}, v.trialIntro || {});
     c.evaluation = Object.assign({}, base.evaluation || {}, v.evaluation || {});
+    ['planted', 'lineups', 'searches'].forEach(k => { if (v[k] !== undefined) c[k] = v[k]; });
     resolved[key] = c;
     return c;
   }
@@ -65,7 +66,7 @@
   function known(cs, id) { return Object.prototype.hasOwnProperty.call(cs.discovered, id); }
 
   /* Horas de investigación que consume cada diligencia (el reloj del caso). */
-  const HOURS = { examine: 0.5, photo: 0.1, forensic: 1, lab: 6, digital: 4, judicial: 12, ask: 0.3, confront: 0.3, revisit: 0.2, recite: 6, revelado: 1, cotejo: 0.05, cotejo_auto: 8, pericia: 3, pericia_auto: 8, video: 2, query: 0.1, compare: 0.2, timeline_compare: 0.2, search: 8, lineup: 6, reconstruccion: 1 };
+  const HOURS = { examine: 0.5, photo: 0.1, forensic: 1, lab: 6, digital: 4, judicial: 12, ask: 0.3, confront: 0.3, revisit: 0.2, recite: 6, revelado: 1, cotejo: 0.05, cotejo_auto: 8, pericia: 3, pericia_auto: 8, video: 2, query: 0.1, compare: 0.2, timeline_compare: 0.2, search: 8, search_denied: 4, lineup: 6, reconstruccion: 1 };
   function log(cs, type, data) {
     cs.log.push(Object.assign({ type, seq: cs.seq, ts: Date.now() }, data || {}));
     if (HOURS[type] && cs.status !== 'cerrado') cs.hours = Math.round(((cs.hours || 0) + HOURS[type]) * 100) / 100;
@@ -407,6 +408,14 @@
     if (examined) lines.push('Cadena de custodia: documentaste fotográficamente ' + photos + ' de ' + examined + ' indicios examinados.');
     if (forensicUses) lines.push('Usaste herramientas forenses ' + forensicUses + ' vez/veces; ' + forensicHits + ' dieron un hallazgo.');
 
+    // pruebas plantadas: acertar suma, señalar como montaje algo auténtico resta
+    const planted = c.planted || [];
+    Object.keys(cs.plantedMarks || {}).filter(id => cs.plantedMarks[id]).forEach(id => {
+      const pl = planted.find(x => x.ev === id), e = c.evidence.find(x => x.id === id);
+      if (pl && (pl.tells || []).some(t => known(cs, t))) { total = Math.min(100, total + 4); lines.push('Detectaste un montaje: ' + e.name + ' (' + pl.label + '). +4 puntos.'); }
+      else if (pl) lines.push('Sospechaste bien de ' + e.name + ', pero sin la prueba que demuestra el montaje.');
+      else { total = Math.max(0, total - 3); lines.push('Señalaste como montaje una prueba auténtica: ' + e.name + '. −3 puntos.'); }
+    });
     // el reloj: si el autor tuvo tiempo de huir, la detención se complica
     if (E0.clock) {
       const D = E0.clock.deadlines(cs), hrs = cs.hours || 0;
@@ -488,5 +497,43 @@
     return true;
   }
 
-  E0.engine = { settlePericia, printsOf, cardPeople, gateReveal, settleLatents, NOT_FOUND, getCase, resolveCase, pickVariant, costOf, judicialMax, minutes, fmt, known, discover, knownFacts, personName, judicialTargets, placeDistance, knownPlaces, log, query, findConflict, timelineCompare, hypStatus, custody, evaluate, trialSet, trialResolve, norm };
+  /* ---------- Registros con orden judicial ----------
+     Fuerza de la solicitud: hechos objetivos elegidos que vinculan a la persona (1 punto
+     cada uno) y contradicciones registradas en las que aparece una declaración suya
+     (2 puntos cada una). El juez autoriza con 3 puntos o más. */
+  function linksPerson(c, f, pid) {
+    if (!f) return false;
+    if (f.person === pid) return true;
+    const p = c.people.find(x => x.id === pid); if (!p) return false;
+    const parts = p.name.split(' ');
+    return parts.slice(0, 2).some(w => w.length > 3 && f.text.includes(w));
+  }
+  function warrantStrength(c, cs, pid, chosen) {
+    const objective = (chosen || []).filter(id => known(cs, id) && c.facts[id].kind !== 'statement' && linksPerson(c, c.facts[id], pid)).length;
+    const conf = Object.keys(cs.conflicts).filter(k => { const x = c.conflicts.find(y => y.id === k); return x && [x.a, x.b].some(id => c.facts[id].kind === 'statement' && c.facts[id].person === pid); }).length;
+    return { objective, conf, total: objective + conf * 2 };
+  }
+
+  /* ---------- Rueda de reconocimiento ----------
+     El testigo reconoce mejor cuanto mejor vio y cuanto antes se hace la rueda. Si la
+     persona que vio no está, a veces señala a otra parecida: un error humano real. */
+  function lineupResult(c, cs, L, chosen) {
+    const memory = E0.clock && (cs.hours || 0) >= E0.clock.deadlines(cs).memory ? 0.6 : 1;
+    const q = (L.quality || 0.7) * memory;
+    let h = 2166136261; for (const ch of c.id + L.id + chosen.slice().sort().join(',') + (c.variant || '')) { h ^= ch.charCodeAt(0); h = Math.imul(h, 16777619); }
+    const r = ((h >>> 0) % 1000) / 1000;
+    const look = id => { const p = c.people.find(x => x.id === id) || { id, name: id, age: 40 }; return E0.appearance ? E0.appearance(p) : { h: 0 }; };
+    const T = look(L.target);
+    const sim = id => { const A = look(id); return (A.skin === T.skin ? 2 : 0) + (A.hair === T.hair ? 2 : 0) + (A.style === T.style ? 1 : 0) + (A.beard === T.beard ? 1 : 0) + (A.old === T.old ? 2 : 0); };
+    const others = chosen.filter(id => id !== L.target).sort((a, b) => sim(b) - sim(a));
+    if (chosen.includes(L.target)) {
+      if (r < q) return { pick: L.target, sure: r < q * 0.6 };
+      if (r < q + (1 - q) * 0.5 && others.length) return { pick: others[0], sure: false };
+      return { pick: null };
+    }
+    if (others.length && r < (1 - q) * 0.7) return { pick: others[0], sure: r < (1 - q) * 0.2 };
+    return { pick: null };
+  }
+
+  E0.engine = { warrantStrength, linksPerson, lineupResult, settlePericia, printsOf, cardPeople, gateReveal, settleLatents, NOT_FOUND, getCase, resolveCase, pickVariant, costOf, judicialMax, minutes, fmt, known, discover, knownFacts, personName, judicialTargets, placeDistance, knownPlaces, log, query, findConflict, timelineCompare, hypStatus, custody, evaluate, trialSet, trialResolve, norm };
 })();

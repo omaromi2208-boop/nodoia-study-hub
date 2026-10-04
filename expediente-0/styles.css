@@ -609,3 +609,11 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 .clip small { display: block; font: 600 0.62rem var(--f-mono); color: #6b6558; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 4px; }
 .clip b { font-size: 0.98rem; line-height: 1.25; }
 @media (max-width: 560px) { .clock-row { grid-template-columns: 1fr auto; } .clock-row .bar { grid-column: 1 / -1; grid-row: 2; } }
+
+/* Rueda de reconocimiento */
+.lineup { display: flex; flex-wrap: wrap; gap: 10px; padding: 12px; background: #4b4f55; border-radius: var(--radius); }
+.lu { position: relative; display: grid; justify-items: center; gap: 4px; padding: 6px; border-radius: 6px; }
+.lu small { font-size: 0.72rem; color: #e6e2d8; max-width: 96px; text-align: center; }
+.lu-n { position: absolute; top: 2px; left: 6px; font: 700 0.8rem var(--f-mono); color: #fff; background: rgba(0,0,0,.55); padding: 0 5px; border-radius: 3px; z-index: 1; }
+.lu.picked { outline: 3px solid var(--amber); }
+hr.sep { border: 0; border-top: 1px dashed var(--line-soft); margin: 8px 0; }

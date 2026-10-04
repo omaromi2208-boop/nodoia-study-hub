@@ -379,9 +379,12 @@
       '<div class="sub">Personas del expediente</div><div class="stack" style="gap:6px">' + c.people.map(p => '<div class="row" style="flex-wrap:nowrap">' + portrait(p, 34) + '<div class="min0"><b style="font-size:.9rem">' + esc(p.name) + '</b> <span class="muted" style="font-size:.82rem">· ' + esc(p.role) + '</span></div></div>').join('') + '</div></article></div>';
   }
 
+  /* Planos de escena disponibles: una segunda escena aparece al descubrir su hecho. */
+  function plansFor(c, cs) { return c.scene.plans.filter(pl => !pl.unlock || EN.known(cs, pl.unlock)); }
+  function evVisible(c, cs, e) { const pl = c.scene.plans.find(p => p.hotspots.some(h => h.ev === e.id)); return !pl || !pl.unlock || EN.known(cs, pl.unlock); }
   function scenePlanId(c, cs) {
     const sel = cs.lastView.sceneSel || null;
-    const plans = c.scene.plans;
+    const plans = plansFor(c, cs);
     let planId = cs.lastView.plan || plans[0].id;
     if (!plans.find(pl => pl.id === planId)) planId = plans[0].id;
     if (sel && !plans.find(pl => pl.id === planId).hotspots.some(h => h.ev === sel)) {
@@ -395,7 +398,7 @@
   function tabEscena(c, cs) {
     const sel = cs.lastView.sceneSel || null;
     const evById = id => c.evidence.find(e => e.id === id);
-    const plans = c.scene.plans;
+    const plans = plansFor(c, cs);
     const planId = scenePlanId(c, cs);
     const can3d = !!E0.scene3d && E0.scene3d.available();
     const in3d = use3d();
@@ -426,6 +429,7 @@
         (done && e.lab ? '<button class="btn" data-act="to-lab" data-id="' + e.id + '">Enviar a laboratorio</button>' : '') +
         (done && e.unlocks ? '<button class="btn" data-act="tab" data-tab="digital">Solicitar análisis digital</button>' : '') +
         (done ? '<button class="btn" data-act="wall-add-ev" data-id="' + e.id + '"' + (onWall ? ' disabled' : '') + '>' + (onWall ? 'En el muro ✓' : 'Añadir al muro') + '</button>' : '') +
+        (done ? '<button class="btn ' + ((cs.plantedMarks || {})[e.id] ? 'danger' : 'ghost') + '" data-act="mark-planted" data-id="' + e.id + '" title="Señálalo si crees que alguien lo colocó o manipuló para engañar">' + ((cs.plantedMarks || {})[e.id] ? 'Señalada como montaje' : '¿Prueba plantada?') + '</button>' : '') +
         (done ? '<button class="btn" data-act="gen-question" data-id="' + e.id + '">Generar pregunta</button>' : '') +
         (in3d ? '<button class="btn" data-act="s3-inspect">' + (cs.lastView.inspect ? 'Dejar de inspeccionar' : 'Inspeccionar de cerca') + '</button>' : '') +
         '<button class="btn ghost" data-act="scene-sel" data-id="">Cerrar</button></div>' +
@@ -467,10 +471,10 @@
 
   function tabEvidencias(c, cs) {
     const show = cs.lastView.evFilter || 'all';
-    const list = c.evidence.filter(e => show === 'all' || (show === 'done' ? cs.examined[e.id] : !cs.examined[e.id]));
+    const list = c.evidence.filter(e => evVisible(c, cs, e) && (show === 'all' || (show === 'done' ? cs.examined[e.id] : !cs.examined[e.id])));
     return '<div class="stack"><div class="spread"><div class="row" role="group" aria-label="Filtrar evidencias">' +
       [['all', 'Todas'], ['done', 'Examinadas'], ['todo', 'Sin examinar']].map(([id, l]) => '<button class="btn small ' + (show === id ? 'primary' : 'ghost') + '" data-act="ev-filter" data-id="' + id + '">' + l + '</button>').join('') +
-      '</div><span class="badge">' + Object.keys(cs.examined).length + '/' + c.evidence.length + ' examinadas</span></div>' +
+      '</div><span class="badge">' + Object.keys(cs.examined).length + '/' + c.evidence.filter(e => evVisible(c, cs, e)).length + ' examinadas</span></div>' +
       '<div class="grid">' + list.map(e => {
         const done = cs.examined[e.id];
         const facts = done ? evFacts(c, cs, e) : [];
@@ -599,7 +603,7 @@
           (done ? (isDevice(d) ? '<div class="row"><button class="btn small" data-act="device-open" data-id="' + d.id + '">' + (deviceKind(d) === 'pc' ? 'Abrir el ordenador' : 'Abrir el dispositivo') + '</button></div>' : '') + '<div>' + facts.map(f => factRow(c, f)).join('') + '</div>' :
             (reqOk ? '<div class="row"><button class="btn" data-act="digital" data-id="' + d.id + '"' + (s.money < EN.costOf('digital', d.cost) ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + EN.costOf('digital', d.cost) + ' €</span></button></div>' : '<p class="faint" style="font-size:.84rem">Requiere antes: ' + esc(reqName) + '.</p>')) + '</article>';
       }).join('') + '</div>' +
-      '<article class="panel stack"><div class="spread"><h3>Solicitud judicial de antenas</h3><span class="badge ' + (left ? 'acc' : '') + '">' + left + '/' + jmax + ' disponibles</span></div><p class="muted" style="font-size:.88rem">' + esc(jud.desc) + '</p>' +
+      warrantSection(c, cs) + '<article class="panel stack"><div class="spread"><h3>Solicitud judicial de antenas</h3><span class="badge ' + (left ? 'acc' : '') + '">' + left + '/' + jmax + ' disponibles</span></div><p class="muted" style="font-size:.88rem">' + esc(jud.desc) + '</p>' +
       (left ? '<div class="row" style="flex-wrap:nowrap"><select id="jud-person" aria-label="Persona">' + EN.judicialTargets(c).filter(p => !cs.judicial.includes(p.id)).map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('') + '</select><button class="btn" data-act="judicial">Solicitar</button></div>' : '') +
       cs.judicial.map(pid => jud.results[pid].map(id => factRow(c, c.facts[id])).join('')).join('') + '</article></div>';
   }
@@ -675,7 +679,7 @@
       const n = cs.asked[p.id] ? Object.keys(cs.asked[p.id]).length : 0;
       return '<button class="person" data-act="person" data-id="' + p.id + '" aria-pressed="' + (sel === p.id) + '">' + portrait(p, 52) + '<div class="min0"><b>' + esc(p.name) + '</b><small>' + esc(p.role) + '</small><div class="faint mono" style="font-size:.7rem">' + (n ? n + ' pregunta(s)' : 'Sin entrevistar') + '</div></div></button>';
     }).join('') + '</div>';
-    if (!sel) return '<div class="stack">' + grid + '<p class="muted">Elige a quién interrogar. Las personas pueden decir la verdad, medias verdades, mentir, no saber o estar equivocadas. Ninguna lo anunciará.</p></div>';
+    if (!sel) return '<div class="stack">' + grid + lineupSection(c, cs) + '<p class="muted">Elige a quién interrogar. Las personas pueden decir la verdad, medias verdades, mentir, no saber o estar equivocadas. Ninguna lo anunciará.</p></div>';
     const p = c.people.find(x => x.id === sel);
     const asked = cs.asked[p.id] || {};
     const avail = p.questions.filter(q => !asked[q.id] && (!q.requires || q.requires.some(id => EN.known(cs, id))));
@@ -697,7 +701,7 @@
       '<article class="panel stack"><div class="panel-head"><h3>Transcripción</h3><span class="badge">' + tr.length + ' intervenciones</span></div>' +
       (tr.length ? '<div class="transcript" id="transcript">' + tr.map((t, i) => '<div><div class="turn-q">' + (t.kind === 'c' ? 'CONFRONTACIÓN · ' : t.kind === 'r' ? 'REPASO · ' : t.kind === 'l' ? 'ACTA · ' : '') + esc(t.q) + '</div><div class="turn-a ' + (t.kind === 'c' || t.kind === 'l' ? 'conf' : '') + '">' + esc(t.a) + '</div>' +
         (t.kind === 'l' ? '' : '<div class="turn-tools"><button class="linkish" data-act="recall" data-person="' + p.id + '" data-i="' + i + '">Volver sobre esta respuesta</button></div>') + '</div>').join('') + '</div>' : '<p class="muted">Aún no has hablado con ' + esc(p.name.split(' ')[0]) + '.</p>') +
-      '</article></div></div>';
+      '</article></div>' + lineupSection(c, cs) + '</div>';
   }
 
   /* Tensión de la persona entrevistada (0–100). Refleja su carácter y la presión, no su culpa. */
@@ -705,6 +709,47 @@
     const t = cs.tension[p.id] || 0;
     const lab = t < 25 ? 'Tranquila' : t < 50 ? 'Incómoda' : t < 75 ? 'Tensa' : 'Al límite';
     return '<div class="tension"><span class="eyebrow">Tensión</span><div class="tension-bar"><i style="width:' + t + '%;background:' + (t < 50 ? 'var(--green)' : t < 75 ? 'var(--amber)' : 'var(--red)') + '"></i></div><span class="mono">' + lab + '</span>' + (cs.lawyer[p.id] === 'presente' ? '<span class="badge">Con abogado</span>' : '') + '</div>';
+  }
+
+  /* Rueda de reconocimiento: el testigo ve a las personas elegidas junto a figurantes. */
+  function lineupSection(c, cs) {
+    const Ls = (c.lineups || []).filter(L => !L.requires || EN.known(cs, L.requires));
+    if (!Ls.length) return '';
+    return '<article class="panel stack"><div class="panel-head"><h3>Rueda de reconocimiento</h3><span class="badge">' + Ls.length + '</span></div>' + Ls.map(L => {
+      const w = c.people.find(p => p.id === L.witness) || { name: L.witnessName || 'Testigo' };
+      const done = (cs.lineups || {})[L.id];
+      const sel = (cs.lastView.lineupSel || {})[L.id] || [];
+      const head = '<p style="font-size:.92rem"><b>' + esc(w.name) + '</b> vio ' + esc(L.saw) + '.</p>';
+      if (done) {
+        const all = done.chosen.concat(done.fillers);
+        const nameOf = id => (c.people.find(p => p.id === id) || {}).name || 'Figurante';
+        return '<div class="stack">' + head + '<div class="lineup">' + all.map((id, i) => '<div class="lu' + (done.res.pick === id ? ' picked' : '') + '"><span class="lu-n">' + (i + 1) + '</span>' + portrait(c.people.find(p => p.id === id) || { id, name: 'Figurante', age: 40 }, 92) + '<small>' + esc(nameOf(id)) + '</small></div>').join('') + '</div>' +
+          '<div class="result ' + (done.res.pick ? '' : 'neutral') + '">' + (done.res.pick ? esc(w.name.split(' ')[0]) + ' señala al número ' + (all.indexOf(done.res.pick) + 1) + ', ' + esc(nameOf(done.res.pick)) + (done.res.sure ? ': «Es él o ella, estoy seguro».' : ': «Creo que es esta persona, pero no estoy seguro».') : esc(w.name.split(' ')[0]) + ' no reconoce a nadie: «No está aquí… o no lo sé».') + '</div>' +
+          '<p class="faint" style="font-size:.8rem">Un reconocimiento es una declaración, no una prueba: los testigos se equivocan, sobre todo si pasa el tiempo o si la persona que vieron no estaba en la rueda.</p></div>';
+      }
+      const opts = c.people.filter(p => p.id !== L.witness);
+      return '<div class="stack">' + head + '<div class="sub">Elige quién entra en la rueda (hasta 4; se completa con figurantes)</div><div class="grid-sm">' +
+        opts.map(p => '<label class="check"><input type="checkbox" data-act="lineup-pick" data-l="' + L.id + '" value="' + p.id + '"' + (sel.includes(p.id) ? ' checked' : '') + '>' + esc(p.name) + '</label>').join('') + '</div>' +
+        '<div class="row"><button class="btn primary" data-act="lineup-run" data-l="' + L.id + '"' + (sel.length ? '' : ' disabled') + '>Hacer la rueda <span class="cost">6 h</span></button></div><p class="faint" style="font-size:.8rem">Solo se puede hacer una vez: un testigo que ya ha visto una cara en una rueda queda contaminado.</p></div>';
+    }).join('<hr class="sep">') + '</article>';
+  }
+
+  /* Registro con orden judicial: hay que convencer al juez con hechos. */
+  function warrantSection(c, cs) {
+    const pid = cs.lastView.warrantPid || '';
+    const W = cs.warrants || {};
+    const known = EN.knownFacts(c, cs, f => f.kind !== 'statement');
+    const linked = pid ? known.filter(f => EN.linksPerson(c, f, pid)) : [];
+    const chosen = (cs.lastView.warrantFacts || []).filter(id => linked.some(f => f.id === id));
+    const st = pid ? EN.warrantStrength(c, cs, pid, chosen) : null;
+    const done = Object.keys(W).filter(k => W[k].granted);
+    return '<article class="panel stack"><div class="panel-head"><h3>Registro con orden judicial</h3><span class="badge">' + done.length + ' autorizado(s)</span></div>' +
+      '<p class="muted" style="font-size:.88rem">Para entrar en el domicilio de alguien, el juez exige indicios que lo vinculen: hechos objetivos (no declaraciones) y contradicciones en lo que ha declarado.</p>' +
+      '<label class="field">Persona<select data-act="warrant-pid"><option value="">Elige…</option>' + c.people.map(p => '<option value="' + p.id + '"' + (pid === p.id ? ' selected' : '') + (W[p.id] && W[p.id].granted ? ' disabled' : '') + '>' + esc(p.name) + (W[p.id] && W[p.id].granted ? ' (registrado)' : '') + '</option>').join('') + '</select></label>' +
+      (pid && !(W[pid] && W[pid].granted) ? (linked.length ? '<div class="sub">Indicios que presentas al juez</div><div class="stack" style="gap:4px;max-height:240px;overflow-y:auto">' + linked.map(f => '<label class="check"><input type="checkbox" data-act="warrant-fact" value="' + f.id + '"' + (chosen.includes(f.id) ? ' checked' : '') + '>' + esc(factLabel(c, f.id)) + '</label>').join('') + '</div>' : '<p class="faint">No tienes hechos objetivos que vinculen a esta persona.</p>') +
+        '<div class="row"><span class="mono" style="font-size:.84rem">Hechos ' + st.objective + ' · contradicciones ' + st.conf + ' (×2)</span><button class="btn primary" data-act="warrant-ask">Solicitar la orden <span class="cost">' + (W[pid] && W[pid].denied ? '4 h' : '8 h si se concede') + '</span></button></div>' : '') +
+      done.map(k => { const p = c.people.find(x => x.id === k), res = (c.searches || {})[k]; return '<div class="result"><b>Registro en ' + esc(res && res.place ? res.place : 'el domicilio de ' + p.name) + '.</b> ' + (res && res.facts.length ? res.facts.map(id => esc(c.facts[id].text)).join(' ') : 'No se encuentra nada relevante para la investigación.') + '</div>'; }).join('') +
+      '</article>';
   }
 
   function tabComparador(c, cs) {
