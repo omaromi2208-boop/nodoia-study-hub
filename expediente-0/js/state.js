@@ -60,6 +60,8 @@
       mapLinks: [],
       forensic: {},
       latents: {},
+      tension: {},
+      lawyer: {},
       lastView: {}
     };
   }

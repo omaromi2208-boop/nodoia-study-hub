@@ -496,3 +496,8 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 .bench-help b { color: var(--text); }
 .bench > .row { grid-column: 1 / -1; }
 @media (max-width: 860px) { .bench { grid-template-columns: 1fr; } .print-cv { max-width: 100%; } }
+
+/* Tensión en el interrogatorio */
+.tension { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; font-size: 0.82rem; }
+.tension-bar { height: 8px; border-radius: 99px; background: var(--bg-2); border: 1px solid var(--line-soft); overflow: hidden; }
+.tension-bar i { display: block; height: 100%; border-radius: 99px; transition: width .5s ease; }

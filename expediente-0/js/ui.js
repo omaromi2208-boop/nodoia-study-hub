@@ -569,13 +569,22 @@
     return '<div class="stack-lg">' + grid + room + roomOff +
       '<div class="interview"><article class="panel stack"><div class="row" style="flex-wrap:nowrap">' + portrait(p, 84) + '<div class="min0"><h3>' + esc(p.name) + ', ' + p.age + ' años</h3><div class="muted" style="font-size:.88rem">' + esc(p.role) + ' · ' + esc(p.relation) + '</div></div></div>' +
       '<div class="spread"><span class="eyebrow">Estado de la entrevista</span><span class="badge">' + Object.keys(asked).length + ' preguntas · ' + (cs.confronted[p.id] ? Object.keys(cs.confronted[p.id]).length : 0) + ' confrontaciones</span></div>' +
+      tensionMeter(cs, p) +
+      (cs.lawyer[p.id] === 'pide' ? '<div class="result warn-note"><b>Ha pedido un abogado.</b> La entrevista queda suspendida. Puedes volver a citarle con su abogado presente: la presión le afectará la mitad.</div><div class="row"><button class="btn" data-act="recite" data-person="' + p.id + '">Volver a citar <span class="cost">−15 energía</span></button></div></article>' :
       '<div class="sub">Nueva pregunta</div>' + (avail.length ? '<div class="q-list">' + avail.map(q => '<button class="q-btn" data-act="ask" data-person="' + p.id + '" data-q="' + q.id + '">' + esc(q.q) + '</button>').join('') + '</div>' : '<p class="muted" style="font-size:.88rem">No quedan preguntas nuevas con la información actual. Confrontarle con datos puede abrir otras líneas.</p>') +
       '<div class="sub">Confrontar con información del expediente</div><select id="confront-fact" aria-label="Hecho para confrontar">' + factOptions(c, cs) + '</select>' +
-      '<div class="row"><button class="btn" data-act="confront" data-person="' + p.id + '">Confrontar</button></div></article>' +
+      '<div class="row"><button class="btn" data-act="confront" data-person="' + p.id + '">Confrontar</button></div></article>') +
       '<article class="panel stack"><div class="panel-head"><h3>Transcripción</h3><span class="badge">' + tr.length + ' intervenciones</span></div>' +
-      (tr.length ? '<div class="transcript" id="transcript">' + tr.map((t, i) => '<div><div class="turn-q">' + (t.kind === 'c' ? 'CONFRONTACIÓN · ' : t.kind === 'r' ? 'REPASO · ' : '') + esc(t.q) + '</div><div class="turn-a ' + (t.kind === 'c' ? 'conf' : '') + '">' + esc(t.a) + '</div>' +
-        '<div class="turn-tools"><button class="linkish" data-act="recall" data-person="' + p.id + '" data-i="' + i + '">Volver sobre esta respuesta</button></div></div>').join('') + '</div>' : '<p class="muted">Aún no has hablado con ' + esc(p.name.split(' ')[0]) + '.</p>') +
+      (tr.length ? '<div class="transcript" id="transcript">' + tr.map((t, i) => '<div><div class="turn-q">' + (t.kind === 'c' ? 'CONFRONTACIÓN · ' : t.kind === 'r' ? 'REPASO · ' : t.kind === 'l' ? 'ACTA · ' : '') + esc(t.q) + '</div><div class="turn-a ' + (t.kind === 'c' || t.kind === 'l' ? 'conf' : '') + '">' + esc(t.a) + '</div>' +
+        (t.kind === 'l' ? '' : '<div class="turn-tools"><button class="linkish" data-act="recall" data-person="' + p.id + '" data-i="' + i + '">Volver sobre esta respuesta</button></div>') + '</div>').join('') + '</div>' : '<p class="muted">Aún no has hablado con ' + esc(p.name.split(' ')[0]) + '.</p>') +
       '</article></div></div>';
+  }
+
+  /* Tensión de la persona entrevistada (0–100). Refleja su carácter y la presión, no su culpa. */
+  function tensionMeter(cs, p) {
+    const t = cs.tension[p.id] || 0;
+    const lab = t < 25 ? 'Tranquila' : t < 50 ? 'Incómoda' : t < 75 ? 'Tensa' : 'Al límite';
+    return '<div class="tension"><span class="eyebrow">Tensión</span><div class="tension-bar"><i style="width:' + t + '%;background:' + (t < 50 ? 'var(--green)' : t < 75 ? 'var(--amber)' : 'var(--red)') + '"></i></div><span class="mono">' + lab + '</span>' + (cs.lawyer[p.id] === 'presente' ? '<span class="badge">Con abogado</span>' : '') + '</div>';
   }
 
   function tabComparador(c, cs) {

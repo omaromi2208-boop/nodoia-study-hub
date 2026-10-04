@@ -95,7 +95,7 @@
     const { c, cs } = curCase();
     const p = c.people.find(x => x.id === el.dataset.person);
     const tr = cs.transcripts[p.id] || [];
-    if (!E0.room3d.mount(el, { c, person: p, line: tr[tr.length - 1], lineNo: tr.length })) { S().settings.view3d = false; render(); }
+    if (!E0.room3d.mount(el, { c, person: p, line: tr[tr.length - 1], lineNo: tr.length, tension: (cs.tension[p.id] || 0) / 100, lawyer: cs.lawyer[p.id] || null })) { S().settings.view3d = false; render(); }
   }
 
   /* Voz sintetizada del navegador para la última respuesta. El tono sale del identificador
@@ -451,6 +451,7 @@
     if (!guardOpen(cs)) return;
     const p = c.people.find(x => x.id === pid);
     const q = p.questions.find(x => x.id === qid);
+    if (!canTalk(cs, p)) return false;
     cs.asked[pid] = cs.asked[pid] || {};
     if (cs.asked[pid][qid]) return;
     cs.asked[pid][qid] = true;
@@ -458,6 +459,7 @@
     cs.transcripts[pid].push({ kind: 'q', q: q.q, a: q.a });
     const fresh = EN.discover(cs, q.reveals);
     EN.log(cs, 'ask', { person: pid, q: qid });
+    pressure(c, cs, p, -4);
     newInfo(fresh);
   }
 
@@ -468,12 +470,14 @@
     const fid = sel && sel.value;
     if (!fid) { toast('Elige primero un hecho del expediente.', 'warn'); return; }
     const p = c.people.find(x => x.id === pid);
+    if (!canTalk(cs, p)) return false;
     cs.confronted[pid] = cs.confronted[pid] || {};
     cs.transcripts[pid] = cs.transcripts[pid] || [];
     const label = 'Le muestras: ' + UI.factLabel(c, fid);
     if (cs.confronted[pid][fid]) {
       cs.transcripts[pid].push({ kind: 'c', q: label, a: 'Ya hemos hablado de eso. ' + cs.confronted[pid][fid] });
       EN.log(cs, 'revisit', { person: pid, fact: fid, recall: true });
+      pressure(c, cs, p, 4);
       return;
     }
     const def = p.confront[fid];
@@ -485,7 +489,42 @@
     cs.confronted[pid][fid] = a;
     cs.transcripts[pid].push({ kind: 'c', q: label, a });
     EN.log(cs, 'confront', { person: pid, fact: fid, relevant: !!def, gap: cs.seq - cs.discovered[fid] });
+    const H = p.hidden || {};
+    pressure(c, cs, p, def ? 14 + (H.miedo || 50) * 0.14 - (H.autocontrol || 50) * 0.08 : 8);
     newInfo(fresh);
+  }
+
+  /* ---------- Presión en el interrogatorio ----------
+     La tensión depende del carácter de la persona y de lo que le enseñas, nunca de si
+     es culpable: quien miente por otros motivos también se pone nerviosa. */
+  function canTalk(cs, p) {
+    if ((cs.lawyer || {})[p.id] !== 'pide') return true;
+    toast(p.name.split(' ')[0] + ' ha pedido un abogado. Vuelve a citarle para seguir.', 'warn');
+    return false;
+  }
+  function pressure(c, cs, p, delta) {
+    const H = p.hidden || {};
+    const withLawyer = cs.lawyer[p.id] === 'presente';
+    const t = clamp((cs.tension[p.id] || 0) + delta * (withLawyer && delta > 0 ? 0.5 : 1), 0, 100);
+    cs.tension[p.id] = Math.round(t);
+    const limit = 78 + (H.honestidad || 50) / 4.5;
+    if (!cs.lawyer[p.id] && t >= limit) {
+      cs.lawyer[p.id] = 'pide';
+      cs.transcripts[p.id].push({ kind: 'l', q: 'Fin de la entrevista', a: (H.autocontrol || 50) >= 55 ? 'No voy a contestar nada más sin mi abogado.' : '¡Basta ya! Quiero un abogado. No pienso decir nada más.' });
+      EN.log(cs, 'lawyer', { person: p.id });
+      toast(p.name.split(' ')[0] + ' pide un abogado y corta la entrevista.', 'warn');
+    }
+  }
+  function recite(pid) {
+    const { c, cs } = curCase();
+    const s = S();
+    if (!guardOpen(cs) || cs.lawyer[pid] !== 'pide') return;
+    if (s.energy < 15) { toast('Energía insuficiente para una nueva citación. Descansa antes.', 'warn'); return false; }
+    s.energy -= 15;
+    cs.lawyer[pid] = 'presente';
+    cs.tension[pid] = 35;
+    cs.transcripts[pid].push({ kind: 'l', q: 'Nueva citación', a: 'Se reanuda la entrevista con su abogado presente.' });
+    EN.log(cs, 'recite', { person: pid });
   }
 
   function recall(pid, i) {
@@ -745,6 +784,7 @@
     person: el => { curCase().cs.lastView.person = el.dataset.id; },
     ask: el => ask(el.dataset.person, el.dataset.q),
     confront: el => confront(el.dataset.person),
+    recite: el => recite(el.dataset.person),
     speak: el => { speak(el.dataset.person); return false; },
     recall: el => recall(el.dataset.person, Number(el.dataset.i)),
     compare: () => compare(),

@@ -179,7 +179,7 @@
       brow.rotation.z = -s * 0.08; head.add(brow);
     });
     const nose = sph(0.02, A.skin); nose.scale.set(0.8, 1.2, 1); head.add(at(nose, 0, -0.012, 0.125));
-    const mouth = at(box(0.052, 0.008, 0.01, '#5b2f2a'), 0, -0.062, 0.112); head.add(mouth);
+    const mouth = at(box(0.052, 0.008, 0.012, '#5b2f2a'), 0, -0.058, 0.122); head.add(mouth);
     // pelo
     const hairMat = { roughness: 0.95 };
     const capLen = [0.42, 0.5, 0.46, 0.36][A.style];
@@ -188,7 +188,7 @@
     if (A.style === 1) { const back = box(0.24, 0.32, 0.06, A.hair, hairMat); head.add(at(back, 0, -0.12, -0.1)); }
     if (A.style === 2) [-1, 1].forEach(s => head.add(at(box(0.02, 0.09, 0.08, A.hair, hairMat), s * 0.118, 0.02, -0.01)));
     if (A.beard) {
-      const beard = new THREE.Mesh(new THREE.SphereGeometry(0.136, 22, 12, Math.PI * 0.12, Math.PI * 0.76, Math.PI * 0.56, Math.PI * 0.3), mat(A.hair, hairMat));
+      const beard = new THREE.Mesh(new THREE.SphereGeometry(0.136, 22, 12, Math.PI * 0.1, Math.PI * 0.8, Math.PI * 0.64, Math.PI * 0.24), mat(A.hair, hairMat));
       beard.scale.set(0.92, 1.08, 0.97); head.add(beard);
     }
     if (A.glasses) {
@@ -233,12 +233,17 @@
   function animate(s, dt) {
     const P = RR.person; if (!P) return;
     const T = P.traits;
-    // respiración y balanceo
-    P.torso.scale.y = 1 + Math.sin(s * P.breath) * 0.012;
-    P.torso.position.y = Math.sin(s * P.breath) * 0.004;
-    let yaw = Math.sin(s * 0.45) * P.sway, pitch = Math.sin(s * 0.31) * P.sway * 0.4;
+    // la tensión (carácter + presión del interrogatorio) acelera la respiración y los gestos
+    RR.tensionNow += ((RR.tension || 0) - RR.tensionNow) * Math.min(1, dt * 1.5);
+    const tn = RR.tensionNow;
+    const br = P.breath * (1 + tn * 0.9);
+    RR.breathPh = (RR.breathPh || 0) + dt * br;
+    P.torso.scale.y = 1 + Math.sin(RR.breathPh) * (0.012 + tn * 0.01);
+    P.torso.position.y = Math.sin(RR.breathPh) * 0.004;
+    const sway = P.sway * (1 + tn * 1.2);
+    let yaw = Math.sin(s * 0.45) * sway, pitch = Math.sin(s * 0.31) * sway * 0.4;
     // mirar hacia otro lado (rasgo de carácter, no indicio de mentira)
-    if (P.avert) {
+    if (P.avert || tn > 0.7) {
       P.nextAvert -= dt;
       if (P.nextAvert <= 0) { P.avertT = 1.4; P.nextAvert = 5 + Math.random() * 5; }
       if (P.avertT > 0) { P.avertT -= dt; yaw += Math.sin(Math.min(1, P.avertT / 1.4) * Math.PI) * 0.35; pitch += 0.08 * Math.sin(Math.min(1, P.avertT / 1.4) * Math.PI); }
@@ -263,7 +268,15 @@
     if (P.blinkT > 0) P.blinkT -= dt;
     P.eyes.scale.y = P.blinkT > 0 ? 0.12 : 1;
     // dedos inquietos
-    if (P.fidget) { const burst = Math.sin(s * 0.7) > 0.3; P.handR.position.y = 0.8 + (burst ? Math.abs(Math.sin(s * 9)) * 0.012 : 0); }
+    if (P.fidget || tn > 0.55) { const burst = Math.sin(s * 0.7) > 0.3; P.handR.position.y = 0.8 + (burst ? Math.abs(Math.sin(s * 9)) * 0.012 : 0); }
+    // prueba sobre la mesa
+    if (RR.card) {
+      const k = ease(Math.min(1, (s - RR.card.t0) / 0.7));
+      RR.card.mesh.position.z = 0.75 - k * 0.55;
+      RR.card.mesh.rotation.z = (1 - k) * 0.5 - 0.06;
+      RR.card.mesh.position.y = 0.79 + (1 - k) * 0.06;
+    }
+    if (RR.lawyerFig) { const L = RR.lawyerFig; L.torso.scale.y = 1 + Math.sin(s * 1.4) * 0.008; L.head.rotation.y = -0.25 + Math.sin(s * 0.3) * 0.08; }
     // texto de la burbuja
     if (RR.typing && RR.bubble && RR.bubble.isConnected) {
       const tp = RR.typing, n = Math.min(tp.text.length, Math.ceil((s - tp.start) * tp.cps));
@@ -307,7 +320,7 @@
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       renderer.domElement.className = 'scene3d-canvas';
       const room = buildRoom();
-      RR = { renderer, room, scene: room.scene, camera: new THREE.PerspectiveCamera(40, 1.6, 0.05, 30), orbit: { yaw: 0, pitch: 0.12, r: 2.35 }, talkUntil: 0, react: 0, raf: null };
+      RR = { renderer, room, scene: room.scene, camera: new THREE.PerspectiveCamera(40, 1.6, 0.05, 30), orbit: { yaw: 0, pitch: 0.12, r: 2.35 }, talkUntil: 0, react: 0, raf: null, tension: 0, tensionNow: 0 };
       bindControls(renderer.domElement);
       window.addEventListener('resize', resize);
     }
@@ -316,7 +329,8 @@
       if (RR.person) { RR.scene.remove(RR.person.g); RR.person.g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); }
       RR.person = buildPerson(opts.person);
       RR.scene.add(RR.person.g);
-      RR.key = key; RR.lineNo = opts.lineNo; RR.typing = null; RR.talkUntil = 0; RR.react = 0;
+      RR.key = key; RR.lineNo = opts.lineNo; RR.typing = null; RR.talkUntil = 0; RR.react = 0; RR.tensionNow = opts.tension || 0;
+      placeCard(null);
       RR.orbit = { yaw: 0, pitch: 0.12, r: 2.35 };
     }
     RR.container = container;
@@ -327,15 +341,49 @@
       const fast = 0.85 + (RR.person.traits.fear) * 0.45;
       RR.typing = { text: opts.line.a, start: s, cps: 34 * fast, n: -1 };
       RR.talkUntil = s + Math.min(9, 0.6 + opts.line.a.length / (16 * fast));
-      if (opts.line.kind === 'c') RR.react = 2.2;
+      if (opts.line.kind === 'c') { RR.react = 2.2; placeCard(opts.line.q.replace(/^Le muestras:\s*/, '')); }
       if (RR.bubble) RR.bubble.textContent = '';
     } else if (RR.typing && RR.bubble) RR.bubble.textContent = RR.typing.text.slice(0, Math.max(0, RR.typing.n));
     RR.lineNo = opts.lineNo;
+    RR.tension = opts.tension || 0;
+    setLawyer(opts.lawyer === 'presente');
     resize();
     camUpdate();
     if (!RR.raf) RR.raf = requestAnimationFrame(loop);
     return true;
   }
+  /* Ficha de la prueba que se pone sobre la mesa al confrontar. */
+  function placeCard(text) {
+    if (RR.card) { RR.scene.remove(RR.card.mesh); RR.card.mesh.geometry.dispose(); RR.card.mesh.material.map.dispose(); RR.card.mesh.material.dispose(); RR.card = null; }
+    if (!text) return;
+    const tex = canvasTex(512, 360, (g, w, h) => {
+      g.fillStyle = '#f2ece0'; g.fillRect(0, 0, w, h);
+      g.fillStyle = '#7a1f1f'; g.font = '700 30px monospace'; g.fillText('PRUEBA', 28, 52);
+      g.strokeStyle = '#7a1f1f'; g.lineWidth = 3; g.strokeRect(14, 14, w - 28, h - 28);
+      g.fillStyle = '#1d1d1d'; g.font = '500 30px sans-serif';
+      const words = text.split(/\s+/); let line = '', y = 110;
+      for (const wd of words) { if (g.measureText(line + wd).width > w - 70) { g.fillText(line, 28, y); y += 40; line = ''; if (y > h - 40) break; } line += wd + ' '; }
+      if (y <= h - 40) g.fillText(line, 28, y);
+    });
+    const mesh = new THREE.Mesh(new THREE.PlaneGeometry(0.3, 0.21), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.9 }));
+    mesh.rotation.x = -Math.PI / 2; mesh.receiveShadow = true;
+    mesh.position.set(-0.08, 0.79, 0.75);
+    RR.scene.add(mesh);
+    RR.card = { mesh, t0: RR.clock || 0 };
+  }
+  /* Abogado sentado al lado cuando la persona vuelve a declarar asistida. */
+  function setLawyer(on) {
+    if (on && !RR.lawyerFig) {
+      const L = buildPerson({ id: 'letrado-' + RR.key, name: 'Letrado', age: 52, hidden: { miedo: 10, autocontrol: 95, confianza: 70 } });
+      L.g.position.set(0.68, 0, -0.85); L.g.rotation.y = -0.35;
+      L.g.add(at(box(0.46, 0.04, 0.44, '#2c3036', { metalness: 0.4 }), 0, 0.46, -0.02), at(box(0.46, 0.5, 0.04, '#2c3036', { metalness: 0.4 }), 0, 0.72, -0.23));
+      const pad = at(box(0.22, 0.012, 0.3, '#e9e4d8'), 0.05, 0.786, 0.32); pad.rotation.y = 0.2; L.g.add(pad);
+      RR.scene.add(L.g); RR.lawyerFig = L;
+    } else if (!on && RR.lawyerFig) {
+      RR.scene.remove(RR.lawyerFig.g); RR.lawyerFig.g.traverse(o => { if (o.geometry) o.geometry.dispose(); }); RR.lawyerFig = null;
+    }
+  }
+
   /* Mueve la boca mientras suena la voz sintetizada. */
   function talk(seconds) { if (RR) RR.talkUntil = (RR.clock || 0) + seconds; }
   function stopTalk() { if (RR) RR.talkUntil = 0; }
