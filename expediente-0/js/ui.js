@@ -277,7 +277,7 @@
       '<p class="faint" style="font-size:.78rem">Si tu sistema pide reducir el movimiento, las animaciones se desactivan automáticamente.</p></article>' +
       '<article class="panel stack"><h3>Exportar partida</h3><p class="muted" style="font-size:.88rem">Copia este JSON para guardar una copia de seguridad o pasarla a otro dispositivo.</p>' +
       '<textarea class="copy-area" id="export-area" readonly>' + esc(E0.store.exportJSON()) + '</textarea>' +
-      '<div class="row"><button class="btn" data-act="copy-export">Copiar JSON</button>' + (inFrame ? '' : '<button class="btn ghost" data-act="download-export">Descargar .json</button>') + '</div></article>' +
+      '<div class="row"><button class="btn" data-act="copy-export">Copiar JSON</button>' + (inFrame && !E0.downloads ? '' : '<button class="btn ghost" data-act="download-export">Descargar .json</button>') + '</div></article>' +
       '<form class="panel stack" data-form="import"><h3>Importar partida</h3><p class="muted" style="font-size:.88rem">Pega aquí un JSON exportado o elige un archivo. Se valida antes de sustituir la partida actual.</p>' +
       '<textarea class="copy-area" id="import-area" name="json" placeholder="{ &quot;v&quot;: 1, … }"></textarea>' +
       '<input type="file" id="import-file" accept="application/json,.json" data-act="import-file">' +

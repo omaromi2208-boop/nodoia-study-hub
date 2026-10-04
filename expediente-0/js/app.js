@@ -516,6 +516,19 @@
     theme: el => { S().settings.theme = el.dataset.id; applySettings(); },
     'copy-export': () => { copyText(store.exportJSON(), document.getElementById('export-area')); return false; },
     'download-export': () => {
+      /* Dentro del visor de claude.ai la descarga pasa por su capacidad «downloads»:
+         el visor pide confirmación y guarda el archivo. Fuera, enlace normal. */
+      if (E0.downloads) {
+        E0.downloads.save({ filename: 'expediente0-partida.json', data: store.exportJSON() }).then(
+          () => toast('Partida exportada.'),
+          err => {
+            const code = err && err.code;
+            if (code === 'declined') return;
+            if (code === 'rate_limited') toast('Ya hay una descarga pendiente de confirmar.', 'warn');
+            else toast('No se pudo descargar aquí. Usa «Copiar JSON».', 'warn');
+          });
+        return false;
+      }
       const blob = new Blob([store.exportJSON()], { type: 'application/json' });
       const a = document.createElement('a');
       a.href = URL.createObjectURL(blob);
@@ -819,6 +832,17 @@
     bind();
     bindWall();
     render();
+    connectDownloads();
+  }
+
+  /* Capacidad de descargas del visor de claude.ai. Si no existe (archivo local, otro
+     host o visor sin el permiso), se queda en null y el juego usa el enlace normal. */
+  function connectDownloads() {
+    if (!window.claude || typeof window.claude.use !== 'function') return;
+    window.claude.use('downloads').then(d => {
+      E0.downloads = d || null;
+      if (d && S().view.screen === 'settings') render();
+    }, () => { E0.downloads = null; });
   }
 
   E0.app = { render, boot, drawWall };
