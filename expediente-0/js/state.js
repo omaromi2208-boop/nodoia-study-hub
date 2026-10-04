@@ -59,6 +59,7 @@
       wall: { cards: [], links: [] },
       mapLinks: [],
       forensic: {},
+      latents: {},
       lastView: {}
     };
   }

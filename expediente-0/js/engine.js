@@ -434,5 +434,33 @@
     return { res, rebutted, total: set.length, verdict };
   }
 
-  E0.engine = { NOT_FOUND, getCase, resolveCase, pickVariant, costOf, judicialMax, minutes, fmt, known, discover, knownFacts, personName, judicialTargets, placeDistance, knownPlaces, log, query, findConflict, timelineCompare, hypStatus, custody, evaluate, trialSet, trialResolve, norm };
+  /* ---------- Lofoscopia ---------- */
+  /* Huellas latentes de un hecho (fact.prints). Si las tiene, el hecho no entra en el
+     expediente hasta que se cotejan todas en el banco del laboratorio. */
+  function printsOf(c, fid) { return (c.facts[fid] && c.facts[fid].prints) || []; }
+  function cardPeople(c) {
+    const v = c.victim && c.victim.id ? [{ id: c.victim.id, name: c.victim.name, role: 'Víctima (necrorreseña)' }] : [];
+    return v.concat(c.people.map(p => ({ id: p.id, name: p.name, role: p.role })), (c.extraPersons || []).map(p => ({ id: p.id, name: p.name, role: 'Víctima (necrorreseña)' })));
+  }
+  function gateReveal(c, cs, ids) {
+    const direct = [], pending = [];
+    (ids || []).forEach(id => {
+      const P = printsOf(c, id);
+      if (!P.length || known(cs, id)) { direct.push(id); return; }
+      cs.latents[id] = cs.latents[id] || { items: {} };
+      P.forEach((_, i) => { cs.latents[id].items[i] = cs.latents[id].items[i] || { status: 'pendiente', pick: null, pairs: [], bad: {}, match: null }; });
+      pending.push(id);
+    });
+    return { fresh: discover(cs, direct), pending };
+  }
+  /* Incorpora el hecho cuando todas sus latentes están resueltas. */
+  function settleLatents(c, cs, fid) {
+    const g = cs.latents[fid];
+    if (!g || known(cs, fid)) return false;
+    const done = printsOf(c, fid).every((_, i) => g.items[i] && g.items[i].status !== 'pendiente');
+    if (done) discover(cs, [fid]);
+    return done;
+  }
+
+  E0.engine = { printsOf, cardPeople, gateReveal, settleLatents, NOT_FOUND, getCase, resolveCase, pickVariant, costOf, judicialMax, minutes, fmt, known, discover, knownFacts, personName, judicialTargets, placeDistance, knownPlaces, log, query, findConflict, timelineCompare, hypStatus, custody, evaluate, trialSet, trialResolve, norm };
 })();

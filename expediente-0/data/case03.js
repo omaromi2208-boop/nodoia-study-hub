@@ -283,7 +283,7 @@ E0.cases.push({
   facts: {
     F3_LUMINOL_POMO: { text: 'Luminol: reacción en el pomo interior de la puerta y en el marco: restos de sangre limpiados.', place: 'p7', source: 'laboratorio', tags: ['sangre', 'puerta', 'acceso'] },
     F3_UV_TEL: { text: 'Luz UV: marcas con textura de guante de látex sobre la pantalla del teléfono de Tomás.', source: 'laboratorio', tags: ['telefono', 'huella'] },
-    F3_POLVO_ESC: { text: 'Polvo revelador: huellas de Sergio Montes en el pasamanos entre el 6.º y el 7.º. Vive en el 6.º: puede ser un uso habitual.', person: 'sergio', source: 'laboratorio', tags: ['escalera', 'huella'] },
+    F3_POLVO_ESC: { prints: [{ at: 'Pasamanos 6.º–7.º', match: 'sergio' }], text: 'Polvo revelador: huellas de Sergio Montes en el pasamanos entre el 6.º y el 7.º. Vive en el 6.º: puede ser un uso habitual.', person: 'sergio', source: 'laboratorio', tags: ['escalera', 'huella'] },
     F3_LUPA_CAJON: { text: 'Lupa: las marcas del abrecartas en el cajón son superficiales y hechas desde arriba; el pestillo está intacto: el cajón no estaba cerrado con llave cuando se "forzó".', source: 'escena', tags: ['cajon', 'robo'] },
     F3_HALLAZGO: { text: 'Rosa encuentra a Tomás muerto en el despacho al llegar a trabajar.', time: '08:15', person: 'rosa', place: 'p7', source: 'informe policial', tags: ['hallazgo'] },
     F3_VENTANA: { text: 'Estimación preliminar en el lugar: muerte entre las 21:30 y las 00:30.', time: '21:30', end: '00:30', person: 'tomas', source: 'informe forense', tags: ['muerte', 'hora'] },
@@ -298,10 +298,10 @@ E0.cases.push({
     F3_ABRECARTAS: { text: 'El abrecartas no tiene huellas aprovechables: fue limpiado.', source: 'laboratorio', tags: ['huella', 'cajon'] },
     F3_INTACTO: { text: 'La cartera con 310 € y el reloj de oro del dormitorio están intactos.', place: 'p7', source: 'escena', tags: ['robo'] },
     F3_TELEFONO_ESCENA: { text: 'El teléfono de Tomás estaba sobre el escritorio con la lista de llamadas recientes abierta.', source: 'escena', tags: ['telefono', 'llamada'] },
-    F3_TEL_HUELLAS: { text: 'Huellas en el teléfono: de Tomás y una parcial superpuesta, emborronada, no apta para cotejo.', source: 'laboratorio', tags: ['telefono', 'huella'] },
+    F3_TEL_HUELLAS: { prints: [{ at: 'Teléfono · carcasa', match: 'tomas' }, { at: 'Teléfono · pantalla', q: 'no_apta' }], text: 'Huellas en el teléfono: de Tomás y una parcial superpuesta, emborronada, no apta para cotejo.', source: 'laboratorio', tags: ['telefono', 'huella'] },
     F3_PC_ESCENA: { text: 'El ordenador del despacho estaba encendido con la sesión abierta.', source: 'escena', tags: ['ordenador'] },
     F3_AJEDREZ: { text: 'Partida de ajedrez a medias en el salón; dos tazas de café limpias en la cocina.', source: 'escena', tags: ['ajedrez'] },
-    F3_AJEDREZ_HUELLAS: { text: 'Huellas de Tomás y de Sergio Montes en varias piezas del ajedrez.', person: 'sergio', source: 'laboratorio', tags: ['ajedrez', 'huella'] },
+    F3_AJEDREZ_HUELLAS: { prints: [{ at: 'Rey blanco', match: 'tomas' }, { at: 'Dama negra', match: 'sergio' }], text: 'Huellas de Tomás y de Sergio Montes en varias piezas del ajedrez.', person: 'sergio', source: 'laboratorio', tags: ['ajedrez', 'huella'] },
     F3_PUERTA: { text: 'Puerta de resbalón sin forzar: se cierra sola al salir. La llave no estaba echada.', source: 'escena', tags: ['acceso', 'puerta'] },
     F3_DEMANDA_ROTA: { text: 'En la papelera, fragmentos de una demanda de reclamación de cantidad; faltan los trozos con el nombre del demandado.', source: 'documento', tags: ['demanda', 'documento'] },
     F3_GANCHO: { text: 'Junto a las llaves de Tomás hay un gancho vacío con la etiqueta «Copia vecino».', place: 'p7', source: 'escena', tags: ['llave', 'acceso'] },
@@ -461,9 +461,9 @@ E0.cases.push({
     marcos: {
       facts: {
         F3_UV_TEL: { text: 'Luz UV: solo marcas de uso con los dedos sobre la pantalla; ninguna textura de guante.', source: 'laboratorio', tags: ['telefono', 'huella'] },
-        F3_TEL_HUELLAS: { text: 'Huellas en el teléfono: solo de Tomás.', source: 'laboratorio', tags: ['telefono', 'huella'] },
+        F3_TEL_HUELLAS: { prints: [{ at: 'Teléfono · carcasa', match: 'tomas' }], text: 'Huellas en el teléfono: solo de Tomás.', source: 'laboratorio', tags: ['telefono', 'huella'] },
         F3_TELEFONO_ESCENA: { text: 'El teléfono de Tomás estaba sobre el escritorio, con una notificación de llamada perdida en la pantalla.', source: 'escena', tags: ['telefono', 'llamada'] },
-        F3_POLVO_ESC: { text: 'Polvo revelador: huellas recientes de Marcos Arnau en el pasamanos del tramo entre el 6.º y el 7.º, encima de la capa de polvo. Marcos no vive en el edificio.', person: 'marcos', source: 'laboratorio', tags: ['escalera', 'huella', 'acceso'] },
+        F3_POLVO_ESC: { prints: [{ at: 'Pasamanos 6.º–7.º', match: 'marcos' }], text: 'Polvo revelador: huellas recientes de Marcos Arnau en el pasamanos del tramo entre el 6.º y el 7.º, encima de la capa de polvo. Marcos no vive en el edificio.', person: 'marcos', source: 'laboratorio', tags: ['escalera', 'huella', 'acceso'] },
         F3_CAJON: { text: 'El cajón del escritorio fue forzado con un abrecartas; queda una funda vacía rotulada «TESTAMENTO 2026». La carpeta con los pagarés originales de S.M. sigue dentro.', place: 'p7', source: 'escena', tags: ['cajon', 'documento', 'testamento', 'pagares'] },
         F3_PAGARES_TRITURADOS: { text: 'Reconstrucción del papel triturado: folletos de propaganda y extractos bancarios antiguos de Sergio Montes. No hay ningún pagaré.', person: 'sergio', place: 'p6', source: 'laboratorio', tags: ['documento', 'basura'] },
         F3_ASC_2309: { text: 'Ascensor: Sergio Montes baja del 7.º al 6.º. Rostro visible; camisa clara.', time: '22:31', person: 'sergio', place: 'p6', source: 'cámara', tags: ['camara', 'ascensor'] },

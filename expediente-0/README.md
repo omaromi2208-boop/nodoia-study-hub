@@ -25,6 +25,7 @@ Abre `index.html` en el navegador (doble clic). No necesita instalación ni serv
 | Escena | Vista 3D (girar, acercar, pulsar objetos e inspeccionarlos de cerca) o plano 2D, con varias zonas. Cada elemento se puede examinar, fotografiar, enviar al laboratorio, añadir al muro o convertir en pregunta. |
 | Herramientas forenses | Luminol, luz UV, polvo revelador y lupa sobre cualquier objeto examinado, con efecto visual en 3D. El luminol y el polvo son limitados en cada expediente. |
 | Laboratorio | Análisis con coste. Los resultados respetan los límites de cada técnica. |
+| Lofoscopia | Las huellas que salen del laboratorio o del polvo revelador quedan pendientes de cotejo. En el banco eliges una ficha y un dedo del fichero decadactilar, y marcas los puntos característicos (finales de cresta y bifurcaciones) en la latente y en la ficha. Con 12 coincidentes hay identificación; tres discrepancias descartan el dedo; una latente sin puntos suficientes se declara no apta. También hay un cotejo automático de pago. |
 | Digital | Cámaras, registros, dispositivos, finanzas y vehículos. Las solicitudes judiciales de antenas son limitadas. |
 | Personas | Sala de interrogatorio en 3D: la persona se sienta frente a ti, habla, parpadea y reacciona a las confrontaciones según su carácter (sus gestos nunca delatan si miente). Botón «Escuchar» con la voz del navegador. Interrogatorio con memoria y confrontación con pruebas. Las respuestas pueden ser verdad, medias verdades, mentiras o creencias erróneas. |
 | Comparador | Señala solo diferencias objetivas entre fuentes. Nunca dice quién miente. |
@@ -52,6 +53,7 @@ data/case04.js     EXP-004
 js/state.js        estado, guardado, exportar/importar con validación
 js/scene3d.js      escena 3D generada a partir de los planos del caso
 js/room3d.js       sala de interrogatorio 3D y aspecto de cada persona
+js/prints.js       huellas dactilares procedurales y cotejo punto a punto
 js/engine.js       motor genérico: consulta, comparador, cronología, mapa, custodia, evaluación
 js/ui.js           render de pantallas
 js/app.js          acciones del jugador, muro (arrastre) y arranque
@@ -80,3 +82,7 @@ Añade `variants: { idVersion: { facts, evidence, answers, confront, conflicts, 
 ### Herramientas forenses
 
 Cada evidencia puede declarar `forensic: { luminol | uv | polvo | lupa: { reveals: [...] } }`. Si una herramienta no tiene resultado definido, el juego responde «sin hallazgos», sin dar pistas.
+
+### Huellas
+
+Un hecho que sale del laboratorio o de una herramienta forense puede declarar `prints: [{ at: 'lugar', match: 'idPersona' }, { at: 'lugar', q: 'no_apta' }]`. Ese hecho no entra en el expediente hasta que se cotejan todas sus latentes. Las huellas de cada persona se generan a partir de su identificador, así que siempre son las mismas.

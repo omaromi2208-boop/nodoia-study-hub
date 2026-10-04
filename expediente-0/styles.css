@@ -469,3 +469,30 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 .tool-uv b { color: #b08cff; }
 .tool-polvo b { color: var(--text); }
 .tool-lupa b { color: var(--amber); }
+
+/* Lofoscopia: banco de cotejo de huellas */
+.latent-group { border: 1px solid var(--line-soft); border-radius: var(--radius); padding: 10px; display: grid; gap: 8px; }
+.latent-items { display: flex; flex-wrap: wrap; gap: 6px; }
+.latent-item { display: inline-flex; align-items: center; gap: 8px; padding: 6px 10px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-2); color: var(--text); font: inherit; font-size: 0.86rem; cursor: pointer; }
+.latent-item[aria-pressed="true"] { border-color: var(--accent); }
+.bench { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; border-top: 1px solid var(--line-soft); padding-top: 14px; }
+.bench-col { display: grid; gap: 8px; align-content: start; min-width: 0; }
+.print-cv { width: 100%; max-width: 340px; aspect-ratio: 1; border: 1px solid var(--line); border-radius: var(--radius); cursor: crosshair; touch-action: manipulation; background: #3a3a40; }
+.bench-stats { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 0.86rem; color: var(--muted); }
+.bench-stats b { color: var(--text); }
+.cand-list { display: flex; flex-wrap: wrap; gap: 6px; }
+.cand { padding: 5px 9px; border: 1px solid var(--line); border-radius: 999px; background: var(--bg-2); color: var(--text); font: inherit; font-size: 0.8rem; cursor: pointer; }
+.cand[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
+.tenprint { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 6px; }
+@media (max-width: 980px) { .tenprint { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
+.finger { display: grid; gap: 2px; justify-items: center; padding: 4px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--bg-2); color: var(--muted); cursor: pointer; font: inherit; min-width: 0; }
+.finger canvas { width: 100%; max-width: 72px; aspect-ratio: 1; border-radius: 3px; }
+.finger small { font: 500 0.62rem/1.2 var(--f-mono); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.finger[aria-pressed="true"] { border-color: var(--accent); color: var(--text); }
+.finger.out { opacity: 0.35; }
+.bench-file { grid-column: 1 / -1; display: grid; gap: 8px; }
+.print-empty { aspect-ratio: 1; max-width: 340px; display: grid; place-items: center; text-align: center; padding: 20px; border: 1px dashed var(--line); border-radius: var(--radius); color: var(--muted); font-size: 0.86rem; }
+.bench-help { grid-column: 1 / -1; font-size: 0.88rem; color: var(--muted); }
+.bench-help b { color: var(--text); }
+.bench > .row { grid-column: 1 / -1; }
+@media (max-width: 860px) { .bench { grid-template-columns: 1fr; } .print-cv { max-width: 100%; } }

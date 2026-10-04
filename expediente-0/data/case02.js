@@ -285,7 +285,7 @@ E0.cases.push({
   facts: {
     F2_LUMINOL_COCHE: { text: 'Luminol: ninguna reacción en el habitáculo ni en el maletero del Clio. No hay restos de sangre.', place: 'puente', source: 'laboratorio', tags: ['vehiculo', 'sangre'] },
     F2_LUMINOL_BARANDILLA: { text: 'Luminol: ninguna reacción en la barandilla ni en el pretil.', place: 'puente', source: 'laboratorio', tags: ['barandilla', 'sangre', 'rio'] },
-    F2_POLVO_CARPETA: { text: 'Polvo revelador: huellas recientes de Irene en la carpeta y en el compartimento donde se guardaba el pasaporte.', person: 'irene', source: 'laboratorio', tags: ['pasaporte', 'huella'] },
+    F2_POLVO_CARPETA: { prints: [{ at: 'Carpeta de documentos', match: 'irene' }], text: 'Polvo revelador: huellas recientes de Irene en la carpeta y en el compartimento donde se guardaba el pasaporte.', person: 'irene', source: 'laboratorio', tags: ['pasaporte', 'huella'] },
     F2_LUPA_ZAPATO: { text: 'Lupa: la suela de la zapatilla está limpia, sin restos del barro del arcén, y los cordones no tienen tierra: no parece haberse perdido caminando por allí.', source: 'escena', tags: ['zapato', 'rio'] },
     F2_AVISO: { text: 'Un camionero llama al 112: hay un coche parado con los warnings en el Puente del Azud.', time: '01:55', person: 'joaquin', place: 'puente', source: 'informe policial', tags: ['aviso', 'testigo'] },
     F2_HALLAZGO: { text: 'Una patrulla encuentra el Renault Clio de Irene en el arcén del puente, vacío, con la puerta del conductor entreabierta.', time: '02:10', place: 'puente', source: 'informe policial', tags: ['vehiculo', 'hallazgo'] },
@@ -293,7 +293,7 @@ E0.cases.push({
     F2_MENSAJE: { text: 'Álvaro recibe desde la cuenta de mensajería de Irene: «Lo siento. No me busquéis. Es mejor así.»', time: '01:30', person: 'alvaro', source: 'mensaje', tags: ['mensaje'] },
 
     F2_COCHE: { text: 'El Clio tiene las llaves puestas, el depósito a tres cuartos y ningún signo de golpe ni de forcejeo.', place: 'puente', source: 'escena', tags: ['vehiculo'] },
-    F2_COCHE_HUELLAS: { text: 'Huellas en el volante y la palanca: solo de Irene. En el tirador exterior del copiloto, una parcial no apta para cotejo.', source: 'laboratorio', tags: ['vehiculo', 'huella'] },
+    F2_COCHE_HUELLAS: { prints: [{ at: 'Volante del Clio', match: 'irene' }, { at: 'Tirador exterior del copiloto', q: 'no_apta' }], text: 'Huellas en el volante y la palanca: solo de Irene. En el tirador exterior del copiloto, una parcial no apta para cotejo.', source: 'laboratorio', tags: ['vehiculo', 'huella'] },
     F2_COCHE_MECANICA: { text: 'Revisión mecánica del Clio: sin averías. Arranca y circula con normalidad.', source: 'laboratorio', tags: ['vehiculo'] },
     F2_BOLSO: { text: 'En el bolso: cartera con DNI, tarjetas y 40 €, y las llaves de casa. No hay teléfono.', place: 'puente', source: 'escena', tags: ['bolso', 'telefono'] },
     F2_ZAPATO: { text: 'Zapatilla izquierda de Irene al pie de la barandilla, de pie y alineada, con los cordones atados con doble nudo.', place: 'puente', source: 'escena', tags: ['zapato', 'rio'] },
@@ -495,7 +495,7 @@ E0.cases.push({
         F2_MARCAS: { text: 'A seis metros detrás del Clio, huella parcial de un neumático ancho de todoterreno, distinto de los del Clio.', place: 'puente', source: 'escena', tags: ['vehiculo', 'neumatico'] },
         F2_NEUMATICO: { text: 'El neumático es de medida 225/65 R17, habitual en todoterrenos compactos (RAV4, Tucson, Qashqai…). Compatible con muchos modelos.', source: 'laboratorio', tags: ['vehiculo', 'neumatico'] },
         F2_PASAPORTE: { text: 'En la carpeta de documentos del dormitorio están los pasaportes de Irene y de Álvaro.', place: 'paterna', source: 'escena', tags: ['pasaporte', 'documento'] },
-        F2_POLVO_CARPETA: { text: 'Polvo revelador: huellas de Irene y de Álvaro en la carpeta; el pasaporte de Irene sigue dentro.', source: 'laboratorio', tags: ['pasaporte', 'huella'] },
+        F2_POLVO_CARPETA: { prints: [{ at: 'Carpeta · cierre', match: 'irene' }, { at: 'Carpeta · solapa', match: 'alvaro' }], text: 'Polvo revelador: huellas de Irene y de Álvaro en la carpeta; el pasaporte de Irene sigue dentro.', source: 'laboratorio', tags: ['pasaporte', 'huella'] },
         F2_ARMARIO: { text: 'El armario de Irene está completo y la maleta pequeña sigue en el altillo.', place: 'paterna', source: 'escena', tags: ['maleta', 'ropa'] },
         F2_TIQUES: { text: 'Tiques en la papelera: la compra semanal del supermercado y una farmacia.', source: 'documento', tags: ['dinero'] },
         F2_FIN_EFECTIVO: { text: 'Cuentas de Irene: movimientos habituales, sin retiradas extraordinarias de efectivo.', person: 'irene', source: 'documento', tags: ['dinero'] },

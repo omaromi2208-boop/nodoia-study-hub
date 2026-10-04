@@ -425,7 +425,7 @@
       }).join('') + '</div>' +
       results.map(t => {
         const def = (e.forensic || {})[t.id];
-        return def ? def.reveals.map(id => '<div class="result"><b>' + esc(t.name) + '.</b> ' + esc(c.facts[id].text.replace(/^[^:]+:\s*/, '')) + '</div>').join('') : '<div class="result neutral"><b>' + esc(t.name) + '.</b> Sin hallazgos con esta técnica en este elemento.</div>';
+        return def ? def.reveals.map(id => EN.known(cs, id) ? '<div class="result"><b>' + esc(t.name) + '.</b> ' + esc(c.facts[id].text.replace(/^[^:]+:\s*/, '')) + '</div>' : factOrPending(c, cs, id)).join('') : '<div class="result neutral"><b>' + esc(t.name) + '.</b> Sin hallazgos con esta técnica en este elemento.</div>';
       }).join('') + '</div>';
   }
 
@@ -458,7 +458,7 @@
     const focus = cs.lastView.labFocus;
     const avail = c.evidence.filter(e => e.lab && cs.examined[e.id]);
     const pending = c.evidence.filter(e => e.lab && !cs.examined[e.id]).length;
-    return '<div class="stack"><div class="spread"><p class="muted" style="max-width:62ch">Decide qué análisis solicitar. Cada análisis tiene un coste para el presupuesto de la unidad. Los resultados respetan los límites de cada técnica.</p><span class="chip keep"><em>Fondos</em>' + money(s.money) + '</span></div>' +
+    return '<div class="stack">' + benchSection(c, cs) + '<div class="spread"><p class="muted" style="max-width:62ch">Decide qué análisis solicitar. Cada análisis tiene un coste para el presupuesto de la unidad. Los resultados respetan los límites de cada técnica.</p><span class="chip keep"><em>Fondos</em>' + money(s.money) + '</span></div>' +
       (avail.length ? '<div class="grid">' + avail.map(e => '<article class="panel stack" ' + (focus === e.id ? 'style="border-color:var(--accent)"' : '') + ' id="lab-' + e.id + '"><div><div class="ev-id">' + e.id + '</div><h3>' + esc(e.name) + '</h3></div>' +
         Object.keys(e.lab).map(k => {
           const a = e.lab[k];
@@ -466,10 +466,67 @@
           const done = cs.lab[key];
           const label = a.label || c.labKinds[k];
           return '<div class="lab-row"><span>' + esc(label) + '</span>' + (done ? '<span class="badge ok">Completado</span>' : '<button class="btn small" data-act="lab" data-id="' + e.id + '" data-kind="' + k + '"' + (s.money < EN.costOf('lab', a.cost) ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + EN.costOf('lab', a.cost) + ' €</span></button>') + '</div>' +
-            (done ? a.reveals.map(id => '<div class="result">' + esc(c.facts[id].text) + '</div>').join('') : '');
+            (done ? a.reveals.map(id => factOrPending(c, cs, id)).join('') : '');
         }).join('') + '</article>').join('') + '</div>' : '<div class="panel"><p class="muted">Todavía no has examinado ningún elemento que admita análisis. Empieza por la escena.</p></div>') +
       (pending ? '<p class="faint" style="font-size:.82rem">Hay elementos de la escena sin examinar que podrían admitir análisis.</p>' : '') +
       (s.money < 120 ? '<div class="result neutral">Fondos bajos. Puedes conseguir presupuesto con «Trabajo administrativo» en el centro de investigación.</div>' : '') + '</div>';
+  }
+
+  /* Resultado de un análisis, o aviso de huellas pendientes de cotejo. */
+  function factOrPending(c, cs, id) {
+    if (EN.known(cs, id) || !EN.printsOf(c, id).length) return '<div class="result">' + esc(c.facts[id].text) + '</div>';
+    const n = EN.printsOf(c, id).length;
+    return '<div class="result neutral"><b>' + n + ' huella' + (n > 1 ? 's latentes recogidas' : ' latente recogida') + '.</b> El resultado se conoce al cotejarlas. <button class="linkish" data-act="bench-open" data-fid="' + id + '" data-i="0">Ir al banco de cotejo</button></div>';
+  }
+
+  /* Banco de lofoscopia: lista de latentes y comparación punto a punto. */
+  function benchSection(c, cs) {
+    const groups = Object.keys(cs.latents || {});
+    if (!groups.length) return '';
+    const PR = E0.prints;
+    const people = EN.cardPeople(c);
+    const nameOf = id => (people.find(p => p.id === id) || {}).name || id;
+    const list = groups.map(fid => {
+      const g = cs.latents[fid];
+      const P = EN.printsOf(c, fid);
+      const pend = P.filter((_, i) => g.items[i].status === 'pendiente').length;
+      return '<div class="latent-group"><div class="spread"><b>' + esc(sourceOfFact(c, fid)) + '</b>' + (pend ? '<button class="btn small ghost" data-act="bench-auto" data-fid="' + fid + '">Cotejo automático <span class="cost">' + EN.costOf('lab', 150) + ' €</span></button>' : '<span class="badge ok">Cotejo completo</span>') + '</div>' +
+        '<div class="latent-items">' + P.map((p, i) => {
+          const it = g.items[i];
+          const st = it.status === 'identificada' ? '<span class="badge ok">' + esc(nameOf(it.match)) + '</span>' : it.status === 'no_apta' ? '<span class="badge">No apta</span>' : '<span class="badge warn">Pendiente</span>';
+          const on = cs.lastView.bench && cs.lastView.bench.fid === fid && cs.lastView.bench.i === i;
+          return '<button class="latent-item" data-act="bench-open" data-fid="' + fid + '" data-i="' + i + '" aria-pressed="' + !!on + '"><span>' + esc(p.at || 'Latente ' + (i + 1)) + '</span>' + st + '</button>';
+        }).join('') + '</div></div>';
+    }).join('');
+    const b = cs.lastView.bench;
+    let bench = '';
+    if (b && cs.latents[b.fid]) {
+      const L = PR.latent(c, b.fid, b.i);
+      const it = cs.latents[b.fid].items[b.i];
+      const key = b.cand !== null && b.fi !== null ? b.cand + '#' + b.fi : null;
+      const hits = key ? it.pairs.filter(p => p.ok && p.key === key).length : 0;
+      const bad = key ? (it.bad[key] || 0) : 0;
+      const closed = it.status !== 'pendiente';
+      const fichero = '<div class="bench-file"><div class="sub">Fichero decadactilar</div><div class="cand-list">' + people.map(p => '<button class="cand" data-act="bench-cand" data-id="' + p.id + '" aria-pressed="' + (b.cand === p.id) + '">' + esc(p.name) + '</button>').join('') + '</div>' +
+        (b.cand !== null ? '<div class="tenprint">' + PR.FINGERS.map((f, i) => {
+          const k = b.cand + '#' + i, out = (it.bad[k] || 0) >= PR.MAX_BAD;
+          return '<button class="finger' + (out ? ' out' : '') + '" data-act="bench-finger" data-i="' + i + '" aria-pressed="' + (b.fi === i) + '" title="' + esc(f) + '"><canvas width="72" height="72" data-thumb="' + b.cand + '|' + i + '"></canvas><small>' + (i + 1) + ' · ' + esc(PR.TYPES[PR.finger(b.cand, i).type].replace('Presilla ', 'P. ')) + '</small></button>';
+        }).join('') + '</div>' : '<p class="muted" style="font-size:.86rem">Elige una ficha. Empieza por el tipo de dibujo: descarta los dedos que no coinciden.</p>') + '</div>';
+      bench = '<div class="bench">' + fichero +
+        '<div class="bench-col"><div class="sub">Latente · ' + esc(L.label) + '</div><canvas class="print-cv" width="256" height="256" data-act="bench-latent" aria-label="Huella latente"></canvas>' +
+        '<div class="bench-stats"><span>Dibujo: <b>' + (L.apta ? esc(PR.TYPES[L.F.type]) : 'no determinable') + '</b></span>' +
+        (key ? '<span>Coincidentes <b class="mono">' + hits + '/' + PR.NEED + '</b></span><span>Discrepancias <b class="mono">' + bad + '/' + PR.MAX_BAD + '</b></span>' : '') + '</div>' +
+        '<div class="row"><button class="btn small ghost" data-act="bench-hl" aria-pressed="' + !!b.hl + '">' + (b.hl ? 'Ocultar ayuda' : 'Resaltar puntos') + '</button>' + (closed ? '' : '<button class="btn small ghost" data-act="bench-noapta">Declarar no apta</button>') + '</div></div>' +
+        '<div class="bench-col">' + (key ? '<div class="sub">Ficha · ' + esc(nameOf(b.cand)) + ' · ' + esc(PR.FINGERS[b.fi]) + '</div><canvas class="print-cv" width="256" height="256" data-act="bench-card" aria-label="Huella de la ficha"></canvas>' : '<div class="sub">Ficha</div><div class="print-empty">Elige una persona y un dedo del fichero para compararlo con la latente.</div>') + '</div>' +
+        '<div class="bench-help">' + (closed ? '<b>' + (it.status === 'identificada' ? 'Identificada: ' + esc(nameOf(it.match)) + '.' : 'Declarada no apta.') + '</b> ' + (EN.known(cs, b.fid) ? 'El resultado ya está en el expediente.' : 'Quedan otras latentes de este elemento por cotejar.') :
+          'Toca un punto característico de la latente (un final de cresta o una bifurcación) y después el mismo punto en la huella de la ficha. Con ' + PR.NEED + ' puntos coincidentes hay identificación. Tres discrepancias descartan ese dedo. Si la latente no tiene puntos suficientes, declárala no apta.') +
+        '</div><div class="row"><button class="btn small ghost" data-act="bench-close">Cerrar el banco</button></div></div>';
+    }
+    return '<article class="panel stack"><div class="panel-head"><h3>Lofoscopia · cotejo de huellas</h3><span class="badge">' + groups.length + ' elemento(s)</span></div>' + list + bench + '</article>';
+  }
+  function sourceOfFact(c, fid) {
+    const e = c.evidence.find(x => (x.lab && Object.values(x.lab).some(a => a.reveals.includes(fid))) || (x.forensic && Object.values(x.forensic).some(f => f.reveals.includes(fid))));
+    return e ? e.id + ' · ' + e.name : fid;
   }
 
   function tabDigital(c, cs) {

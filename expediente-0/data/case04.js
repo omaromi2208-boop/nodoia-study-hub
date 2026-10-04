@@ -305,7 +305,7 @@ E0.cases.push({
     F4_ARMERO: { text: 'El armero del pasillo está abierto con la llave puesta; falta la escopeta del calibre 12 de Vicente. La llave se guardaba en un cajón de la cocina.', place: 'masia', source: 'escena', tags: ['arma', 'llave', 'acceso'] },
     F4_VAINAS: { text: 'Siete vainas del calibre 12 entre el salón, el pasillo y el dormitorio principal.', place: 'masia', source: 'escena', tags: ['arma'] },
     F4_VAINAS_LAB: { text: 'Las vainas son de la misma marca y lote que los cartuchos del armero de la casa.', source: 'laboratorio', tags: ['arma'] },
-    F4_CAJA_HUELLAS: { text: 'En la caja fuerte solo hay huellas de Vicente; parte de la puerta se ha limpiado con un paño.', source: 'laboratorio', tags: ['huella', 'caja'] },
+    F4_CAJA_HUELLAS: { prints: [{ at: 'Caja fuerte · tirador', match: 'vicente' }], text: 'En la caja fuerte solo hay huellas de Vicente; parte de la puerta se ha limpiado con un paño.', source: 'laboratorio', tags: ['huella', 'caja'] },
     F4_AGENDA: { text: 'Agenda de Vicente: lunes 9/11, 10:00 — notaría de Castellón.', person: 'vicente', source: 'documento', tags: ['documento', 'cita'] },
     F4_ESCALERA_SANGRE: { text: 'Al pie de la escalera hay una mancha de sangre de Carla y un candelabro de hierro caído.', person: 'carla', place: 'masia', source: 'escena', tags: ['golpe', 'arma'] },
     F4_PERRO: { text: 'El perro, un mastín atado con cadena larga hasta la puerta del porche, está ileso y tranquilo.', place: 'masia', source: 'escena', tags: ['perro'] },
@@ -413,7 +413,7 @@ E0.cases.push({
     carla: {
       facts: {
         F4_LUMINOL_CASA: { text: 'Luminol: rastro de gotas limpiadas desde el salón hasta el baño, y reacción en el lavabo y en una toalla húmeda: alguien se lavó sangre antes de la llamada.', place: 'masia', source: 'laboratorio', tags: ['sangre'] },
-        F4_POLVO_ARMERO: { text: 'Polvo revelador: huellas de Carla en la puerta del armero y en la llave. Vive en la casa: su valor es limitado.', source: 'laboratorio', tags: ['arma', 'huella'] },
+        F4_POLVO_ARMERO: { prints: [{ at: 'Puerta del armero', match: 'carla' }, { at: 'Llave del armero', match: 'carla' }], text: 'Polvo revelador: huellas de Carla en la puerta del armero y en la llave. Vive en la casa: su valor es limitado.', source: 'laboratorio', tags: ['arma', 'huella'] },
         F4_UV_CAJA: { text: 'Luz UV: residuo graso en cuatro teclas del teclado de la caja, compatible con un uso reciente con la mano desnuda.', source: 'laboratorio', tags: ['caja'] },
         F4_CRISTALES: { text: 'La mayoría de los cristales de la ventana de la cocina están fuera, en el patio. Dentro, sobre la encimera, apenas hay fragmentos.', place: 'masia', source: 'escena', tags: ['ventana', 'acceso'] },
         F4_FRACTURA: { text: 'El patrón de fractura del vidrio indica que el golpe se dio desde el interior de la cocina.', source: 'laboratorio', tags: ['ventana', 'acceso'] },
@@ -421,7 +421,7 @@ E0.cases.push({
         F4_CALZADO: { text: 'Comparativa de calzado: todas las pisadas corresponden a calzado de la familia. No hay huellas de calzado ajeno.', source: 'laboratorio', tags: ['calzado'] },
         F4_CAJA: { text: 'La caja fuerte está abierta con la combinación, sin forzar. Las joyas siguen dentro; según la libreta de Vicente faltan unos 3.000 € en efectivo.', place: 'masia', source: 'escena', tags: ['caja', 'dinero', 'robo'] },
         F4_DOC_LUNES: { text: 'En el escritorio, un borrador de testamento con la nota «lunes, notaría»: Vicente reduce la parte de Carla a la legítima y le descuenta los 30.000 € prestados.', person: 'carla', source: 'documento', tags: ['testamento', 'herencia', 'documento'] },
-        F4_CANDELABRO: { text: 'En el candelabro hay sangre de Carla y solo huellas de Carla.', person: 'carla', source: 'laboratorio', tags: ['huella', 'golpe'] },
+        F4_CANDELABRO: { prints: [{ at: 'Candelabro · fuste', match: 'carla' }], text: 'En el candelabro hay sangre de Carla y solo huellas de Carla.', person: 'carla', source: 'laboratorio', tags: ['huella', 'golpe'] },
         F4_CAMINO: { text: 'En el camino de acceso solo hay rodadas del coche de Carla y del vehículo de la Guardia Civil.', place: 'masia', source: 'escena', tags: ['vehiculo'] },
         F4_DEPOSITO: { text: 'Dentro del depósito de agua del huerto aparece la escopeta de Vicente, envuelta en una toalla de baño de la casa.', place: 'masia', source: 'escena', tags: ['arma'] },
         F4_HERIDA_CARLA: { text: 'Informe médico de Carla: herida contusa superficial en la frente, sin fractura. Zona accesible a la propia mano; no se aprecian lesiones de defensa. Pérdida de conciencia poco probable.', person: 'carla', source: 'informe forense', tags: ['golpe'] },

@@ -82,6 +82,7 @@
     const tr = document.getElementById('transcript');
     if (tr) tr.scrollTop = tr.scrollHeight;
     drawWall();
+    drawBench();
     mount3d();
     mountRoom();
     store.save();
@@ -311,10 +312,113 @@
     if (cs.lab[key] || !cs.examined[id]) return;
     if (!spend(cs, EN.costOf('lab', a.cost))) return;
     cs.lab[key] = true;
-    const fresh = EN.discover(cs, a.reveals);
+    const { fresh, pending } = EN.gateReveal(c, cs, a.reveals);
     EN.log(cs, 'lab', { ev: id, kind });
-    toast('Resultado de laboratorio recibido.');
+    toast(pending.length ? 'Huellas latentes recogidas: pendientes de cotejo en el banco de lofoscopia.' : 'Resultado de laboratorio recibido.');
     newInfo(fresh);
+  }
+
+  /* ---------- Banco de lofoscopia ---------- */
+  function benchCtx() {
+    const { c, cs } = curCase();
+    const b = cs && cs.lastView.bench;
+    if (!b || !cs.latents[b.fid]) return null;
+    const L = E0.prints.latent(c, b.fid, b.i);
+    const it = cs.latents[b.fid].items[b.i];
+    return { c, cs, b, L, it };
+  }
+  function canvasPoint(el, e) {
+    const r = el.getBoundingClientRect();
+    return [(e.clientX - r.left) / r.width * el.width, (e.clientY - r.top) / r.height * el.height];
+  }
+  function benchLatent(el, e) {
+    const x = benchCtx(); if (!x || x.it.status !== 'pendiente' || !guardOpen(x.cs)) return false;
+    const m = E0.prints.pickLatent(x.L, el.width, ...canvasPoint(el, e));
+    if (m === null) { toast('Ahí no hay un punto característico claro. Busca finales de cresta y bifurcaciones.', 'warn'); return false; }
+    x.it.pick = m;
+  }
+  function benchCard(el, e) {
+    const x = benchCtx(); if (!x || x.it.status !== 'pendiente' || !guardOpen(x.cs)) return false;
+    const { c, cs, b, L, it } = x;
+    if (b.cand === null || b.fi === null) return false;
+    if (it.pick === null) { toast('Marca primero un punto en la latente.', 'warn'); return false; }
+    const key = b.cand + '#' + b.fi;
+    if ((it.bad[key] || 0) >= E0.prints.MAX_BAD) { toast('Este dedo ya está descartado para esta latente.', 'warn'); return false; }
+    const m = E0.prints.pickCard(b.cand, b.fi, el.width, ...canvasPoint(el, e));
+    if (m === null) { toast('Ahí no hay un punto característico en la ficha.', 'warn'); return false; }
+    const ok = b.cand === L.source.pid && b.fi === L.source.fi && m === it.pick;
+    if (ok && it.pairs.some(p => p.ok && p.m === m && p.key === key)) { toast('Ese punto ya está cotejado.', 'warn'); it.pick = null; return; }
+    it.pairs.push({ key, m: it.pick, c: m, ok });
+    it.pick = null;
+    EN.log(cs, 'cotejo', { fact: b.fid, ok });
+    if (!ok) {
+      it.bad[key] = (it.bad[key] || 0) + 1;
+      toast(it.bad[key] >= E0.prints.MAX_BAD ? 'Tres discrepancias: este dedo queda descartado.' : 'Discrepancia: los puntos no se corresponden.', 'warn');
+      return;
+    }
+    const hits = it.pairs.filter(p => p.ok && p.key === key).length;
+    if (hits >= E0.prints.NEED) {
+      it.status = 'identificada'; it.match = b.cand;
+      const name = EN.cardPeople(c).find(p => p.id === b.cand).name;
+      toast('Identificación: ' + hits + ' puntos coincidentes con ' + name + ' (' + E0.prints.FINGERS[b.fi].toLowerCase() + ').');
+      finishLatent(c, cs, b.fid);
+    } else toast('Coincidente (' + hits + ' de ' + E0.prints.NEED + ').');
+  }
+  function benchNoApta() {
+    const x = benchCtx(); if (!x || x.it.status !== 'pendiente' || !guardOpen(x.cs)) return false;
+    if (x.L.apta) { toast('El perito no lo acepta: la latente tiene calidad suficiente para cotejarla.', 'warn'); return false; }
+    x.it.status = 'no_apta';
+    toast('Latente declarada no apta para cotejo: no tiene puntos suficientes.');
+    finishLatent(x.c, x.cs, x.b.fid);
+  }
+  function benchAuto(fid) {
+    const { c, cs } = curCase();
+    if (!guardOpen(cs)) return;
+    if (!spend(cs, EN.costOf('lab', 150))) return;
+    EN.printsOf(c, fid).forEach((P, i) => {
+      const it = cs.latents[fid].items[i];
+      if (it.status !== 'pendiente') return;
+      const L = E0.prints.latent(c, fid, i);
+      if (L.apta) { it.status = 'identificada'; it.match = L.source.pid; } else it.status = 'no_apta';
+    });
+    EN.log(cs, 'cotejo_auto', { fact: fid });
+    toast('Cotejo automático completado.');
+    finishLatent(c, cs, fid);
+  }
+  function finishLatent(c, cs, fid) {
+    if (EN.settleLatents(c, cs, fid)) {
+      toast('Cotejo completo: el resultado se incorpora al expediente.');
+      const b = cs.lastView.bench;
+      if (b && b.fid === fid) b.done = true;
+    }
+  }
+  /* Dibuja las huellas y las marcas del banco tras cada render. */
+  function drawBench() {
+    document.querySelectorAll('canvas[data-thumb]').forEach(cv => { const [pid, fi] = cv.dataset.thumb.split('|'); E0.prints.drawCard(cv, pid, +fi); });
+    const lat = document.querySelector('canvas[data-act="bench-latent"]');
+    if (!lat) return;
+    const x = benchCtx();
+    if (!x) return;
+    const { b, L, it } = x;
+    const accent = getComputedStyle(document.body).getPropertyValue('--accent').trim() || '#5fd3df';
+    const mark = (g, px, py, color, label, r) => {
+      g.strokeStyle = color; g.lineWidth = 2; g.beginPath(); g.arc(px, py, r || 7, 0, Math.PI * 2); g.stroke();
+      if (label) { g.fillStyle = color; g.font = '700 11px monospace'; g.fillText(label, px + 8, py - 6); }
+    };
+    const key = b.cand !== null && b.fi !== null ? b.cand + '#' + b.fi : null;
+    const okPairs = it.pairs.filter(p => p.ok && (key === null || p.key === key || it.status === 'identificada'));
+    const g = E0.prints.drawLatent(lat, L);
+    if (b.hl) L.visible.forEach(id => { const [px, py] = E0.prints.latentPos(L, lat.width, id); mark(g, px, py, 'rgba(255,255,255,.35)', '', 5); });
+    okPairs.forEach((p, n) => { const [px, py] = E0.prints.latentPos(L, lat.width, p.m); mark(g, px, py, '#5ccd8c', String(n + 1)); });
+    if (it.pick !== null) { const [px, py] = E0.prints.latentPos(L, lat.width, it.pick); mark(g, px, py, accent, '?', 9); }
+    const card = document.querySelector('canvas[data-act="bench-card"]');
+    if (card && key) {
+      const g2 = E0.prints.drawCard(card, b.cand, b.fi);
+      it.pairs.filter(p => p.key === key).forEach((p, n) => {
+        const [px, py] = E0.prints.cardPos(b.cand, b.fi, card.width, p.c);
+        mark(g2, px, py, p.ok ? '#3aa86b' : '#d64550', p.ok ? String(okPairs.indexOf(p) + 1) : '✕');
+      });
+    }
   }
 
   function requestDigital(id) {
@@ -558,13 +662,23 @@
       }
       const def = (e.forensic || {})[tool];
       cs.forensic[key] = def ? 'pos' : 'neg';
-      const fresh = def ? EN.discover(cs, def.reveals) : [];
+      const gate = def ? EN.gateReveal(c, cs, def.reveals) : { fresh: [], pending: [] };
+      const fresh = gate.fresh;
       EN.log(cs, 'forensic', { ev: id, tool, positive: !!def });
       cs.lastView.fx = { ev: id, tool, pos: !!def };
       if (tool === 'lupa') cs.lastView.inspect = true;
-      toast(T.name + ': ' + (def ? 'hay un resultado.' : 'sin hallazgos con esta técnica.'));
+      toast(T.name + ': ' + (gate.pending.length ? 'huellas reveladas. Cotéjalas en el laboratorio.' : def ? 'hay un resultado.' : 'sin hallazgos con esta técnica.'));
       newInfo(fresh);
     },
+    'bench-open': el => { const { cs } = curCase(); cs.lastView.bench = { fid: el.dataset.fid, i: +el.dataset.i, cand: null, fi: null, hl: false }; S().view.tab = 'laboratorio'; },
+    'bench-close': () => { curCase().cs.lastView.bench = null; },
+    'bench-cand': el => { const b = curCase().cs.lastView.bench; b.cand = el.dataset.id; b.fi = null; },
+    'bench-finger': el => { curCase().cs.lastView.bench.fi = +el.dataset.i; },
+    'bench-hl': () => { const b = curCase().cs.lastView.bench; b.hl = !b.hl; },
+    'bench-latent': (el, e) => benchLatent(el, e),
+    'bench-card': (el, e) => benchCard(el, e),
+    'bench-noapta': () => benchNoApta(),
+    'bench-auto': el => benchAuto(el.dataset.fid),
     'fx-off': () => { curCase().cs.lastView.fx = null; },
     'scene-plan': el => { const { cs } = curCase(); cs.lastView.plan = el.dataset.id; cs.lastView.sceneSel = null; },
     photo: el => {
@@ -758,7 +872,7 @@
       if (!fn) return;
       e.preventDefault();
       if (el.classList.contains('nav-btn')) document.body.classList.remove('nav-open');
-      const r = fn(el);
+      const r = fn(el, e);
       if (r !== false) render();
     });
 
