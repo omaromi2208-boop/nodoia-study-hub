@@ -180,6 +180,16 @@ E0.cases.push({
           { id: 'cocina', name: 'Cocina', x: 70, y: 40, w: 30, h: 60 }
         ],
         hotspots: [{ ev: 'V01', x: 12, y: 22 }, { ev: 'V04', x: 28, y: 18 }, { ev: 'V05', x: 20, y: 44 }, { ev: 'V02', x: 58, y: 18 }, { ev: 'V03', x: 86, y: 14 }, { ev: 'V06', x: 84, y: 70 }]
+      },
+      {
+        /* Segunda escena: se abre al saber que Álvaro salió esa noche en su coche. */
+        id: 'garaje', name: 'Garaje (Paterna)', legend: 'Sótano del edificio · plaza 14 y trastero de Irene y Álvaro', unlock: 'F2_CV_2327',
+        rooms: [
+          { id: 'rampa', name: 'Rampa', x: 0, y: 0, w: 20, h: 100 },
+          { id: 'plazas', name: 'Plaza 14', x: 20, y: 0, w: 52, h: 100 },
+          { id: 'trastero', name: 'Trastero', x: 72, y: 0, w: 28, h: 100 }
+        ],
+        hotspots: [{ ev: 'G01', x: 46, y: 50 }, { ev: 'G02', x: 86, y: 40 }]
       }
     ]
   },
@@ -245,7 +255,19 @@ E0.cases.push({
       detail: 'Letra de Irene: «Compra: leche, pan, café. Llamar a Hugo — viernes».',
       value: 'Puede indicar una cita o un recado.', limits: 'Una nota doméstica admite muchas lecturas.',
       reveals: ['F2_NOTA'],
-      lab: { caligrafia: { cost: 120, label: 'Pericial caligráfica', reveals: ['F2_NOTA_CALIG'] } } }
+      lab: { caligrafia: { cost: 120, label: 'Pericial caligráfica', reveals: ['F2_NOTA_CALIG'] } } },
+    { id: 'G01', name: 'Coche de Álvaro (RAV4)', type: 'Vehículo', level: 2, fixed: true, room: 'Plaza 14',
+      public: 'El Toyota RAV4 negro de Álvaro, aparcado en su plaza del garaje.',
+      detail: 'Todoterreno negro aparcado en su plaza, con navegador integrado.',
+      value: 'Puede indicar por dónde circuló esa noche.', limits: 'Un trayecto del navegador sitúa el coche, no a quien lo conducía.',
+      reveals: ['F2_G_NAVEGADOR'],
+      lab: { vehiculo: { cost: 150, label: 'Revisión del vehículo y de los bajos', reveals: ['F2_G_BAJOS'] } } },
+    { id: 'G02', name: 'Bolsa de deporte del trastero', model: 'bag', type: 'Objeto', level: 3, room: 'Trastero',
+      public: 'Una bolsa de deporte en el suelo del trastero.',
+      detail: 'Bolsa de deporte de Álvaro con ropa y calzado.',
+      value: 'Ropa y calzado usados recientemente.', limits: 'No dice cuándo se usaron.',
+      reveals: ['F2_G_BOLSA'],
+      lab: { comparativa: { cost: 180, label: 'Comparativa de suelos', reveals: ['F2_G_SUELO'] } } }
   ],
 
   labKinds: { huellas: 'Huellas dactilares', adn: 'ADN', fibras: 'Fibras', comparativa: 'Comparativa', vehiculo: 'Revisión mecánica', caligrafia: 'Pericial caligráfica' },
@@ -378,7 +400,10 @@ E0.cases.push({
     S2_JOAQ_DUDA: { kind: 'statement', text: 'Joaquín reconoce que no puede asegurar que la persona de la capucha fuera un hombre.', person: 'joaquin', source: 'testigo', tags: ['testigo'] },
     S2_CARMEN_DISC: { kind: 'statement', text: 'Carmen oyó una discusión fuerte en casa de Irene y Álvaro.', time: '21:30', person: 'carmen', place: 'paterna', source: 'testigo', tags: ['testigo', 'discusion'] },
     S2_CARMEN_SALIDAS: { kind: 'statement', text: 'Carmen vio salir a Irene en coche a las 22:15 y a Álvaro en el suyo hacia las 23:30.', time: '23:30', person: 'alvaro', place: 'paterna', source: 'testigo', tags: ['testigo', 'vehiculo'] },
-    S2_CARMEN_MALETA: { kind: 'statement', text: 'Carmen vio el miércoles por la mañana a Hugo cargar una maleta en su furgoneta con Irene.', person: 'hugo', source: 'testigo', tags: ['testigo', 'maleta', 'furgoneta'] }
+    S2_CARMEN_MALETA: { kind: 'statement', text: 'Carmen vio el miércoles por la mañana a Hugo cargar una maleta en su furgoneta con Irene.', person: 'hugo', source: 'testigo', tags: ['testigo', 'maleta', 'furgoneta'] },
+
+    /* Registros con orden judicial (comunes a todas las versiones) */
+    F2_REG_RIC: { text: 'Registro del domicilio de Ricardo Albiol en Rocafort: en su despacho, una copia de la citación de Irene ante la Fiscalía con su domicilio subrayado, dentro de la documentación del procedimiento que le remitieron sus abogados como investigado.', person: 'ricardo', source: 'registro', tags: ['fiscalia', 'registro'] }
   },
 
   conflicts: [
@@ -442,6 +467,31 @@ E0.cases.push({
   /* ================= VERSIONES ================= */
   variants: {
     voluntaria: {
+      facts: {
+        F2_G_NAVEGADOR: { text: 'Navegador del RAV4 de Álvaro: el viernes, trayecto de 23:28 a 01:10 por Paterna, Burjassot y Benimàmet, con varias paradas cortas. No se acerca al puente.', time: '23:28', end: '01:10', person: 'alvaro', place: 'benimamet', source: 'dispositivo', tags: ['vehiculo', 'ubicacion'] },
+        F2_G_BAJOS: { text: 'Revisión del RAV4: pasos de rueda y bajos con polvo urbano seco, sin barro. El kilometraje del viernes es compatible con un recorrido urbano corto.', person: 'alvaro', source: 'laboratorio', tags: ['vehiculo'] },
+        F2_G_BOLSA: { text: 'En el trastero, la bolsa de deporte de Álvaro: una sudadera negra con capucha, ropa de correr y unas zapatillas con tierra seca en la suela.', person: 'alvaro', place: 'paterna', source: 'escena', tags: ['ropa', 'calzado'] },
+        F2_G_SUELO: { text: 'Comparativa de suelos: la tierra de las zapatillas de Álvaro es de parque, con restos de corteza de pino; no coincide con la arcilla del arcén del puente.', person: 'alvaro', source: 'laboratorio', tags: ['calzado'] },
+        F2_REG_HUGO_ZAPATILLA: { text: 'Registro del taller de Hugo en Sagunto: en la furgoneta Transit, bajo el asiento del copiloto, una zapatilla deportiva derecha de mujer, pareja de la que apareció junto a la barandilla del puente.', person: 'hugo', place: 'sagunto', source: 'registro', tags: ['zapato', 'furgoneta', 'registro'] },
+        F2_REG_HUGO_NOTA: { text: 'Registro del taller de Hugo: en la oficina, una nota manuscrita de Irene: «Lisboa — miércoles. No llamar al número viejo».', person: 'hugo', place: 'sagunto', source: 'registro', tags: ['nota', 'registro'] },
+        F2_REG_ALV_V: { text: 'Registro del domicilio de Álvaro: en la mesilla, la póliza del seguro de vida de Irene (200.000 €) con anotaciones a lápiz; en la misma carpeta está la póliza gemela de Álvaro, con Irene como beneficiaria.', person: 'alvaro', place: 'paterna', source: 'registro', tags: ['seguro', 'dinero', 'registro'] }
+      },
+      evidence: {
+        G01: { detail: 'Todoterreno negro aparcado en su plaza; pasos de rueda secos. El navegador conserva el historial de trayectos del viernes.' },
+        G02: { detail: 'Bolsa de deporte de Álvaro: una sudadera negra con capucha, ropa de correr y unas zapatillas con tierra seca en la suela.' }
+      },
+      planted: [
+        { ev: 'P03', label: 'caída al río simulada', tells: ['F2_LUPA_ZAPATO', 'F2_BARANDILLA', 'F2_REG_HUGO_ZAPATILLA'] },
+        { ev: 'V01', label: 'despedida programada para despistar', tells: ['F2_TAB_PROG'] }
+      ],
+      lineups: [
+        { id: 'L1', witness: 'joaquin', saw: 'a la persona con capucha que estaba junto a la barandilla del puente hacia las 00:38, de noche, durante unos segundos y desde la cabina de su camión', target: 'irene', quality: 0.5, requires: 'S2_JOAQ_0038' }
+      ],
+      searches: {
+        hugo: { place: 'el taller y la furgoneta de Hugo en Sagunto', facts: ['F2_REG_HUGO_ZAPATILLA', 'F2_REG_HUGO_NOTA'] },
+        alvaro: { place: 'el domicilio de Álvaro en Paterna', facts: ['F2_REG_ALV_V'] },
+        ricardo: { place: 'el domicilio de Ricardo Albiol en Rocafort', facts: ['F2_REG_RIC'] }
+      },
       conflicts: [
     { id: 'C03', a: 'S2_HUGO_CASA', b: 'F2_PJ_2344', type: 'Lugar distinto', severity: 'alta', desc: 'Hugo dice que estuvo en Sagunto; la furgoneta de su taller pasa el peaje del Molinar a las 23:44, tres minutos después del coche de Irene.' },
     { id: 'C04', a: 'S2_HUGO_CASA', b: 'F2_ANT_HUGO', type: 'Lugar distinto', severity: 'alta', desc: 'Hugo dice que estuvo en Sagunto; su teléfono conecta en El Puig, en la zona del puente (00:28–00:48) y en la A-3 (01:31).' },
@@ -521,7 +571,25 @@ E0.cases.push({
         S2_HUGO_ULTIMO: { kind: 'statement', text: 'Hugo declara que Irene le llamó a las 22:09 llorando y que le dijo que fuera a su casa de Sagunto.', time: '22:09', person: 'hugo', source: 'declaración', tags: ['contacto', 'llamada'] },
         S2_HUGO_RUIDO: { kind: 'statement', text: 'Hugo dice que en la llamada de las 22:09 Irene lloraba y quería ir a su casa.', time: '22:09', person: 'hugo', source: 'declaración', tags: ['llamada'] },
         S2_HUGO_GRUA: { kind: 'statement', text: 'Hugo dice que esa noche no salió de Sagunto.', person: 'hugo', place: 'sagunto', source: 'declaración', tags: ['coartada'] },
-        S2_HUGO_SILENCIO: { kind: 'statement', text: 'Hugo explica que llamó a Irene a las 23:10 y a las 00:20 porque no llegaba.', person: 'hugo', source: 'declaración', tags: ['llamada'] }
+        S2_HUGO_SILENCIO: { kind: 'statement', text: 'Hugo explica que llamó a Irene a las 23:10 y a las 00:20 porque no llegaba.', person: 'hugo', source: 'declaración', tags: ['llamada'] },
+        F2_G_NAVEGADOR: { text: 'Navegador del RAV4 de Álvaro: el historial de trayectos se borró manualmente el sábado 10/10 por la mañana. No queda ningún recorrido del viernes.', person: 'alvaro', place: 'paterna', source: 'dispositivo', tags: ['vehiculo', 'ubicacion'] },
+        F2_G_BAJOS: { text: 'Revisión del RAV4: barro arcilloso con restos de caña en los pasos de rueda y en el dibujo de los neumáticos. El kilometraje del viernes es compatible con un viaje de ida y vuelta al puente.', person: 'alvaro', source: 'laboratorio', tags: ['vehiculo', 'neumatico'] },
+        F2_G_BOLSA: { text: 'En el trastero, la bolsa de deporte de Álvaro: una sudadera negra con capucha, todavía húmeda, y unas zapatillas con barro en la suela.', person: 'alvaro', place: 'paterna', source: 'escena', tags: ['ropa', 'calzado'] },
+        F2_G_SUELO: { text: 'Comparativa de suelos: el barro de las zapatillas de Álvaro es arcilla con restos de caña, compatible con el arcén del puente. Es común en la ribera: no es exclusiva de ese punto.', person: 'alvaro', source: 'laboratorio', tags: ['calzado', 'rio'] },
+        F2_REG_ALV_POLAR: { text: 'Registro del domicilio de Álvaro: en el tambor de la lavadora, un forro polar negro recién lavado, con un desgarro en el puño derecho del que faltan fibras.', person: 'alvaro', place: 'paterna', source: 'registro', tags: ['fibra', 'ropa', 'registro'] },
+        F2_REG_ALV_CALCULOS: { text: 'Registro del domicilio de Álvaro: en el cajón de su mesilla, una hoja manuscrita con cálculos: «piso 50 % − hipoteca», «seguro: 200.000», «si se va, nada».', person: 'alvaro', place: 'paterna', source: 'registro', tags: ['seguro', 'dinero', 'divorcio', 'registro'] },
+        F2_REG_HUGO_CAJA: { text: 'Registro del taller de Hugo en Sagunto: en un cajón, 1.800 € en efectivo y un cuaderno con reparaciones cobradas sin factura.', person: 'hugo', place: 'sagunto', source: 'registro', tags: ['dinero', 'registro'] }
+      },
+      planted: [
+        { ev: 'V01', label: 'mensaje de despedida falsificado', tells: ['F2_TAB_PROG', 'F2_TAB_SYNC'] }
+      ],
+      lineups: [
+        { id: 'L1', witness: 'joaquin', saw: 'a la persona con capucha que estaba junto a la barandilla del puente hacia las 00:38, de noche, durante unos segundos y desde la cabina de su camión', target: 'alvaro', quality: 0.5, requires: 'S2_JOAQ_0038' }
+      ],
+      searches: {
+        alvaro: { place: 'el domicilio de Álvaro en Paterna', facts: ['F2_REG_ALV_POLAR', 'F2_REG_ALV_CALCULOS'] },
+        hugo: { place: 'el taller y la furgoneta de Hugo en Sagunto', facts: ['F2_REG_HUGO_CAJA'] },
+        ricardo: { place: 'el domicilio de Ricardo Albiol en Rocafort', facts: ['F2_REG_RIC'] }
       },
       evidence: {
         P03: { detail: 'Zapatilla izquierda, volcada junto a la barandilla, con los cordones desatados y barro en la suela.' },
@@ -529,7 +597,9 @@ E0.cases.push({
         P05: { detail: 'A seis metros detrás del Clio, barro con la huella parcial de un neumático ancho, de dibujo de todoterreno.' },
         V02: { detail: 'Libro de familia, escrituras y los dos pasaportes, el de Álvaro y el de Irene.' },
         V03: { detail: 'Armario ordenado; la maleta pequeña sigue en el altillo.' },
-        V05: { detail: 'Tiques arrugados: la compra semanal y una farmacia.' }
+        V05: { detail: 'Tiques arrugados: la compra semanal y una farmacia.' },
+        G01: { detail: 'Todoterreno negro aparcado en su plaza, con barro seco en los pasos de rueda. El navegador no muestra trayectos recientes.' },
+        G02: { detail: 'Bolsa de deporte de Álvaro: una sudadera negra con capucha, aún húmeda, y unas zapatillas con barro en la suela.' }
       },
       answers: {
         alvaro: { discusion: { type: 'mentira' } },

@@ -499,7 +499,7 @@
           '<p style="font-size:.9rem">' + esc(done ? e.detail : e.public) + '</p>' +
           (done ? '<dl class="kv"><dt>Valor</dt><dd>' + esc(e.value) + '</dd><dt>Límites</dt><dd>' + esc(e.limits) + '</dd></dl>' : '') +
           (facts.length ? '<div class="sub">Información incorporada</div>' + facts.map(f => '<div class="result neutral" style="font-size:.86rem">' + esc(f.text) + '</div>').join('') : '') +
-          '<div class="row">' + (done ? '<button class="btn small ghost" data-act="examine" data-id="' + e.id + '">Volver a examinar</button>' + (e.lab ? '<button class="btn small" data-act="to-lab" data-id="' + e.id + '">Laboratorio</button>' : '') : '<button class="btn small primary" data-act="examine" data-id="' + e.id + '">Examinar</button>') + '</div></article>';
+          '<div class="row">' + (done ? '<button class="btn small ghost" data-act="examine" data-id="' + e.id + '">Volver a examinar</button>' + (e.lab ? '<button class="btn small" data-act="to-lab" data-id="' + e.id + '">Laboratorio</button>' : '') + '<button class="btn small ' + ((cs.plantedMarks || {})[e.id] ? 'danger' : 'ghost') + '" data-act="mark-planted" data-id="' + e.id + '">' + ((cs.plantedMarks || {})[e.id] ? 'Señalada como montaje' : '¿Prueba plantada?') + '</button>' : '<button class="btn small primary" data-act="examine" data-id="' + e.id + '">Examinar</button>') + '</div></article>';
       }).join('') + '</div></div>';
   }
 

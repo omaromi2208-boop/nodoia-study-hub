@@ -169,6 +169,18 @@ E0.cases.push({
           { id: 'esc', name: 'Escalera', x: 78, y: 0, w: 22, h: 100 }
         ],
         hotspots: [{ ev: 'R01', x: 69, y: 50 }, { ev: 'R02', x: 89, y: 30 }, { ev: 'R04', x: 22, y: 50 }, { ev: 'R03', x: 28, y: 84 }]
+      },
+      {
+        /* Segunda escena: se abre cuando el registro judicial encuentra la llave del 7.º A en casa de Sergio. */
+        id: 'sexto', name: 'Vivienda 6.º A', legend: 'Domicilio de Sergio Montes · inspección tras el registro judicial', unlock: 'F3_REG_SER_LLAVE',
+        rooms: [
+          { id: 'entrada', name: 'Entrada', x: 0, y: 60, w: 22, h: 40 },
+          { id: 'salon', name: 'Salón', x: 22, y: 50, w: 46, h: 50 },
+          { id: 'despacho', name: 'Despacho', x: 0, y: 0, w: 45, h: 60 },
+          { id: 'dormitorio', name: 'Dormitorio', x: 45, y: 0, w: 55, h: 50 },
+          { id: 'cocina', name: 'Cocina', x: 68, y: 50, w: 32, h: 50 }
+        ],
+        hotspots: [{ ev: 'S01', x: 20, y: 24 }, { ev: 'S02', x: 78, y: 18 }, { ev: 'S03', x: 84, y: 76 }]
       }
     ]
   },
@@ -249,7 +261,23 @@ E0.cases.push({
       detail: 'Una bolsa con tiras de papel triturado, aún sin recoger.',
       value: 'Puede contener documentos destruidos.', limits: 'Lo usan las dos viviendas de la planta (la 6.º B está vacía, en venta).',
       reveals: ['F3_TRITURADO'],
-      lab: { documentos: { cost: 250, reveals: ['F3_PAGARES_TRITURADOS'] } } }
+      lab: { documentos: { cost: 250, reveals: ['F3_PAGARES_TRITURADOS'] } } },
+    { id: 'S01', name: 'Trituradora de papel', model: 'papers', type: 'Documento', level: 3, room: 'Despacho',
+      public: 'Trituradora de oficina junto al escritorio de Sergio.',
+      detail: 'Trituradora con la papelera vacía; en las cuchillas quedan algunas tiras de papel.',
+      value: 'Puede relacionarse con el papel triturado del cuarto de basuras.', limits: 'Triturar papeles no es delito: hay que saber cuáles.',
+      reveals: ['F3_S6_TRITURADORA'],
+      lab: { documentos: { cost: 200, label: 'Reconstrucción de las tiras', reveals: ['F3_S6_TIRAS'] } } },
+    { id: 'S02', name: 'Armario del dormitorio', type: 'Objeto', level: 3, room: 'Dormitorio',
+      public: 'Armario empotrado del dormitorio de Sergio.',
+      detail: 'Ropa de diario colgada. Entre ella, una sudadera oscura con capucha.',
+      value: 'La cámara del ascensor registra una sudadera oscura esa noche.', limits: 'Una sudadera oscura es una prenda muy común.',
+      reveals: ['F3_S6_SUDADERA'] },
+    { id: 'S03', name: 'Cubo de basura de la cocina', type: 'Objeto', level: 4, room: 'Cocina',
+      public: 'Cubo de basura bajo el fregadero.',
+      detail: 'Bolsa nueva, casi vacía.',
+      value: 'Lo que se tiró después de bajar la basura.', limits: 'No dice cuándo se tiró cada cosa.',
+      reveals: ['F3_S6_BASURA'] }
   ],
 
   labKinds: { autopsia: 'Autopsia completa', comparativa: 'Comparativa', huellas: 'Huellas dactilares', documentos: 'Reconstrucción documental' },
@@ -362,15 +390,27 @@ E0.cases.push({
     S3_ROSA_DEUDA: { kind: 'statement', text: 'Rosa declara que Sergio Montes debía dinero a Tomás y que últimamente discutían.', person: 'rosa', source: 'declaración', tags: ['dinero'] },
     S3_JUL_PORTERIA: { kind: 'statement', text: 'Julián declara que estuvo en la portería sin moverse hasta las 23:30.', time: '21:00', end: '23:30', person: 'julian', place: 'porteria', source: 'declaración', tags: ['coartada'] },
     S3_JUL_MONTES: { kind: 'statement', text: 'Julián vio bajar a Sergio Montes hacia las 23:25 con una sudadera oscura; le dijo que iba a dar una vuelta.', time: '23:25', person: 'sergio', place: 'porteria', source: 'testigo', tags: ['testigo', 'ropa'] },
-    S3_JUL_SALIO: { kind: 'statement', text: 'Julián admite que salió unos veinte minutos al bar de enfrente.', time: '22:30', end: '22:50', person: 'julian', place: 'barfrente', source: 'declaración', tags: ['coartada'] }
+    S3_JUL_SALIO: { kind: 'statement', text: 'Julián admite que salió unos veinte minutos al bar de enfrente.', time: '22:30', end: '22:50', person: 'julian', place: 'barfrente', source: 'declaración', tags: ['coartada'] },
+
+    /* Registros con orden judicial (comunes a todas las versiones) */
+    F3_REG_SER_LLAVE: { text: 'Registro del 6.º A: en el llavero de Sergio Montes hay una llave suelta que abre la puerta del 7.º A.', person: 'sergio', place: 'p6', source: 'registro', tags: ['llave', 'acceso', 'registro'] }
   },
+
+  /* ---------- PRUEBAS PLANTADAS, RUEDA (comunes a todas las versiones) ---------- */
+  planted: [
+    { ev: 'T03', label: 'simulación de robo', tells: ['F3_LUPA_CAJON', 'F3_INTACTO'] }
+  ],
+  lineups: [
+    { id: 'L1', witness: 'julian', saw: 'al hombre que bajó a la portería hacia las 23:25 y salió a la calle; lo tuvo delante, con la luz de la portería encendida', target: 'sergio', quality: 0.85, requires: 'S3_JUL_MONTES' }
+  ],
 
   conflicts: [
     { id: 'C01', a: 'S3_SER_NOSUBE', b: 'F3_ASC_2226', type: 'Lugar distinto', severity: 'alta', desc: 'Sergio dice que no subió al 7.º; la cámara del ascensor le registra subiendo del 6.º al 7.º a las 22:26.' },
     { id: 'C02', a: 'S3_SER_SINLLAVE', b: 'S3_ROSA_LLAVE', type: 'Hecho distinto', severity: 'alta', desc: 'Sergio niega tener llave; Rosa afirma que Tomás guardaba una copia para él en un gancho que esa mañana estaba vacío.' },
     { id: 'C05', a: 'S3_JUL_PORTERIA', b: 'F3_ASC_2241', type: 'Lugar distinto', severity: 'media', desc: 'Julián dice que no se movió de la portería; a las 22:41 la cámara muestra el mostrador vacío.' },
     { id: 'C08', a: 'S3_JUL_PORTERIA', b: 'F3_LIBRO', type: 'Hecho distinto', severity: 'baja', desc: 'Julián dice que no se movió; en su libro aparece una ronda de 22:30 a 22:50, tachada.' },
-    { id: 'C09', a: 'S3_MAR_BAR', b: 'F3_BAR', type: 'Hecho omitido', severity: 'media', desc: 'Marcos dice que estuvo en el bar de 22:00 a 23:30; la cámara interior no le muestra entre las 22:20 y las 22:48.' }
+    { id: 'C09', a: 'S3_MAR_BAR', b: 'F3_BAR', type: 'Hecho omitido', severity: 'media', desc: 'Marcos dice que estuvo en el bar de 22:00 a 23:30; la cámara interior no le muestra entre las 22:20 y las 22:48.' },
+    { id: 'C11', a: 'S3_SER_SINLLAVE', b: 'F3_REG_SER_LLAVE', type: 'Hecho distinto', severity: 'alta', desc: 'Sergio niega tener llave de la vivienda de Tomás; en su llavero aparece una llave que abre el 7.º A.' }
   ],
 
   verdictOptions: {
@@ -418,6 +458,21 @@ E0.cases.push({
   /* ================= VERSIONES ================= */
   variants: {
     sergio: {
+      facts: {
+        F3_S6_TRITURADORA: { text: 'En las cuchillas de la trituradora de Sergio quedan tiras de papel grueso y timbrado, con trazos de tinta azul.', person: 'sergio', place: 'p6', source: 'escena', tags: ['documento', 'pagares'] },
+        F3_S6_TIRAS: { text: 'Las tiras de la trituradora son del mismo papel timbrado de pagaré que el de la bolsa del cuarto de basuras; en una se lee «…ontes Alcaraz».', person: 'sergio', place: 'p6', source: 'laboratorio', tags: ['documento', 'pagares'] },
+        F3_S6_SUDADERA: { text: 'En el armario de Sergio, una sudadera oscura con capucha colgada de cualquier manera; en el bolsillo, un guante de látex usado, vuelto del revés.', person: 'sergio', place: 'p6', source: 'escena', tags: ['ropa', 'huella'] },
+        F3_S6_BASURA: { text: 'En el cubo de la cocina de Sergio, el envoltorio abierto de un paquete de guantes de látex de un solo uso.', person: 'sergio', place: 'p6', source: 'escena', tags: ['basura', 'huella'] },
+        F3_REG_SER_CAMISA: { text: 'Registro del 6.º A: en el cesto de la ropa sucia, una camisa clara como la que Sergio lleva en la cámara del ascensor a las 22:26, con un botón arrancado y el bolsillo descosido.', person: 'sergio', place: 'p6', source: 'registro', tags: ['ropa', 'registro'] },
+        F3_REG_MAR_RECIBO: { text: 'Registro del domicilio de Marcos: cartas de reclamación de dos entidades de crédito y el recibo de la cerrajería por una copia de la llave del 7.º A, grapado a una nota: «para Rosa».', person: 'marcos', source: 'registro', tags: ['llave', 'dinero', 'registro'] }
+      },
+      evidence: {
+        S02: { detail: 'Ropa de diario colgada. Entre ella, una sudadera oscura con capucha, colgada de cualquier manera; algo abulta en el bolsillo.' }
+      },
+      searches: {
+        sergio: { place: 'la vivienda 6.º A de Sergio Montes', facts: ['F3_REG_SER_LLAVE', 'F3_REG_SER_CAMISA'] },
+        marcos: { place: 'el domicilio de Marcos Arnau', facts: ['F3_REG_MAR_RECIBO'] }
+      },
       conflicts: [
     { id: 'C03', a: 'S3_SER_PIJAMA', b: 'F3_ASC_2324', type: 'Hecho distinto', severity: 'alta', desc: 'Sergio dice que estaba en pijama; a las 23:24 la cámara le muestra con sudadera oscura bajando a la portería.' },
     { id: 'C04', a: 'S3_SER_PIJAMA', b: 'S3_JUL_MONTES', type: 'Hecho distinto', severity: 'media', desc: 'Sergio dice que estaba en pijama; el conserje le vio bajar hacia las 23:25 con una sudadera oscura.' },
@@ -483,11 +538,22 @@ E0.cases.push({
         S3_MAR_VUELTA: { kind: 'statement', text: 'Marcos admite que fue al edificio a pedir perdón a su tío, que llamó al portero automático, que nadie contestó y que volvió al bar sin entrar.', time: '22:27', end: '22:42', person: 'marcos', place: 'porteria', source: 'declaración', tags: ['coartada', 'acceso'] },
         S3_MAR_NOSABIA: { kind: 'statement', text: 'Marcos declara que no sabía que su tío iba a cambiar el testamento.', person: 'marcos', source: 'declaración', tags: ['testamento', 'herencia'] },
         S3_SER_ABOGADO: { kind: 'statement', text: 'Sergio se niega a hablar de sus deudas sin abogado.', person: 'sergio', source: 'declaración', tags: ['dinero'] },
-        S3_MAR_ABOGADO: { kind: 'statement', text: 'Marcos se niega a seguir declarando sin abogado al ver las huellas de la escalera.', person: 'marcos', source: 'declaración', tags: [] }
+        S3_MAR_ABOGADO: { kind: 'statement', text: 'Marcos se niega a seguir declarando sin abogado al ver las huellas de la escalera.', person: 'marcos', source: 'declaración', tags: [] },
+        F3_S6_TRITURADORA: { text: 'En las cuchillas de la trituradora de Sergio quedan tiras de papel fino de extractos bancarios.', person: 'sergio', place: 'p6', source: 'escena', tags: ['documento'] },
+        F3_S6_TIRAS: { text: 'Las tiras de la trituradora son extractos y cartas de su banco sobre el embargo, como los de la bolsa del cuarto de basuras. Ningún pagaré.', person: 'sergio', place: 'p6', source: 'laboratorio', tags: ['documento', 'dinero'] },
+        F3_S6_SUDADERA: { text: 'En el armario de Sergio, una sudadera oscura con capucha doblada en un estante, con una capa de polvo encima: no se ha usado en días.', person: 'sergio', place: 'p6', source: 'escena', tags: ['ropa'] },
+        F3_S6_BASURA: { text: 'En el cubo de la cocina de Sergio, una bolsa nueva con restos de la cena y el periódico del jueves. Nada relevante.', person: 'sergio', place: 'p6', source: 'escena', tags: ['basura'] },
+        F3_REG_MAR_TESTAMENTO: { text: 'Registro del domicilio de Marcos: en una maceta del balcón, restos de papel quemado; en un fragmento se lee «…a la Fundación…» y «Gráficas Arnau».', person: 'marcos', source: 'registro', tags: ['testamento', 'herencia', 'registro'] },
+        F3_REG_MAR_CHAQUETA: { text: 'Registro del domicilio de Marcos: en el cesto de la ropa, la chaqueta que lleva en la cámara del bar, con una pequeña mancha parda en el puño derecho, pendiente de análisis.', person: 'marcos', source: 'registro', tags: ['ropa', 'sangre', 'registro'] }
+      },
+      searches: {
+        marcos: { place: 'el domicilio de Marcos Arnau', facts: ['F3_REG_MAR_TESTAMENTO', 'F3_REG_MAR_CHAQUETA'] },
+        sergio: { place: 'la vivienda 6.º A de Sergio Montes', facts: ['F3_REG_SER_LLAVE'] }
       },
       evidence: {
         T03: { detail: 'Forzado con un abrecartas que sigue en el suelo. Carpetas revueltas. Queda una funda de plástico vacía rotulada a mano «TESTAMENTO 2026». La carpeta de pagarés de S.M. sigue dentro.' },
-        T05: { detail: 'Teléfono sin bloqueo de pantalla. En la pantalla, una notificación de llamada perdida.' }
+        T05: { detail: 'Teléfono sin bloqueo de pantalla. En la pantalla, una notificación de llamada perdida.' },
+        S02: { detail: 'Ropa de diario colgada. En un estante, una sudadera oscura con capucha, doblada.' }
       },
       answers: {
         sergio: {
@@ -529,7 +595,8 @@ E0.cases.push({
       conflicts: [
         { id: 'CM1', a: 'S3_MAR_TERRAZA', b: 'F3_ANT_MARCOS', type: 'Lugar distinto', severity: 'alta', desc: 'Marcos dice que pasó media hora en la terraza del bar hablando con su pareja; su teléfono no hace llamadas y conecta en la zona de C/ de la Paz de 22:27 a 22:42.' },
         { id: 'CM2', a: 'S3_MAR_NOSABIA', b: 'F3_WA_BORRADO', type: 'Hecho distinto', severity: 'alta', desc: 'Marcos dice que no sabía nada del testamento; a las 20:46 leyó el mensaje de su tío: «Mañana firmo el testamento nuevo».' },
-        { id: 'CM3', a: 'S3_MAR_VUELTA', b: 'F3_POLVO_ESC', type: 'Hecho distinto', severity: 'alta', desc: 'Marcos dice que no entró en el edificio; hay huellas suyas recientes en el pasamanos de la escalera entre el 6.º y el 7.º.' }
+        { id: 'CM3', a: 'S3_MAR_VUELTA', b: 'F3_POLVO_ESC', type: 'Hecho distinto', severity: 'alta', desc: 'Marcos dice que no entró en el edificio; hay huellas suyas recientes en el pasamanos de la escalera entre el 6.º y el 7.º.' },
+        { id: 'CM4', a: 'S3_MAR_NOSABIA', b: 'F3_REG_MAR_TESTAMENTO', type: 'Hecho distinto', severity: 'media', desc: 'Marcos dice que no sabía nada del testamento nuevo; en su balcón aparecen restos quemados de un documento que menciona una fundación y Gráficas Arnau.' }
       ],
       truth: {
         culprit: 'marcos', motive: 'm3_herencia', method: 'me3_empujon', window: 'w3_2226', accomplices: [],

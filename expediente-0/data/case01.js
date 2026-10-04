@@ -457,8 +457,16 @@ E0.cases.push({
 
     S_RAMON_CALDERA: { kind: 'statement', text: 'Ramón declara que estuvo en el edificio arreglando la caldera del 12 entre las 21:00 y las 21:40 y luego fue a Patraix.', time: '21:00', end: '21:40', person: 'ramon', place: 'almendro', source: 'declaración', tags: ['coartada'] },
     S_RAMON_RELLANO: { kind: 'statement', text: 'Ramón declara que Daniel le dijo esa noche que el lunes le pagaría porque iba a "recuperar un dinero".', time: '21:00', person: 'ramon', place: 'almendro', source: 'declaración', tags: ['dinero'] },
-    S_RAMON_MUJER: { kind: 'statement', text: 'Ramón declara que en las últimas semanas una mujer de unos cuarenta, con traje y maletín, entraba en coche oscuro al garaje; Daniel le abría desde el interfono.', person: 'ramon', source: 'declaración', tags: ['garaje', 'vehiculo', 'visita'] }
+    S_RAMON_MUJER: { kind: 'statement', text: 'Ramón declara que en las últimas semanas una mujer de unos cuarenta, con traje y maletín, entraba en coche oscuro al garaje; Daniel le abría desde el interfono.', person: 'ramon', source: 'declaración', tags: ['garaje', 'vehiculo', 'visita'] },
+
+    /* Registros con orden judicial (comunes a todas las versiones) */
+    F_REG_MARTA: { text: 'Registro en casa de Marta Ruiz: en la mesilla, una caja de zolpidem con receta a su nombre dispensada en febrero; el blíster está casi completo. En un cajón, los papeles del préstamo del piso que compartió con Daniel.', person: 'marta', place: 'campanar', source: 'registro', tags: ['tox', 'prestamo', 'registro'] }
   },
+
+  /* ---------- RUEDA DE RECONOCIMIENTO (común) ---------- */
+  lineups: [
+    { id: 'L1', witness: 'ramon', saw: 'a la mujer de unos cuarenta años, con traje y maletín, que en las últimas semanas entraba en coche al garaje del edificio; la vio dos o tres veces, de lejos y al volante', target: 'elena', quality: 0.65, requires: 'S_RAMON_MUJER' }
+  ],
 
   /* ---------- CONTRADICCIONES OBJETIVAS ----------
    * Solo describen la diferencia. Nunca dicen quién miente ni por qué. */
@@ -517,6 +525,20 @@ E0.cases.push({
   /* ================= VERSIONES ================= */
   variants: {
     elena: {
+      facts: {
+        F_REG_ELENA_SUJ: { text: 'Registro del Audi A3 de Elena Vidal: en el hueco de la rueda de repuesto, envuelto en una bolsa de tela, un sujetalibros de bronce en forma de ancla, gemelo del que queda en la estantería de Daniel. Huele a lejía.', person: 'elena', place: 'ruzafa', source: 'registro', tags: ['arma', 'registro', 'vehiculo'] },
+        F_REG_ELENA_ZOLP: { text: 'Registro del domicilio de Elena Vidal: en un neceser, un blíster de zolpidem con receta a nombre de su madre, fallecida en 2025; faltan cuatro comprimidos.', person: 'elena', place: 'ruzafa', source: 'registro', tags: ['tox', 'registro'] },
+        F_REG_JAV_V1: { text: 'Registro del domicilio de Javier Molina: carpetas con las cuentas de la consultora y la póliza del seguro de persona clave, con la cifra de 300.000 € subrayada a lápiz junto a otras partidas del plan de viabilidad.', person: 'javier', place: 'benimaclet', source: 'registro', tags: ['dinero', 'seguro', 'registro'] }
+      },
+      planted: [
+        { ev: 'E03', label: 'copa lavada para ocultar una visita', tells: ['F_UV_COPA', 'S_JAV_DOSCOPAS'] },
+        { ev: 'E04', label: 'botella limpiada para borrar huellas', tells: ['F_BOTELLA_SIN_HUELLAS'] }
+      ],
+      searches: {
+        elena: { place: 'el domicilio y el coche de Elena Vidal', facts: ['F_REG_ELENA_SUJ', 'F_REG_ELENA_ZOLP'] },
+        javier: { place: 'el domicilio de Javier Molina en Benimaclet', facts: ['F_REG_JAV_V1'] },
+        marta: { place: 'el domicilio de Marta Ruiz en Campanar', facts: ['F_REG_MARTA'] }
+      },
       conflicts: [
     { id: 'C04', a: 'S_ELENA_CASA', b: 'F_ANT_ELENA', type: 'Lugar distinto', severity: 'alta', desc: 'La declaración sitúa a Elena en Ruzafa toda la noche; su teléfono conecta con la antena de C/ del Almendro entre las 22:41 y las 00:04.' },
     { id: 'C05', a: 'S_ELENA_ULTIMO', b: 'F_TEL_2246', type: 'Hecho omitido', severity: 'alta', desc: 'La declaración sitúa el último contacto a las 19:30; el teléfono de Daniel registra una llamada de Elena a las 22:46.' },
@@ -594,7 +616,16 @@ E0.cases.push({
         S_ELENA_2246: { kind: 'statement', text: 'Elena confirma la llamada de las 22:46: avisaba de que estaba ante la rampa del garaje.', time: '22:46', person: 'elena', source: 'declaración', tags: ['llamada'] },
         S_ANDRES_DISCUSION: { kind: 'statement', text: 'Andrés oyó una discusión fuerte de dos hombres en el piso 17.', time: '23:20', end: '23:40', person: 'andres', place: 'almendro', source: 'testigo', tags: ['testigo', 'discusion'] },
         S_ANDRES_GARAJE: { kind: 'statement', text: 'Andrés oyó un portazo en la puerta del piso 17 poco antes de las doce.', time: '23:57', person: 'andres', place: 'almendro', source: 'testigo', tags: ['testigo', 'puerta'] },
-        S_ANDRES_DUDA: { kind: 'statement', text: 'Andrés dice que una salida a las 23:58 cuadra con el portazo que oyó.', person: 'andres', source: 'testigo', tags: ['testigo'] }
+        S_ANDRES_DUDA: { kind: 'statement', text: 'Andrés dice que una salida a las 23:58 cuadra con el portazo que oyó.', person: 'andres', source: 'testigo', tags: ['testigo'] },
+        F_REG_JAV_BOLSA: { text: 'Registro del domicilio de Javier Molina: en el armario, la bolsa de deporte negra que lleva en la cámara del portal, con el forro recién lavado; en una costura del fondo quedan manchas parduscas, pendientes de análisis.', person: 'javier', place: 'benimaclet', source: 'registro', tags: ['arma', 'registro'] },
+        F_REG_JAV_JMST: { text: 'Registro del domicilio de Javier Molina: la escritura de «JM Servicios Técnicos SL», con Javier como administrador único, y un archivador con facturas emitidas a la consultora sin ningún servicio detallado.', person: 'javier', place: 'benimaclet', source: 'registro', tags: ['dinero', 'empresa', 'registro'] },
+        F_REG_ELENA_V2: { text: 'Registro de la oficina de Elena Vidal: los contratos de inversión de Daniel y los extractos del fondo, que cuadran con las aportaciones. En el perchero, un abrigo gris de lana.', person: 'elena', place: 'ruzafa', source: 'registro', tags: ['dinero', 'fibra', 'registro'] }
+      },
+      planted: [],
+      searches: {
+        javier: { place: 'el domicilio de Javier Molina en Benimaclet', facts: ['F_REG_JAV_BOLSA', 'F_REG_JAV_JMST'] },
+        elena: { place: 'el domicilio y la oficina de Elena Vidal', facts: ['F_REG_ELENA_V2'] },
+        marta: { place: 'el domicilio de Marta Ruiz en Campanar', facts: ['F_REG_MARTA'] }
       },
       evidence: {
         E07: { detail: 'El llavero tiene la llave del portal, la llave de la vivienda y una tarjeta de garaje.' }

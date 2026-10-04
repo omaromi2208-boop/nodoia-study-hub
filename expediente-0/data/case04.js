@@ -356,7 +356,11 @@ E0.cases.push({
     S4_TERESA_MADRE: { kind: 'statement', text: 'Teresa declara que su madre le dijo a las 22:15 que Vicente estaba muy tenso por lo del lunes y que había discutido por teléfono con alguien.', time: '22:15', person: 'teresa', source: 'declaración', tags: ['llamada', 'cita'] },
     S4_ROSARIO_DISPAROS: { kind: 'statement', text: 'Rosario oyó cinco disparos seguidos hacia las 02:40, en menos de dos minutos.', time: '02:40', end: '02:42', person: 'rosario', place: 'masia', source: 'testigo', tags: ['testigo', 'disparos'] },
     S4_ROSARIO_PERRO: { kind: 'statement', text: 'Rosario afirma que el perro de los Ballester no ladró en toda la noche, y que ladra a cualquiera que no conozca.', person: 'rosario', source: 'testigo', tags: ['testigo', 'perro'] },
-    S4_ROSARIO_LUCES: { kind: 'statement', text: 'Rosario vio apagarse las luces de la masía hacia las 00:30, salvo la del porche.', time: '00:30', person: 'rosario', place: 'masia', source: 'testigo', tags: ['testigo'] }
+    S4_ROSARIO_LUCES: { kind: 'statement', text: 'Rosario vio apagarse las luces de la masía hacia las 00:30, salvo la del porche.', time: '00:30', person: 'rosario', place: 'masia', source: 'testigo', tags: ['testigo'] },
+
+    /* Registros con orden judicial (comunes a todas las versiones) */
+    F4_REG_DAMIAN: { text: 'Registro de la casa de Damián: unas botas de seguridad de la empresa, talla 43, con barro seco, y una caja de cartuchos del calibre 12 de otra marca que los del armero de la masía. Damián tiene licencia de caza en vigor.', person: 'damian', place: 'damian', source: 'registro', tags: ['calzado', 'arma', 'registro'] },
+    F4_REG_MARC_ZAP: { text: 'Registro del piso de Marc en Castellón: unas zapatillas de running de la talla 44 con tierra seca en la suela y varios avisos de impago de casas de apuestas en línea.', person: 'marc', place: 'castellon', source: 'registro', tags: ['calzado', 'dinero', 'registro'] }
   },
 
   /* Contradicciones comunes a todas las versiones (pistas falsas incluidas). */
@@ -434,7 +438,22 @@ E0.cases.push({
         F4_ANT_MARC: { text: 'Teléfono de Marc: Castellón toda la noche; uso de datos continuo hasta la 01:30.', time: '22:00', end: '04:00', person: 'marc', place: 'castellon', source: 'antena', tags: ['ubicacion', 'telefono'] },
         S4_ROSARIO_MOTOR: { kind: 'statement', text: 'Rosario declara que no oyó ningún vehículo en toda la noche.', person: 'rosario', source: 'testigo', tags: ['testigo', 'vehiculo'] },
         S4_CARLA_LUNES: { kind: 'statement', text: 'Carla dice no saber qué iba a hacer su padre en la notaría: «cosas de la empresa».', person: 'carla', source: 'declaración', tags: ['cita'] },
-        S4_CARLA_GSR: { kind: 'statement', text: 'Carla dice que al despertar quizá cogió la escopeta del suelo, pero que no lo recuerda bien.', person: 'carla', source: 'declaración', tags: ['arma', 'residuos'] }
+        S4_CARLA_GSR: { kind: 'statement', text: 'Carla dice que al despertar quizá cogió la escopeta del suelo, pero que no lo recuerda bien.', person: 'carla', source: 'declaración', tags: ['arma', 'residuos'] },
+        F4_REG_CARLA_DINERO: { text: 'Registro del utilitario de Carla: en el maletero, dentro de una bolsa de deporte, 3.000 € en billetes de 50 sujetos con la faja de la sucursal bancaria de Vicente.', person: 'carla', place: 'masia', source: 'registro', tags: ['dinero', 'caja', 'registro'] },
+        F4_REG_CARLA_TESTAMENTO: { text: 'Registro del utilitario de Carla: en la guantera, una fotocopia del borrador de testamento de Vicente; en el margen, a mano: «legítima → ¿cuánto queda?» y «30.000 descontados».', person: 'carla', place: 'masia', source: 'registro', tags: ['testamento', 'herencia', 'registro'] }
+      },
+      planted: [
+        { ev: 'E4_04', label: 'entrada simulada: ventana rota desde dentro', tells: ['F4_FRACTURA', 'F4_CRISTALES'] },
+        { ev: 'E4_06', label: 'robo simulado', tells: ['F4_FRACTURA', 'F4_REG_CARLA_DINERO'] },
+        { ev: 'E4_14', label: 'agresión simulada (autolesión)', tells: ['F4_HERIDA_CARLA', 'F4_CANDELABRO'] }
+      ],
+      lineups: [
+        { id: 'L1', witness: 'carla', saw: 'a la figura encapuchada que, según su relato, estaba en el salón en penumbra justo antes del golpe al pie de la escalera', target: 'carla', quality: 0.5, requires: 'S4_CARLA_VIO' }
+      ],
+      searches: {
+        carla: { place: 'el coche y las pertenencias de Carla', facts: ['F4_REG_CARLA_DINERO', 'F4_REG_CARLA_TESTAMENTO'] },
+        marc: { place: 'el piso de Marc en Castellón', facts: ['F4_REG_MARC_ZAP'] },
+        damian: { place: 'la casa de Damián, en las afueras de Vilallarga', facts: ['F4_REG_DAMIAN'] }
       },
       evidence: {
         E4_14: { forensic: { luminol: { reveals: ['F4_LUMINOL_CASA'] } } },
@@ -474,7 +493,8 @@ E0.cases.push({
         { id: 'CA2', a: 'S4_CARLA_NOCHE', b: 'F4_CRISTALES', type: 'Secuencia incompatible', severity: 'alta', desc: 'Carla habla de un ruido de cristales de alguien que entraba; casi todos los cristales cayeron hacia fuera, al patio.' },
         { id: 'CA3', a: 'S4_CARLA_NOCHE', b: 'F4_TEL_CARLA_ACT', type: 'Secuencia incompatible', severity: 'alta', desc: 'Carla dice que estuvo inconsciente hasta poco antes de llamar; su teléfono se desbloquea a las 02:51 y borra una conversación a las 02:58.' },
         { id: 'CA4', a: 'S4_CARLA_VIO', b: 'F4_HUELLAS_BARRO', type: 'Hecho distinto', severity: 'alta', desc: 'Carla describe dos o tres intrusos; en el barro bajo la ventana solo hay calzado de la familia.' },
-        { id: 'CA5', a: 'S4_CARLA_DISPARO', b: 'F4_GSR', type: 'Hecho distinto', severity: 'media', desc: 'Carla dice que no dispara desde niña; la prueba encuentra residuos de disparo en su mano y su manga.' }
+        { id: 'CA5', a: 'S4_CARLA_DISPARO', b: 'F4_GSR', type: 'Hecho distinto', severity: 'media', desc: 'Carla dice que no dispara desde niña; la prueba encuentra residuos de disparo en su mano y su manga.' },
+        { id: 'CA6', a: 'S4_CARLA_LUNES', b: 'F4_REG_CARLA_TESTAMENTO', type: 'Hecho distinto', severity: 'alta', desc: 'Carla dice no saber qué iba a hacer su padre en la notaría; en su coche hay una fotocopia anotada del borrador de testamento que la reduce a la legítima.' }
       ],
       truth: {
         culprit: 'carla', motive: 'm4_testamento', method: 'me4_autolesion', window: 'w4_0240', accomplices: [],
@@ -543,7 +563,18 @@ E0.cases.push({
         F4_ANT_MARC: { text: 'Teléfono de Marc: Castellón toda la noche; uso de datos continuo hasta la 01:30.', time: '22:00', end: '04:00', person: 'marc', place: 'castellon', source: 'antena', tags: ['ubicacion', 'telefono'] },
         S4_ROSARIO_MOTOR: { kind: 'statement', text: 'Rosario oyó, antes de los disparos, un motor diésel grande que paró en el camino, y después lo oyó alejarse.', person: 'rosario', source: 'testigo', tags: ['testigo', 'vehiculo'] },
         S4_CARLA_LUNES: { kind: 'statement', text: 'Carla dice que su padre iba a firmar el lunes la venta de El Pla y que su tío Ernesto estaba furioso.', person: 'carla', source: 'declaración', tags: ['cita', 'finca'] },
-        S4_ERNESTO_GPS: { kind: 'statement', text: 'Ernesto admite que fue en el todoterreno hacia la masía para hablar con Vicente, que vio las luces apagadas y que se volvió enseguida sin entrar.', time: '02:14', end: '02:25', person: 'ernesto', place: 'cruce', source: 'declaración', tags: ['coartada', 'vehiculo'] }
+        S4_ERNESTO_GPS: { kind: 'statement', text: 'Ernesto admite que fue en el todoterreno hacia la masía para hablar con Vicente, que vio las luces apagadas y que se volvió enseguida sin entrar.', time: '02:14', end: '02:25', person: 'ernesto', place: 'cruce', source: 'declaración', tags: ['coartada', 'vehiculo'] },
+        F4_REG_ERN_PAPELES: { text: 'Registro de la casa de Ernesto: en la chimenea, restos de papel quemado; un fragmento legible lleva el membrete «Auditoría proveedores — Cítricos Ballester».', person: 'ernesto', place: 'pueblo', source: 'registro', tags: ['documento', 'empresa', 'registro'] },
+        F4_REG_ERN_GUANTES: { text: 'Registro de la casa de Ernesto: junto a la puerta, unas botas de seguridad de la talla 43 recién cepilladas y unos guantes de cuero de trabajo húmedos.', person: 'ernesto', place: 'pueblo', source: 'registro', tags: ['calzado', 'huella', 'registro'] }
+      },
+      planted: [],
+      lineups: [
+        { id: 'L1', witness: 'carla', saw: 'a la figura encapuchada que, según su relato, estaba en el salón en penumbra justo antes del golpe al pie de la escalera', target: 'ernesto', quality: 0.5, requires: 'S4_CARLA_VIO' }
+      ],
+      searches: {
+        ernesto: { place: 'la casa de Ernesto en Vilallarga', facts: ['F4_REG_ERN_PAPELES', 'F4_REG_ERN_GUANTES'] },
+        marc: { place: 'el piso de Marc en Castellón', facts: ['F4_REG_MARC_ZAP'] },
+        damian: { place: 'la casa de Damián, en las afueras de Vilallarga', facts: ['F4_REG_DAMIAN'] }
       },
       evidence: {
         E4_14: { forensic: { luminol: { reveals: ['F4_LUMINOL_CASA'] } } },
@@ -647,7 +678,16 @@ E0.cases.push({
         F4_ANT_MARC: { text: 'Teléfono de Marc: Castellón hasta la 01:20; antena de la carretera de Vilallarga, que cubre la masía, de 02:05 a 03:02; de nuevo Castellón desde las 03:40.', time: '02:05', end: '03:02', person: 'marc', place: 'masia', source: 'antena', tags: ['ubicacion', 'telefono'] },
         S4_ROSARIO_MOTOR: { kind: 'statement', text: 'Rosario oyó una moto alejarse por el camino hacia la carretera poco después de los disparos.', time: '02:45', person: 'rosario', source: 'testigo', tags: ['testigo', 'vehiculo', 'moto'] },
         S4_CARLA_LUNES: { kind: 'statement', text: 'Carla dice que el viernes su padre sacó dinero para pagar a la cuadrilla y lo guardó en la caja fuerte.', person: 'carla', source: 'declaración', tags: ['cita', 'dinero'] },
-        S4_MARC_FUI: { kind: 'statement', text: 'Marc admite que fue a Vilallarga a ver a Carla a escondidas, pero dice que no entró y que volvió antes de la una.', time: '00:00', end: '01:00', person: 'marc', place: 'masia', source: 'declaración', tags: ['coartada', 'moto'] }
+        S4_MARC_FUI: { kind: 'statement', text: 'Marc admite que fue a Vilallarga a ver a Carla a escondidas, pero dice que no entró y que volvió antes de la una.', time: '00:00', end: '01:00', person: 'marc', place: 'masia', source: 'declaración', tags: ['coartada', 'moto'] },
+        F4_REG_MARC_DINERO: { text: 'Registro del piso de Marc: en una mochila del armario, 16.500 € en billetes de 50 sujetos con la faja de la sucursal donde Vicente retiró el efectivo el viernes 6/11.', person: 'marc', place: 'castellon', source: 'registro', tags: ['dinero', 'caja', 'registro'] }
+      },
+      planted: [],
+      lineups: [
+        { id: 'L1', witness: 'carla', saw: 'a la figura encapuchada que, según su relato, estaba en el salón en penumbra justo antes del golpe al pie de la escalera', target: 'marc', quality: 0.5, requires: 'S4_CARLA_VIO' }
+      ],
+      searches: {
+        marc: { place: 'el piso de Marc en Castellón', facts: ['F4_REG_MARC_ZAP', 'F4_REG_MARC_DINERO'] },
+        damian: { place: 'la casa de Damián, en las afueras de Vilallarga', facts: ['F4_REG_DAMIAN'] }
       },
       evidence: {
         E4_14: { forensic: { luminol: { reveals: ['F4_LUMINOL_CASA'] } } },
