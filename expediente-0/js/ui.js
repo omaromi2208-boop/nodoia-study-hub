@@ -736,6 +736,18 @@
   }
 
   const WALL_KINDS = { person: 'Persona', evidence: 'Evidencia', fact: 'Registro', statement: 'Declaración', place: 'Lugar', conflict: 'Contradicción', hyp: 'Hipótesis', question: 'Pregunta abierta' };
+  const LINK_COLORS = { relación: '#e2555d', llamada: '#5fd3df', ubicación: '#8fa8ff', cámara: '#e7ae4b', vehículo: '#c79bff', tiempo: '#f0e68c', dinero: '#5ccd8c', contradicción: '#ff7a3d', acceso: '#d98fd0', otro: '#b9b5ad' };
+  /* Línea temporal con las tarjetas del muro que tienen hora. */
+  function wallTimeline(c, cs) {
+    const items = cs.wall.cards.filter(k => (k.kind === 'fact' || k.kind === 'statement') && c.facts[k.ref] && c.facts[k.ref].time)
+      .map(k => ({ k, f: c.facts[k.ref], m: EN.minutes(c.facts[k.ref].time) })).sort((a, b) => a.m - b.m);
+    if (!items.length) return '<p class="faint" style="font-size:.8rem">Añade al muro registros o declaraciones con hora y aparecerán aquí, ordenados en una línea temporal.</p>';
+    const lo = items[0].m, hi = Math.max(items[items.length - 1].m, lo + 30);
+    const pos = m => 8 + (m - lo) / (hi - lo) * 84;
+    return '<article class="panel stack"><div class="panel-head"><h3>Línea temporal del muro</h3><span class="badge">' + items.length + ' con hora</span></div><div class="wall-tl"><div class="wall-tl-axis"></div>' +
+      items.map((x, i) => '<button class="wall-tl-mark ' + (i % 2 ? 'down' : 'up') + (x.f.kind === 'statement' ? ' st' : '') + '" style="left:' + pos(x.m) + '%" data-act="wall-focus" data-id="' + x.k.id + '" title="' + esc(x.f.text) + '"><b>' + esc(x.f.time) + (x.f.end ? '–' + esc(x.f.end) : '') + '</b><span>' + esc(x.f.text.slice(0, 38)) + (x.f.text.length > 38 ? '…' : '') + '</span></button>').join('') +
+      '</div><p class="faint" style="font-size:.78rem">Toca una marca para localizar su tarjeta. Ámbar: declaraciones; azul: registros.</p></article>';
+  }
   function wallText(c, cs, k) {
     const cut = (t, n) => t.length > n ? t.slice(0, n - 1) + '…' : t;
     if (k.kind === 'person') { const p = c.people.find(x => x.id === k.ref); return p ? p.name + ' · ' + p.role : c.victim.name + ' · ' + (c.victimLabel || 'Víctima'); }
@@ -764,7 +776,16 @@
   function tabMuro(c, cs) {
     const W = cs.wall;
     const con = cs.lastView.wallConnect || {};
-    const cardHtml = W.cards.map(k => '<div class="wall-card k-' + k.kind + (con.from === k.id ? ' from' : '') + '" data-card="' + k.id + '" style="left:' + k.x + 'px;top:' + k.y + 'px"><div class="wc-head"><span>' + WALL_KINDS[k.kind] + '</span><button class="wc-x" data-act="wall-remove" data-id="' + k.id + '" aria-label="Quitar del muro">✕</button></div><div class="wc-text">' + esc(wallText(c, cs, k)) + '</div></div>').join('');
+    const focus = cs.lastView.wallFocus;
+    const tilt = id => { let h = 0; for (const ch of id) h = (h * 31 + ch.charCodeAt(0)) | 0; return ((Math.abs(h) % 50) - 25) / 10; };
+    const media = k => {
+      if (k.kind === 'evidence') return '<div class="wc-photo"><img data-shot="' + k.ref + '" alt=""><span>' + esc(k.ref) + '</span></div>';
+      if (k.kind === 'person') { const p = c.people.find(x => x.id === k.ref) || c.victim; return '<div class="wc-face">' + portrait(p, 46) + '</div>'; }
+      return '';
+    };
+    const cardHtml = W.cards.map(k => '<div class="wall-card k-' + k.kind + (con.from === k.id ? ' from' : '') + (focus === k.id ? ' focus' : '') + '" data-card="' + k.id + '" style="left:' + k.x + 'px;top:' + k.y + 'px;--tilt:' + tilt(k.id) + 'deg"><i class="pin" aria-hidden="true"></i><div class="wc-head"><span>' + WALL_KINDS[k.kind] + '</span><button class="wc-x" data-act="wall-remove" data-id="' + k.id + '" aria-label="Quitar del muro">✕</button></div>' + media(k) + '<div class="wc-text">' + esc(wallText(c, cs, k)) + '</div></div>').join('');
+    const used = [...new Set(W.links.map(l => l.label))];
+    const legend = used.length ? '<div class="wall-legend">' + used.map(l => '<span><i style="background:' + LINK_COLORS[l in LINK_COLORS ? l : 'otro'] + '"></i>' + esc(l) + '</span>').join('') + '</div>' : '';
     return '<div class="stack-lg"><article class="panel stack"><div class="wall-tools">' +
       '<div class="row" style="flex-wrap:nowrap;flex:2;min-width:min(100%,320px)"><select id="wall-add" aria-label="Elemento a añadir">' + wallOptions(c, cs) + '</select><button class="btn" data-act="wall-add">Añadir</button></div>' +
       '<form class="row" data-form="wall-question" style="flex-wrap:nowrap;flex:2;min-width:min(100%,320px)"><input type="text" id="wall-q" name="q" maxlength="140" placeholder="Pregunta abierta…" aria-label="Pregunta abierta"><button class="btn" type="submit">Añadir pregunta</button></form></div>' +
@@ -774,7 +795,7 @@
       '<div class="row"><button class="btn ghost" data-act="wall-sort">Ordenar por tipo</button><span class="badge">' + W.cards.length + ' tarjetas · ' + W.links.length + ' conexiones</span></div></div>' +
       '<p class="faint" style="font-size:.8rem">Arrastra las tarjetas por su cabecera. Quitar una tarjeta solo la retira del muro: el hecho sigue en el expediente.</p></article>' +
       '<div class="wall-scroll"><div class="wall-board" id="wall-board' + (con.on ? '" data-connect="1' : '') + '"><svg class="wall-lines" id="wall-lines" aria-hidden="true"></svg>' + cardHtml +
-      (W.cards.length ? '' : '<div class="wall-empty"><b>Muro vacío.</b> Añade a la víctima, a las personas, evidencias, lugares, declaraciones o preguntas abiertas y conéctalos.</div>') + '</div></div>' +
+      (W.cards.length ? '' : '<div class="wall-empty"><b>Muro vacío.</b> Añade a la víctima, a las personas, evidencias, lugares, declaraciones o preguntas abiertas y conéctalos.</div>') + '</div></div>' + legend + wallTimeline(c, cs) +
       (W.links.length ? '<article class="panel stack"><h3>Conexiones</h3>' + W.links.map(l => { const a = W.cards.find(k => k.id === l.a), b = W.cards.find(k => k.id === l.b); return '<div class="spread" style="font-size:.86rem;border-bottom:1px dashed var(--line-soft);padding:4px 0"><span>' + esc(wallText(c, cs, a).slice(0, 50)) + ' <b class="mono" style="color:var(--accent)">— ' + esc(l.label) + ' →</b> ' + esc(wallText(c, cs, b).slice(0, 50)) + '</span><button class="linkish" data-act="wall-unlink" data-id="' + l.id + '">Quitar</button></div>'; }).join('') + '</article>' : '') + '</div>';
   }
 
@@ -873,7 +894,7 @@
   }
 
   E0.ui = {
-    esc, rankInfo, topbar, sidebar, modal, factLabel, unlocked, scenePlanId,
+    esc, rankInfo, topbar, sidebar, modal, factLabel, unlocked, scenePlanId, LINK_COLORS,
     screens: { home: screenHome, cases: screenCases, academy: screenAcademy, career: screenCareer, notebook: screenNotebook, profile: screenProfile, settings: screenSettings, case: screenCase }
   };
 })();

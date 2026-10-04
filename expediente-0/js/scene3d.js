@@ -580,5 +580,37 @@
     R.orbit.phi = 0.95; R.autoRotate = false;
   }
 
-  E0.scene3d = { available, mount, resetView, modelFor };
+  /* Foto de la evidencia para el muro: el modelo 3D sobre fondo de estudio, con regla. */
+  const shots = {};
+  let shotR = null;
+  function snapshot(e) {
+    if (!available()) return null;
+    const key = modelFor(e);
+    if (shots[key]) return shots[key];
+    try {
+      if (!shotR) {
+        shotR = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+        shotR.setPixelRatio(1); shotR.setSize(240, 168, false);
+      }
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color('#d9d6cf');
+      scene.add(new THREE.HemisphereLight('#ffffff', '#8a8378', 0.85));
+      const dl = new THREE.DirectionalLight('#ffffff', 0.7); dl.position.set(2, 4, 3); scene.add(dl);
+      const g = MODELS[key]();
+      g.traverse(o => { if (o.userData) delete o.userData.ev; });
+      scene.add(g);
+      const bb = new THREE.Box3().setFromObject(g), size = bb.getSize(new THREE.Vector3()), ctr = bb.getCenter(new THREE.Vector3());
+      const floor = new THREE.Mesh(new THREE.PlaneGeometry(40, 40), new THREE.MeshStandardMaterial({ color: '#cfcbc2', roughness: 1 }));
+      floor.rotation.x = -Math.PI / 2; floor.position.y = bb.min.y - 0.001; scene.add(floor);
+      const r = Math.max(size.x, size.y, size.z) * 1.35 + 0.05;
+      const cam = new THREE.PerspectiveCamera(35, 240 / 168, 0.01, 100);
+      cam.position.set(ctr.x + r * 0.75, ctr.y + r * 0.7, ctr.z + r * 0.95); cam.lookAt(ctr);
+      shotR.render(scene, cam);
+      shots[key] = shotR.domElement.toDataURL('image/jpeg', 0.82);
+      scene.traverse(o => { if (o.geometry) o.geometry.dispose(); });
+      return shots[key];
+    } catch (err) { return null; }
+  }
+
+  E0.scene3d = { available, mount, resetView, modelFor, snapshot };
 })();

@@ -325,28 +325,51 @@ input[type="range"] { width: 100%; accent-color: var(--accent); }
 /* Muro */
 .wall-tools { display: flex; flex-wrap: wrap; gap: 10px; justify-content: space-between; align-items: center; }
 .wall-scroll { overflow: auto; max-height: 72vh; border: 1px solid var(--line); border-radius: var(--radius); -webkit-overflow-scrolling: touch; }
-.wall-board { position: relative; width: 1500px; height: 1000px; background:
-  radial-gradient(circle, var(--line-soft) 1px, transparent 1.5px) 0 0 / 22px 22px, var(--bg-2); }
+.wall-board { position: relative; width: 1500px; height: 1400px; background:
+  radial-gradient(circle at 30% 40%, rgba(0,0,0,.18) 1px, transparent 1.6px) 0 0 / 7px 9px,
+  radial-gradient(circle at 70% 60%, rgba(255,255,255,.07) 1px, transparent 1.6px) 3px 4px / 11px 8px,
+  linear-gradient(135deg, #8a6a46, #7a5b3b 40%, #85643f); box-shadow: inset 0 0 60px rgba(0,0,0,.45); }
 .wall-board[data-connect] .wall-card { cursor: crosshair; }
-.wall-lines { position: absolute; inset: 0; width: 1500px; height: 1000px; pointer-events: none; }
-.wall-lines line { stroke: var(--accent); stroke-width: 2; opacity: 0.75; }
-.wall-lines text { fill: var(--accent); font: 600 11px var(--f-mono); stroke: var(--bg-2); stroke-width: 4px; paint-order: stroke; }
-.wall-card { position: absolute; width: 210px; background: var(--panel-2); border: 1px solid var(--line); border-left: 3px solid var(--muted); border-radius: var(--radius);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3); touch-action: none; cursor: grab; user-select: none; transition: box-shadow 0.15s; }
+.wall-lines { position: absolute; inset: 0; width: 1500px; height: 1400px; pointer-events: none; }
+.wall-lines path { fill: none; stroke-width: 2.4; opacity: 0.92; filter: drop-shadow(0 2px 1px rgba(0,0,0,.4)); }
+.wall-lines text { font: 700 11px var(--f-mono); stroke: #3a2a18; stroke-width: 4px; paint-order: stroke; }
+.wall-card { position: absolute; width: 210px; background: #f3eee2; color: #1f1f1f; border: 1px solid #d8d0bd; border-left: 4px solid #8d8778; border-radius: 2px;
+  box-shadow: 0 6px 14px rgba(0, 0, 0, 0.4); touch-action: none; cursor: grab; user-select: none; transition: box-shadow 0.15s; transform: rotate(var(--tilt, 0deg)); }
+.wall-card .pin { position: absolute; top: -7px; left: 50%; width: 14px; height: 14px; margin-left: -7px; border-radius: 50%; background: radial-gradient(circle at 35% 35%, #ff8a8a, #c62828 60%, #7a1010); box-shadow: 0 3px 4px rgba(0,0,0,.45); z-index: 1; }
+.wall-card.focus { outline: 3px solid var(--accent); outline-offset: 3px; animation: wallPulse 1.2s ease 2; }
+@keyframes wallPulse { 50% { outline-offset: 8px; } }
+.wc-photo { position: relative; margin: 6px 8px 0; aspect-ratio: 10 / 7; background: #d9d6cf; border: 4px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,.3); }
+.wc-photo img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.wc-photo span { position: absolute; right: 4px; bottom: 3px; font: 700 0.6rem var(--f-mono); color: #fff; background: rgba(0,0,0,.55); padding: 1px 4px; }
+.wc-photo.no-shot { display: none; }
+.wc-face { margin: 6px 10px 0; }
+.wc-face .portrait { border-radius: 4px; }
 .wall-card.dragging { cursor: grabbing; box-shadow: 0 12px 28px rgba(0, 0, 0, 0.45); z-index: 2; }
 .wall-card.from { outline: 2px solid var(--accent); outline-offset: 2px; }
-.wc-head { display: flex; justify-content: space-between; align-items: center; padding: 6px 8px 0 10px; font: 600 0.62rem/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); }
-.wc-x { background: none; border: 0; color: var(--faint); font-size: 0.8rem; padding: 2px 4px; cursor: pointer; }
+.wc-head { display: flex; justify-content: space-between; align-items: center; padding: 8px 8px 0 10px; font: 600 0.62rem/1 var(--f-mono); letter-spacing: 0.1em; text-transform: uppercase; color: #6b6558; }
+.wc-x { background: none; border: 0; color: #8d8778; font-size: 0.8rem; padding: 2px 4px; cursor: pointer; }
 .wc-x:hover { color: var(--red); }
 .wc-text { padding: 4px 10px 10px; font-size: 0.8rem; line-height: 1.4; }
-.wall-card.k-person { border-left-color: var(--accent); }
-.wall-card.k-evidence { border-left-color: var(--green); }
-.wall-card.k-statement { border-left-color: var(--amber); }
-.wall-card.k-conflict { border-left-color: var(--red); }
+.wall-card.k-person { border-left-color: #2a9fae; }
+.wall-card.k-evidence { border-left-color: #2f9d5e; }
+.wall-card.k-statement { border-left-color: #c58a1f; background: #f6efd9; }
+.wall-card.k-conflict { border-left-color: #c73a42; background: #f8e6e2; }
 .wall-card.k-place { border-left-color: #8fa8ff; }
 .wall-card.k-hyp { border-left-color: #c79bff; }
 .wall-card.k-question { border-left-style: dashed; }
-.wall-empty { position: absolute; left: 24px; top: 24px; max-width: 420px; color: var(--muted); font-size: 0.9rem; }
+.wall-empty { position: absolute; left: 24px; top: 24px; max-width: 420px; color: #f3eee2; font-size: 0.9rem; background: rgba(0,0,0,.35); padding: 10px 12px; border-radius: 4px; }
+.wall-legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font: 600 0.74rem var(--f-mono); color: var(--muted); }
+.wall-legend i { display: inline-block; width: 18px; height: 3px; border-radius: 2px; margin-right: 6px; vertical-align: middle; }
+.wall-tl { position: relative; height: 165px; overflow: hidden; }
+.wall-tl-axis { position: absolute; left: 2%; right: 2%; top: 74px; height: 2px; background: var(--line); }
+.wall-tl-mark { position: absolute; top: 0; transform: translateX(-50%); width: 120px; height: 75px; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 2px; background: none; border: 0; color: var(--text); cursor: pointer; font: inherit; padding: 0; }
+.wall-tl-mark::after { content: ''; width: 10px; height: 10px; border-radius: 50%; background: #5fd3df; border: 2px solid var(--bg); margin-bottom: -6px; }
+.wall-tl-mark.st::after { background: var(--amber); }
+.wall-tl-mark.down { top: 69px; height: 90px; justify-content: flex-start; }
+.wall-tl-mark.down::after { order: -1; margin: 0 0 2px; }
+.wall-tl-mark b { font: 700 0.72rem var(--f-mono); color: var(--accent); }
+.wall-tl-mark span { font-size: 0.68rem; line-height: 1.25; color: var(--muted); text-align: center; max-width: 118px; }
+.wall-tl-mark:hover span { color: var(--text); }
 
 /* Cadena de custodia */
 .custody { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; counter-reset: step; }

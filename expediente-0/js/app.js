@@ -143,22 +143,41 @@
       const el = board.querySelector('[data-card="' + id + '"]');
       return el ? { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + el.offsetHeight / 2 } : null;
     };
+    // hilos de colores entre las chinchetas, con una ligera caída por su peso
+    const pin = id => { const el = board.querySelector('[data-card="' + id + '"]'); return el ? { x: el.offsetLeft + el.offsetWidth / 2, y: el.offsetTop + 6 } : null; };
     svg.innerHTML = cs.wall.links.map(l => {
-      const a = center(l.a), b = center(l.b);
+      const a = pin(l.a), b = pin(l.b);
       if (!a || !b) return '';
-      return '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '"/><text x="' + (a.x + b.x) / 2 + '" y="' + ((a.y + b.y) / 2 - 4) + '" text-anchor="middle">' + UI.esc(l.label) + '</text>';
+      const col = UI.LINK_COLORS[l.label] || UI.LINK_COLORS.otro;
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2 + Math.min(60, Math.hypot(b.x - a.x, b.y - a.y) * 0.12);
+      const ty = (a.y + b.y) / 4 + my / 2;
+      return '<path d="M' + a.x + ' ' + a.y + ' Q' + mx + ' ' + my + ' ' + b.x + ' ' + b.y + '" style="stroke:' + col + '"/><text x="' + mx + '" y="' + (ty - 4) + '" text-anchor="middle" style="fill:' + col + '">' + UI.esc(l.label) + '</text>';
     }).join('');
+    board.querySelectorAll('img[data-shot]').forEach(img => {
+      if (img.getAttribute('src')) return;
+      const { c } = curCase();
+      const e = c.evidence.find(x => x.id === img.dataset.shot);
+      const src = e && E0.scene3d && E0.scene3d.snapshot(e);
+      if (src) img.src = src; else img.parentElement.classList.add('no-shot');
+    });
+    const f = cs.lastView.wallFocus && board.querySelector('[data-card="' + cs.lastView.wallFocus + '"]');
+    if (f && cs.lastView.wallFocusScroll) {
+      cs.lastView.wallFocusScroll = false;
+      const sc = board.parentElement;
+      sc.scrollTo({ left: Math.max(0, f.offsetLeft - sc.clientWidth / 2 + f.offsetWidth / 2), top: Math.max(0, f.offsetTop - sc.clientHeight / 2 + 60), behavior: 'smooth' });
+      sc.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
   }
 
   const WALL_ORDER = ['person', 'evidence', 'place', 'fact', 'statement', 'conflict', 'hyp', 'question'];
   function wallSlot(cs) {
     const n = cs.wall.cards.length;
-    return { x: 20 + (n % 6) * 240, y: 20 + Math.floor(n / 6) * 150 };
+    return { x: 24 + (n % 6) * 242, y: 24 + Math.floor(n / 6) * 250 };
   }
   function wallAdd(cs, kind, ref, text) {
     if (cs.wall.cards.some(k => k.kind === kind && k.ref === ref)) return false;
     const pos = wallSlot(cs);
-    cs.wall.cards.push({ id: uid(), kind, ref, text: text || '', x: pos.x, y: Math.min(pos.y, 860) });
+    cs.wall.cards.push({ id: uid(), kind, ref, text: text || '', x: pos.x, y: Math.min(pos.y, 1140) });
     EN.log(cs, 'wall_add', { kind });
     return true;
   }
@@ -767,12 +786,13 @@
       cs.lastView.wallConnect = { on: true, from: null, label: document.getElementById('wall-label').value };
     },
     'wall-connect-cancel': () => { const { cs } = curCase(); cs.lastView.wallConnect = { on: false, from: null }; },
+    'wall-focus': el => { const { cs } = curCase(); cs.lastView.wallFocus = el.dataset.id; cs.lastView.wallFocusScroll = true; },
     'wall-unlink': el => { const { cs } = curCase(); cs.wall.links = cs.wall.links.filter(l => l.id !== el.dataset.id); },
     'wall-sort': () => {
       const { cs } = curCase();
       const cols = WALL_ORDER.filter(k => cs.wall.cards.some(x => x.kind === k));
       cols.forEach((kind, ci) => {
-        cs.wall.cards.filter(x => x.kind === kind).forEach((x, ri) => { x.x = 20 + (ci % 6) * 240; x.y = Math.min(860, 20 + ri * 130 + Math.floor(ci / 6) * 420); });
+        cs.wall.cards.filter(x => x.kind === kind).forEach((x, ri) => { const rowH = kind === 'evidence' ? 235 : kind === 'person' ? 180 : 150; x.x = 24 + (ci % 6) * 242; x.y = Math.min(1240, 24 + ri * rowH + Math.floor(ci / 6) * 640); });
       });
     },
     examine: el => examine(el.dataset.id),
