@@ -98,6 +98,7 @@
       '<span class="chip opt" title="Rango">' + esc(r.cur.name) + '</span>' +
       '<span class="chip" title="Dinero"><em>€</em>' + s.money.toLocaleString('es-ES') + '</span>' +
       '<span class="chip opt" title="Energía"><em>EN</em>' + s.energy + '</span>' +
+      '<button class="chip sound-btn" data-act="toggle-ambient" title="' + (s.settings.ambient !== false ? 'Silenciar el sonido ambiente' : 'Activar el sonido ambiente') + '" aria-label="Sonido ambiente">' + (s.settings.ambient !== false ? '🔊' : '🔇') + '</button>' +
       '<button class="player-chip" data-act="go" data-screen="profile" title="Perfil"><span class="avatar sm acc">' + esc(initials(playerName())) + '</span><span class="pc-name">' + esc(playerName()) + '</span></button>' +
       '</div>';
   }
@@ -315,6 +316,7 @@
       '<article class="panel stack"><h3>Tema visual</h3><div class="swatches">' + C.themes.map(t => '<button class="swatch" data-act="theme" data-id="' + t.id + '" aria-pressed="' + (st.theme === t.id) + '"><i class="sw-' + t.id + '"></i>' + esc(t.name) + '</button>').join('') + '</div>' +
       '<h3>Interfaz</h3><label class="check"><input type="checkbox" id="set-anim" data-act="toggle-setting" data-key="anim"' + (st.anim ? ' checked' : '') + '>Animaciones activadas</label>' +
       '<label class="check"><input type="checkbox" id="set-sound" data-act="toggle-setting" data-key="sound"' + (st.sound ? ' checked' : '') + '>Sonido de interfaz discreto</label>' +
+      '<label class="check"><input type="checkbox" id="set-ambient" data-act="toggle-setting" data-key="ambient"' + (st.ambient !== false ? ' checked' : '') + '>Sonido ambiente (lluvia, fluorescente, respiración y latidos en el interrogatorio)</label>' +
       '<label class="field">Tamaño de interfaz<select id="set-scale" data-act="set-scale">' + [90, 100, 112, 125].map(v => '<option value="' + v + '"' + (st.scale === v ? ' selected' : '') + '>' + v + ' %</option>').join('') + '</select></label>' +
       '<p class="faint" style="font-size:.78rem">Si tu sistema pide reducir el movimiento, las animaciones se desactivan automáticamente.</p></article>' +
       '<article class="panel stack"><h3>Exportar partida</h3><p class="muted" style="font-size:.88rem">Copia este JSON para guardar una copia de seguridad o pasarla a otro dispositivo.</p>' +

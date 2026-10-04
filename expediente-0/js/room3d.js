@@ -325,7 +325,7 @@
     // la lámpara falla de vez en cuando (más a menudo cuanto más tensa está la sala)
     const sp = RR.room.spot;
     RR.nextFlicker = RR.nextFlicker == null ? s + 6 : RR.nextFlicker;
-    if (s > RR.nextFlicker) { RR.flickerUntil = s + 0.25 + Math.random() * 0.45; RR.nextFlicker = s + (14 - (RR.tensionNow || 0) * 9) * (0.6 + Math.random()); }
+    if (s > RR.nextFlicker) { if (E0.audio) E0.audio.flicker(); RR.flickerUntil = s + 0.25 + Math.random() * 0.45; RR.nextFlicker = s + (14 - (RR.tensionNow || 0) * 9) * (0.6 + Math.random()); }
     sp.intensity = RR.flickerUntil > s ? sp.userData.base * (Math.random() < 0.5 ? 0.15 : 0.9) : sp.userData.base;
     animate(s, dt);
     camUpdate();

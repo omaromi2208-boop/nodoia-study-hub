@@ -85,6 +85,7 @@
     const tr = document.getElementById('transcript');
     if (tr) tr.scrollTop = tr.scrollHeight;
     drawWall();
+    updateAudio();
     drawBench();
     drawPericia();
     drawVideo();
@@ -589,6 +590,22 @@
     if (n === E0.threads.unlockAt) toast('Se ha abierto el expediente transversal. Míralo en Carrera.', 'warn');
   }
 
+  /* ---------- Sonido ambiente ---------- */
+  function updateAudio() {
+    if (!E0.audio) return;
+    const s = S();
+    let scene = 'office', tension = 0;
+    if (s.view.screen === 'case') {
+      const { cs } = curCase();
+      const tab = s.view.tab;
+      if (tab === 'personas' && cs && cs.lastView.person) { scene = 'room'; tension = ((cs.tension || {})[cs.lastView.person] || 0) / 100; }
+      else if (tab === 'escena') scene = 'scene';
+      else if (tab === 'laboratorio') scene = 'lab';
+    }
+    E0.audio.update(scene, { tension });
+  }
+  document.addEventListener('pointerdown', () => { if (E0.audio && S() && S().settings.ambient !== false && !E0.audio.scene) { E0.audio.unlock(true); updateAudio(); } }, { capture: true });
+
   /* ---------- Reloj de la investigación ---------- */
   function clockHours() { const { cs } = curCase(); return cs ? cs.hours || 0 : null; }
   function clockCheck(h0) {
@@ -980,6 +997,7 @@
       if (o.ok) { s.meta = { solved: true }; addXP(300); s.reputation = clamp(s.reputation + 8, 0, 100); toast('Expediente transversal resuelto: +300 XP y +8 reputación.'); }
       else { s.meta = { tries: ((s.meta || {}).tries || 0) + 1 }; toast(Q.wrong, 'warn'); }
     },
+    'toggle-ambient': () => { const st = S().settings; st.ambient = st.ambient === false; if (E0.audio) { E0.audio.setEnabled(st.ambient); if (st.ambient) { E0.audio.unlock(true); updateAudio(); } } store.save(); },
     'per-open': el => { const { cs } = curCase(); cs.lastView.pericia = el.dataset.id; S().view.tab = 'laboratorio'; },
     'per-close': () => { curCase().cs.lastView.pericia = null; },
     'per-auto': el => {
@@ -1237,7 +1255,7 @@
       const act = el.dataset && el.dataset.act;
       if (!act) return;
       const s = S();
-      if (act === 'toggle-setting') { s.settings[el.dataset.key] = el.checked; applySettings(); store.save(); }
+      if (act === 'toggle-setting') { s.settings[el.dataset.key] = el.checked; applySettings(); store.save(); if (el.dataset.key === 'ambient' && E0.audio) { E0.audio.setEnabled(el.checked); if (el.checked) { E0.audio.unlock(true); updateAudio(); } } }
       else if (act === 'set-scale') { s.settings.scale = Number(el.value); applySettings(); store.save(); }
       else if (act === 'map-person') { const { cs } = curCase(); const h = new Set(cs.lastView.mapHide || []); if (el.checked) h.delete(el.value); else h.add(el.value); cs.lastView.mapHide = [...h]; drawMapTokens(); store.save(); }
       else if (act === 'lineup-pick') { const { cs } = curCase(); cs.lastView.lineupSel = cs.lastView.lineupSel || {}; const cur = new Set(cs.lastView.lineupSel[el.dataset.l] || []); if (el.checked) { if (cur.size >= 4) { el.checked = false; toast('Como máximo cuatro personas; el resto son figurantes.', 'warn'); return; } cur.add(el.value); } else cur.delete(el.value); cs.lastView.lineupSel[el.dataset.l] = [...cur]; render(); }

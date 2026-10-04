@@ -23,7 +23,7 @@
       skills: defaultSkills(),
       academy: {},
       notes: [],
-      settings: { theme: 'noche', anim: true, scale: 100, sound: false },
+      settings: { theme: 'noche', anim: true, scale: 100, sound: false, ambient: true },
       cases: {},
       history: [],
       budgets: {},

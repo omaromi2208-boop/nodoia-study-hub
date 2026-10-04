@@ -617,3 +617,5 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 .lu-n { position: absolute; top: 2px; left: 6px; font: 700 0.8rem var(--f-mono); color: #fff; background: rgba(0,0,0,.55); padding: 0 5px; border-radius: 3px; z-index: 1; }
 .lu.picked { outline: 3px solid var(--amber); }
 hr.sep { border: 0; border-top: 1px dashed var(--line-soft); margin: 8px 0; }
+
+.sound-btn { cursor: pointer; font-size: 0.9rem; padding: 4px 9px; }
