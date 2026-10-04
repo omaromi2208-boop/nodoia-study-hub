@@ -524,3 +524,39 @@ body.no-anim *, body.no-anim *::before, body.no-anim *::after { animation: none 
 .tension { display: grid; grid-template-columns: auto 1fr auto auto; align-items: center; gap: 10px; font-size: 0.82rem; }
 .tension-bar { height: 8px; border-radius: 99px; background: var(--bg-2); border: 1px solid var(--line-soft); overflow: hidden; }
 .tension-bar i { display: block; height: 100%; border-radius: 99px; transition: width .5s ease; }
+
+/* Mapa: reproducción temporal */
+.map-tokens, .map-gaps { position: absolute; inset: 0; pointer-events: none; }
+.map-gaps { width: 100%; height: 100%; }
+.map-gaps line { stroke: var(--red); stroke-width: 0.5; stroke-dasharray: 1.2 1; vector-effect: non-scaling-stroke; stroke-width: 2; }
+.map-token { position: absolute; transform: translate(-50%, -50%); width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font: 700 0.62rem var(--f-mono); background: var(--accent); color: var(--accent-ink); box-shadow: 0 2px 8px rgba(0,0,0,.5); transition: left .25s ease, top .25s ease; z-index: 3; }
+.map-token.st { background: transparent; color: var(--amber); border: 2px dashed var(--amber); }
+.map-people { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 0.84rem; }
+.map-now { display: grid; gap: 4px; max-height: 220px; overflow-y: auto; }
+.legend .lg-rec, .legend .lg-st, .legend .lg-gap { display: inline-block; width: 12px; height: 12px; border-radius: 50%; margin-right: 6px; vertical-align: -2px; }
+.legend .lg-rec { background: var(--accent); }
+.legend .lg-st { border: 2px dashed var(--amber); }
+.legend .lg-gap { width: 18px; height: 0; border-top: 2px dashed var(--red); border-radius: 0; }
+/* Visor de dispositivos */
+.dev-wrap { display: flex; flex-wrap: wrap; gap: 20px; align-items: flex-start; }
+.dev-phone { width: min(100%, 320px); border: 10px solid #111418; border-radius: 34px; background: #0b0e12; box-shadow: 0 10px 30px rgba(0,0,0,.5), inset 0 0 0 1px #2a2f36; overflow: hidden; }
+.dev-pc { width: min(100%, 560px); border: 10px solid #1a1d22; border-bottom-width: 22px; border-radius: 10px; background: #0b0e12; box-shadow: 0 10px 30px rgba(0,0,0,.5); overflow: hidden; }
+.dev-status { display: flex; justify-content: space-between; padding: 6px 14px; font: 600 0.62rem var(--f-mono); color: var(--muted); background: #07090c; letter-spacing: 0.06em; }
+.dev-screen { min-height: 420px; max-height: 520px; overflow-y: auto; background: linear-gradient(160deg, #13202b, #0b1118); }
+.dev-pc .dev-screen { min-height: 300px; }
+.dev-home { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; padding: 22px 16px; }
+.dev-app { position: relative; display: grid; justify-items: center; gap: 6px; background: none; border: 0; color: var(--text); cursor: pointer; font: inherit; }
+.dev-app span { width: 56px; height: 56px; display: grid; place-items: center; font-size: 1.6rem; border-radius: 15px; background: linear-gradient(160deg, #2a3a4a, #1a2632); box-shadow: 0 4px 10px rgba(0,0,0,.35); }
+.dev-app small { font-size: 0.72rem; }
+.dev-app em { position: absolute; top: -4px; right: 14px; min-width: 18px; height: 18px; border-radius: 9px; background: var(--red); color: #fff; font: 700 0.62rem/18px var(--f-mono); font-style: normal; padding: 0 4px; }
+.dev-bar { position: sticky; top: 0; display: flex; justify-content: space-between; align-items: center; padding: 10px 12px; background: #0e161e; border-bottom: 1px solid #1d2a36; font-size: 0.86rem; z-index: 1; }
+.dev-list { display: grid; gap: 8px; padding: 10px; }
+.dev-row { display: flex; gap: 10px; align-items: flex-start; padding: 8px; border-radius: 10px; background: rgba(255,255,255,.04); font-size: 0.82rem; line-height: 1.4; }
+.dev-row time, .dev-msg time { display: block; font: 600 0.66rem var(--f-mono); color: var(--muted); margin-top: 2px; }
+.dev-ico { flex: none; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: #1d2a36; font-size: 0.8rem; }
+.dev-ico.in { color: var(--green); } .dev-ico.out { color: var(--accent); }
+.dev-msg { display: grid; justify-items: start; font-size: 0.82rem; }
+.dev-msg.out { justify-items: end; }
+.dev-msg .bubble { max-width: 86%; padding: 8px 11px; border-radius: 14px 14px 14px 4px; background: #233142; line-height: 1.4; }
+.dev-msg.out .bubble { border-radius: 14px 14px 4px 14px; background: #1f4d55; }
+.dev-tools { margin-top: 2px; font-size: 0.72rem; }

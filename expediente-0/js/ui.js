@@ -535,18 +535,84 @@
     const jmax = EN.judicialMax(c);
     const left = jmax - cs.judicial.length;
     return '<div class="stack-lg"><div class="spread"><p class="muted" style="max-width:62ch">Solicita registros digitales y compáralos después con las declaraciones y la cronología.</p><span class="chip keep"><em>Fondos</em>' + money(s.money) + '</span></div>' +
+      deviceView(c, cs) +
       '<div class="grid">' + c.digital.map(d => {
         const done = cs.digital[d.id];
         const reqOk = (!d.requires || cs.examined[d.requires]) && (!d.requiresDigital || cs.digital[d.requiresDigital]);
         const reqName = d.requires && !cs.examined[d.requires] ? 'examinar ' + c.evidence.find(e => e.id === d.requires).name : d.requiresDigital ? 'obtener «' + c.digital.find(x => x.id === d.requiresDigital).name + '»' : '';
         const facts = done ? d.reveals.map(id => c.facts[id]) : [];
         return '<article class="panel stack"><div class="spread"><h3>' + esc(d.name) + '</h3>' + (done ? '<span class="badge ok">Recibido</span>' : '<span class="badge">' + EN.costOf('digital', d.cost) + ' €</span>') + '</div><p class="muted" style="font-size:.88rem">' + esc(d.desc) + '</p>' +
-          (done ? '<div>' + facts.map(f => factRow(c, f)).join('') + '</div>' :
+          (done ? (isDevice(d) ? '<div class="row"><button class="btn small" data-act="device-open" data-id="' + d.id + '">' + (deviceKind(d) === 'pc' ? 'Abrir el ordenador' : 'Abrir el dispositivo') + '</button></div>' : '') + '<div>' + facts.map(f => factRow(c, f)).join('') + '</div>' :
             (reqOk ? '<div class="row"><button class="btn" data-act="digital" data-id="' + d.id + '"' + (s.money < EN.costOf('digital', d.cost) ? ' disabled title="Fondos insuficientes"' : '') + '>Solicitar <span class="cost">' + EN.costOf('digital', d.cost) + ' €</span></button></div>' : '<p class="faint" style="font-size:.84rem">Requiere antes: ' + esc(reqName) + '.</p>')) + '</article>';
       }).join('') + '</div>' +
       '<article class="panel stack"><div class="spread"><h3>Solicitud judicial de antenas</h3><span class="badge ' + (left ? 'acc' : '') + '">' + left + '/' + jmax + ' disponibles</span></div><p class="muted" style="font-size:.88rem">' + esc(jud.desc) + '</p>' +
       (left ? '<div class="row" style="flex-wrap:nowrap"><select id="jud-person" aria-label="Persona">' + EN.judicialTargets(c).filter(p => !cs.judicial.includes(p.id)).map(p => '<option value="' + p.id + '">' + esc(p.name) + '</option>').join('') + '</select><button class="btn" data-act="judicial">Solicitar</button></div>' : '') +
       cs.judicial.map(pid => jud.results[pid].map(id => factRow(c, c.facts[id])).join('')).join('') + '</article></div>';
+  }
+
+  /* ---------- Visor de dispositivos extraídos ---------- */
+  const isDevice = d => /tel[eé]fono|m[oó]vil|tablet|port[aá]til|ordenador|dispositivo/i.test(d.name);
+  const deviceKind = d => /port[aá]til|ordenador/i.test(d.name) ? 'pc' : 'phone';
+  const APPS = [
+    { id: 'llamadas', name: 'Llamadas', icon: '📞', test: f => f.source === 'llamada' || (f.tags || []).includes('llamada') },
+    { id: 'mensajes', name: 'Mensajes', icon: '💬', test: f => ['mensaje', 'correo'].some(t => (f.tags || []).includes(t)) || f.source === 'mensaje' },
+    { id: 'ubicacion', name: 'Ubicación', icon: '📍', test: f => f.source === 'antena' || (f.tags || []).includes('ubicacion') || (f.tags || []).includes('gps') },
+    { id: 'archivos', name: 'Archivos', icon: '🗂', test: f => f.source === 'documento' || (f.tags || []).includes('documento') },
+    { id: 'registro', name: 'Registro', icon: '⚙', test: () => true }
+  ];
+  function deviceApps(c, cs, d) {
+    const facts = d.reveals.filter(id => EN.known(cs, id)).map(id => Object.assign({ id }, c.facts[id]));
+    const used = new Set();
+    return APPS.map(a => { const items = facts.filter(f => !used.has(f.id) && a.test(f)); items.forEach(f => used.add(f.id)); return Object.assign({ items }, a); }).filter(a => a.items.length);
+  }
+  function deviceView(c, cs) {
+    const dv = cs.lastView.device;
+    const d = dv && c.digital.find(x => x.id === dv.id);
+    if (!d || !cs.digital[d.id]) return '';
+    const apps = deviceApps(c, cs, d);
+    const app = apps.find(a => a.id === dv.app);
+    const dir = f => /entrante|recibe|de [A-ZÁÉÍÓÚ]/.test(f.text) ? 'in' : /saliente|envía|a [A-ZÁÉÍÓÚ]/.test(f.text) ? 'out' : '';
+    const item = f => {
+      const t = esc(f.time ? f.time + (f.end ? '–' + f.end : '') : '');
+      const tools = '<div class="dev-tools"><button class="linkish" data-act="wall-add-fact" data-id="' + f.id + '">Al muro</button></div>';
+      if (app.id === 'mensajes') return '<div class="dev-msg ' + dir(f) + '"><div class="bubble">' + esc(f.text) + '</div><time>' + t + '</time>' + tools + '</div>';
+      if (app.id === 'llamadas') return '<div class="dev-row"><span class="dev-ico ' + dir(f) + '">' + (dir(f) === 'in' ? '↙' : dir(f) === 'out' ? '↗' : '•') + '</span><div class="min0"><div>' + esc(f.text) + '</div><time>' + t + '</time>' + tools + '</div></div>';
+      return '<div class="dev-row"><span class="dev-ico">' + app.icon + '</span><div class="min0"><div>' + esc(f.text) + '</div><time>' + t + '</time>' + tools + '</div></div>';
+    };
+    const screen = app ? '<div class="dev-bar"><button class="linkish" data-act="device-app" data-app="">‹ Inicio</button><b>' + esc(app.name) + '</b><span>' + app.items.length + '</span></div><div class="dev-list">' + app.items.map(item).join('') + '</div>' :
+      '<div class="dev-home">' + apps.map(a => '<button class="dev-app" data-act="device-app" data-app="' + a.id + '"><span>' + a.icon + '</span><small>' + esc(a.name) + '</small><em>' + a.items.length + '</em></button>').join('') + '</div>';
+    const pc = deviceKind(d) === 'pc';
+    return '<article class="panel stack"><div class="panel-head"><h3>' + esc(d.name) + '</h3><button class="btn small ghost" data-act="device-close">Cerrar</button></div>' +
+      '<div class="dev-wrap"><div class="' + (pc ? 'dev-pc' : 'dev-phone') + '"><div class="dev-status"><span>EXTRACCIÓN FORENSE</span><span>' + esc(c.id) + '</span></div><div class="dev-screen">' + screen + '</div></div>' +
+      '<p class="muted" style="font-size:.86rem;max-width:42ch">Copia forense del dispositivo. Todo lo que ves aquí ya está en el expediente; ordénalo por aplicaciones, llévalo al muro y contrástalo en el comparador.</p></div></article>';
+  }
+
+  /* ---------- Reproducción temporal en el mapa ----------
+     Une cada hecho con persona, lugar y hora. Los registros (cámaras, antenas, pagos…)
+     se pintan llenos; lo que la persona declara, con borde discontinuo. */
+  function mapTracks(c, cs) {
+    const ids = new Set([c.victim.id].concat(c.people.map(p => p.id)));
+    const out = {};
+    EN.knownFacts(c, cs, f => f.person && ids.has(f.person) && f.place && c.places[f.place] && !c.places[f.place].offmap && f.time).forEach(f => {
+      const t0 = EN.minutes(f.time), t1 = f.end ? EN.minutes(f.end) : t0;
+      (out[f.person] = out[f.person] || []).push({ id: f.id, t0, t1: Math.max(t0, t1), place: f.place, st: f.kind === 'statement', text: f.text, time: f.time });
+    });
+    return out;
+  }
+  function mapPlayback(c, cs) {
+    const tracks = mapTracks(c, cs);
+    const pids = Object.keys(tracks);
+    if (!pids.length) return '';
+    let lo = Infinity, hi = -Infinity;
+    pids.forEach(p => tracks[p].forEach(e => { lo = Math.min(lo, e.t0); hi = Math.max(hi, e.t1); }));
+    hi = Math.max(hi, lo + 30);
+    const t = cs.lastView.mapT != null ? Math.min(hi, Math.max(lo, cs.lastView.mapT)) : lo;
+    const name = id => id === c.victim.id ? c.victim.name : c.people.find(p => p.id === id).name;
+    return '<article class="panel stack" id="map-play" data-lo="' + lo + '" data-hi="' + hi + '"><div class="panel-head"><h3>Reproducción temporal</h3><span class="badge mono" id="map-clock">' + EN.fmt(t) + '</span></div>' +
+      '<div class="row" style="flex-wrap:nowrap"><button class="btn small" data-act="map-play" id="map-play-btn">▶ Reproducir</button><input type="range" id="map-time" data-act="map-time" min="' + lo + '" max="' + hi + '" step="1" value="' + t + '" aria-label="Hora" style="flex:1"></div>' +
+      '<div class="legend"><span><i class="lg-rec"></i>Registro (cámara, antena, pago…)</span><span><i class="lg-st"></i>Lo que declara</span><span><i class="lg-gap"></i>No coinciden a esa hora</span></div>' +
+      '<div class="map-people">' + pids.map(p => '<label class="check"><input type="checkbox" data-act="map-person" value="' + p + '"' + ((cs.lastView.mapHide || []).includes(p) ? '' : ' checked') + '>' + esc(name(p)) + '</label>').join('') + '</div>' +
+      '<div class="map-now" id="map-now"></div></article>';
   }
 
   function tabPersonas(c, cs) {
@@ -726,8 +792,9 @@
     const pins = onMap.map(k => '<button class="map-pin k-' + esc(pt(k).kind) + (sel === k ? ' sel' : '') + '" style="left:' + pt(k).x + '%;top:' + pt(k).y + '%" data-act="map-sel" data-id="' + k + '" title="' + esc(pt(k).name) + '"><i></i><span>' + esc(pt(k).name) + '</span></button>').join('');
     const placeOpts = (id, val) => '<select id="' + id + '"><option value="">Elige un lugar…</option>' + onMap.map(k => '<option value="' + k + '"' + (val === k ? ' selected' : '') + '>' + esc(pt(k).name) + '</option>').join('') + '</select>';
     const selFacts = sel ? EN.knownFacts(c, cs, f => f.place === sel).sort((a, b) => (EN.minutes(a.time) || 0) - (EN.minutes(b.time) || 0)) : [];
-    return '<div class="stack-lg"><div class="map-wrap"><div class="map" role="group" aria-label="Mapa de investigación"><div class="map-grid"></div>' + svg + labels + pins + '</div>' +
+    return '<div class="stack-lg"><div class="map-wrap"><div class="map" role="group" aria-label="Mapa de investigación"><div class="map-grid"></div>' + svg + labels + pins + '<svg class="map-gaps" id="map-gaps" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"></svg><div class="map-tokens" id="map-tokens"></div></div>' +
       '<div class="legend"><span>Solo aparecen los lugares que constan en el expediente.</span><span>Distancias en línea recta, aproximadas.</span>' + (off.length ? '<span>Fuera del mapa: ' + off.map(k => esc(pt(k).name) + ' (' + esc(pt(k).offmap) + ')').join(', ') + '</span>' : '') + '</div></div>' +
+      mapPlayback(c, cs) +
       '<div class="grid"><article class="panel stack"><h3>Conectar lugares</h3><div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr))"><label class="field">Desde' + placeOpts('map-a', sel) + '</label><label class="field">Hasta' + placeOpts('map-b') + '</label></div>' +
       '<label class="field">Tipo de conexión<select id="map-label">' + ['Ruta conocida', 'Desplazamiento posible', 'Llamada', 'Cámara', 'Vehículo', 'Relación', 'Otro'].map(x => '<option>' + x + '</option>').join('') + '</select></label>' +
       '<div class="row"><button class="btn primary" data-act="map-link">Trazar línea</button></div>' +
@@ -894,7 +961,7 @@
   }
 
   E0.ui = {
-    esc, rankInfo, topbar, sidebar, modal, factLabel, unlocked, scenePlanId, LINK_COLORS,
+    esc, rankInfo, topbar, sidebar, modal, factLabel, unlocked, scenePlanId, LINK_COLORS, mapTracks, portrait,
     screens: { home: screenHome, cases: screenCases, academy: screenAcademy, career: screenCareer, notebook: screenNotebook, profile: screenProfile, settings: screenSettings, case: screenCase }
   };
 })();

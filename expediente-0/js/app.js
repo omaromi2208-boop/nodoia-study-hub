@@ -83,6 +83,7 @@
     if (tr) tr.scrollTop = tr.scrollHeight;
     drawWall();
     drawBench();
+    drawMapTokens();
     mount3d();
     mountRoom();
     store.save();
@@ -131,6 +132,58 @@
       onPick: id => { cs.lastView.sceneSel = id; cs.lastView.inspect = false; cs.lastView.fx = null; render(); }
     });
     if (!okMount) { S().settings.view3d = false; render(); }
+  }
+
+  /* ---------- Mapa: reproducción temporal ---------- */
+  let mapTimer = null;
+  function drawMapTokens() {
+    const layer = document.getElementById('map-tokens'), gaps = document.getElementById('map-gaps'), panel = document.getElementById('map-play');
+    if (!layer || !panel) { if (mapTimer) { clearInterval(mapTimer); mapTimer = null; } return; }
+    const { c, cs } = curCase();
+    const lo = +panel.dataset.lo, hi = +panel.dataset.hi;
+    const t = cs.lastView.mapT != null ? Math.min(hi, Math.max(lo, cs.lastView.mapT)) : lo;
+    const tracks = UI.mapTracks(c, cs);
+    const hide = new Set(cs.lastView.mapHide || []);
+    const pick = list => list.filter(e => t >= e.t0 - 1 && t <= e.t1 + (e.t1 > e.t0 ? 0 : 15)).sort((a, b) => b.t0 - a.t0)[0];
+    const tokens = [], lines = [], now = [];
+    Object.keys(tracks).forEach(pid => {
+      if (hide.has(pid)) return;
+      const rec = pick(tracks[pid].filter(e => !e.st)), st = pick(tracks[pid].filter(e => e.st));
+      const person = pid === c.victim.id ? c.victim : c.people.find(p => p.id === pid);
+      const ini = person.initials || person.name.split(' ').map(w => w[0]).slice(0, 2).join('');
+      if (rec) { tokens.push({ pid, place: rec.place, st: false, ini }); now.push(rec); }
+      if (st) { tokens.push({ pid, place: st.place, st: true, ini }); now.push(st); }
+      if (rec && st && rec.place !== st.place) lines.push([c.places[rec.place], c.places[st.place]]);
+    });
+    const per = {};
+    layer.innerHTML = tokens.map(k => {
+      const n = per[k.place] = (per[k.place] || 0) + 1;
+      const a = n * 2.1, r = n > 1 ? 3.2 : 0;
+      const P = c.places[k.place];
+      return '<span class="map-token' + (k.st ? ' st' : '') + '" style="left:calc(' + P.x + '% + ' + (Math.cos(a) * r * 6).toFixed(1) + 'px);top:calc(' + P.y + '% + ' + (Math.sin(a) * r * 6).toFixed(1) + 'px)" title="' + UI.esc(k.st ? 'Declara' : 'Registro') + '">' + UI.esc(k.ini) + '</span>';
+    }).join('');
+    gaps.innerHTML = lines.map(([a, b]) => '<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '"/>').join('');
+    const clock = document.getElementById('map-clock'); if (clock) clock.textContent = EN.fmt(t);
+    const slider = document.getElementById('map-time'); if (slider && +slider.value !== t) slider.value = t;
+    const list = document.getElementById('map-now');
+    if (list) list.innerHTML = now.length ? now.sort((a, b) => a.t0 - b.t0).map(e => '<div class="fact' + (e.st ? ' statement' : '') + '"><time>' + UI.esc(e.time) + '</time><div class="min0"><span class="src">' + (e.st ? 'declaración' : 'registro') + '</span>' + UI.esc(e.text) + '</div></div>').join('') : '<p class="muted" style="font-size:.86rem">A esta hora no consta nadie situado en el mapa.</p>';
+  }
+  function toggleMapPlay() {
+    const btn = document.getElementById('map-play-btn'), panel = document.getElementById('map-play');
+    if (mapTimer) { clearInterval(mapTimer); mapTimer = null; if (btn) btn.textContent = '▶ Reproducir'; store.save(); return; }
+    if (!panel) return;
+    const { cs } = curCase();
+    const lo = +panel.dataset.lo, hi = +panel.dataset.hi;
+    if (cs.lastView.mapT == null || cs.lastView.mapT >= hi) cs.lastView.mapT = lo;
+    const step = Math.max(1, Math.round((hi - lo) / 160));
+    if (btn) btn.textContent = '❚❚ Pausa';
+    mapTimer = setInterval(() => {
+      const st = curCase().cs;
+      if (!st || !document.getElementById('map-play')) { clearInterval(mapTimer); mapTimer = null; return; }
+      st.lastView.mapT = Math.min(hi, st.lastView.mapT + step);
+      drawMapTokens();
+      if (st.lastView.mapT >= hi) toggleMapPlay();
+    }, 90);
   }
 
   /* ---------- Muro: líneas y arrastre ---------- */
@@ -786,6 +839,11 @@
       cs.lastView.wallConnect = { on: true, from: null, label: document.getElementById('wall-label').value };
     },
     'wall-connect-cancel': () => { const { cs } = curCase(); cs.lastView.wallConnect = { on: false, from: null }; },
+    'device-open': el => { curCase().cs.lastView.device = { id: el.dataset.id, app: '' }; window.scrollTo({ top: 0 }); },
+    'device-app': el => { curCase().cs.lastView.device.app = el.dataset.app; },
+    'device-close': () => { curCase().cs.lastView.device = null; },
+    'wall-add-fact': el => { const { c, cs } = curCase(); const f = c.facts[el.dataset.id]; if (wallAdd(cs, f.kind === 'statement' ? 'statement' : 'fact', el.dataset.id)) toast('Tarjeta añadida al muro.'); else toast('Ya está en el muro.'); return false; },
+    'map-play': () => { toggleMapPlay(); return false; },
     'wall-focus': el => { const { cs } = curCase(); cs.lastView.wallFocus = el.dataset.id; cs.lastView.wallFocusScroll = true; },
     'wall-unlink': el => { const { cs } = curCase(); cs.wall.links = cs.wall.links.filter(l => l.id !== el.dataset.id); },
     'wall-sort': () => {
@@ -950,6 +1008,11 @@
       if (act === 'range-out' || act === 'hyp-conf') {
         const out = document.getElementById(el.dataset.out);
         if (out) out.textContent = el.value;
+      } else if (act === 'map-time') {
+        const { cs } = curCase();
+        cs.lastView.mapT = Number(el.value);
+        drawMapTokens();
+        store.save();
       } else if (act === 'report-field') {
         const { cs } = curCase();
         cs.report[el.dataset.key] = el.value;
@@ -964,6 +1027,7 @@
       const s = S();
       if (act === 'toggle-setting') { s.settings[el.dataset.key] = el.checked; applySettings(); store.save(); }
       else if (act === 'set-scale') { s.settings.scale = Number(el.value); applySettings(); store.save(); }
+      else if (act === 'map-person') { const { cs } = curCase(); const h = new Set(cs.lastView.mapHide || []); if (el.checked) h.delete(el.value); else h.add(el.value); cs.lastView.mapHide = [...h]; drawMapTokens(); store.save(); }
       else if (act === 'conflict-resolve') { const { cs } = curCase(); cs.resolved = cs.resolved || {}; cs.resolved[el.dataset.id] = el.checked; store.save(); }
       else if (act === 'tl-note') { const { cs } = curCase(); const ev = cs.timeline.find(x => x.id === el.dataset.id); if (ev) { ev.note = el.value; store.save(); } }
       else if (act === 'hyp-conf') {
